@@ -14,7 +14,7 @@ The original repository ignore rule did not prevent Netlify from publishing the 
 
 ## Current Milestone 10F preview
 
-- Latest private Deploy Preview: deployment `6a98a38416a4180007eb5752` at commit `20c7f44`.
+- Last functionally reviewed guarded Deploy Preview: deployment `6a98a96257fc900008411d91` at commit `5a56947`; later documentation-only commits do not change the reviewed application bundle.
 - The existing owner session opened Creator HQ, and `/library` plus `/media` survived direct navigation and refresh.
 - The browser console showed no warnings or errors.
 - Responsive review passed at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844.

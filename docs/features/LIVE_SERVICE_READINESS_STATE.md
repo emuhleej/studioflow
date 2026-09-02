@@ -51,7 +51,7 @@ The hosted Supabase project contains the six committed production-core migration
 
 The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, exact local and Deploy Preview redirects, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, real owner, and anonymous media-boundary behavior have been verified. The private B2 bucket, restricted application key, server-side encryption, exact-origin CORS, lifecycle rules, Supabase secrets, and eight Edge Functions are configured. Single-part upload, private preview/download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup creation/download/decryption, non-destructive restore ordering, and exact cleanup are verified. The public repository is connected, and isolated database-security plus application CI passed.
 
-Milestone 10F has a private Netlify Deploy Preview at commit `20c7f44`. The startup owner-authorization race is fixed and regression-tested; the existing owner session, Creator HQ, direct `/library` and `/media` routes and refreshes, clean browser console, and all four supported viewport sizes are verified. Netlify's three browser variables exist only in Deploy Previews, and production browser values are empty. The remaining live checks are the provider-level production auto-publish lock, a fresh owner sign-out/sign-in, and one tiny preview-origin media lifecycle exercise with exact cleanup.
+Milestone 10F has a guarded private Netlify Deploy Preview at commit `5a56947`, containing the startup owner-authorization fix from `20c7f44` and the fail-closed production-build guard. The application source is unchanged from the functionally reviewed auth-fix revision; the existing owner session, Creator HQ, direct `/library` and `/media` routes and refreshes, clean browser console, and all four supported viewport sizes are verified. Netlify's three browser variables exist only in Deploy Previews, and production browser values are empty. The remaining live checks are the provider-level production auto-publish lock, a fresh owner sign-out/sign-in, and one tiny preview-origin media lifecycle exercise with exact cleanup.
 
 ## Complete
 
@@ -88,7 +88,7 @@ Milestone 10F has a private Netlify Deploy Preview at commit `20c7f44`. The star
 - Follow-up secret scan completed against a valid commit range with no leaks detected.
 - Owner authorization now distinguishes retryable verification errors from definitive non-owner denial and ignores stale results from superseded sessions.
 - `npm run verify` passed with 69 unit/component tests and the production build; all 32 Playwright scenarios passed.
-- Private Netlify deployment `6a98a38416a4180007eb5752` serves commit `20c7f44` with protected access and preview-only browser configuration.
+- Private Netlify deployment `6a98a96257fc900008411d91` serves guarded commit `5a56947` with protected access and preview-only browser configuration.
 - Existing-owner access to Creator HQ, direct `/library` and `/media` navigation and refresh, a clean console, and responsive layouts at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844 are verified.
 - PR #5 has six successful checks and one neutral check and remains unmerged pending the final live gate.
 

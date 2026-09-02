@@ -77,11 +77,12 @@ Prompt and generation history preserves how each attempted result was made. It k
 | --- | --- |
 | Episode-wide and shot-specific prompt versions | Implemented and tested |
 | Independent purpose/version chains | Implemented and tested |
-| Immutable database prompt history | Implemented; pgTAP execution pending Docker |
+| Immutable database prompt history | Implemented; isolated pgTAP passed in GitHub Actions |
 | Manual generation provenance | Implemented and tested |
 | Result-media attachment and removal | Implemented and tested |
 | Selected/rejected/unreviewed decisions | Implemented and tested |
-| Backward-compatible result synchronization | Implemented; pgTAP execution pending Docker |
+| Backward-compatible result synchronization | Implemented; isolated pgTAP and hosted restore rehearsal passed |
+| Hosted owner persistence and restore | Verified with temporary fictional records; test data removed |
 | Desktop, iPad, and phone workflow | Implemented and tested |
 
 ## Complete
@@ -107,9 +108,8 @@ Prompt and generation history preserves how each attempted result was made. It k
 
 ## Broken / Needs Verification
 
-- Docker is not installed in the verified shell environment, so prompt/generation migrations and pgTAP tests cannot run locally.
-- Supabase and the owner account are not configured, so remote prompt, generation, result-link, and decision persistence have not been exercised live.
-- The migration does not change browser-facing table row shapes, so the checked-in database type snapshot needs no manual edit; regeneration remains part of the later approved local Supabase exercise.
+- None within the approved manual Milestone 7 scope. Docker remains intentionally absent on this desktop; isolated database tests run in GitHub Actions instead.
+- Live AI-provider execution is not a missing Milestone 7 feature. It remains a separately proposed phase in `AI_GENERATION_PLAN.md`.
 
 ## Locked Decisions
 
@@ -126,18 +126,17 @@ Prompt and generation history preserves how each attempted result was made. It k
 
 - Concurrent prompt saves can compute the same next version client-side; database uniqueness safely rejects the duplicate, but conflict-specific retry UX is outside Milestone 7.
 - Existing prompt records whose shot was removed can display “Unknown shot”; immutable content remains preserved.
-- The new result-integrity and synchronization triggers remain unexecuted until Docker/Supabase is available.
-- A private workspace created against an older database must apply the new migration before relying on canonical result-link synchronization.
+- A private workspace created against an older database must apply all six reviewed migrations before relying on canonical result-link synchronization.
+- Future managed AI jobs must preserve current manual, outputless generation records; the additive compatibility rules are specified in `AI_GENERATION_PLAN.md`.
 
 ## Remaining Verification
 
-- Apply all migrations and run `prompt_history.test.sql` and `generation_history.test.sql` after local Supabase/Docker setup.
-- Regenerate database types after the verified migration run.
-- Exercise owner-only remote creation, result linking/removal, review changes, and direct non-owner denial against configured Supabase.
+- None within Milestone 7. All six migrations are applied to hosted Supabase, generated types are current, the isolated pgTAP suite passed in GitHub Actions, and the live fictional restore rehearsal was cleaned up exactly.
+- The first real AI-provider job and its paid-cost reconciliation belong to the separately approved AI plan, not this completed feature.
 
 ## Exact Next Implementation Task
 
-No Milestone 7 implementation remains. When the owner starts the next project checkpoint, return to `docs/PROJECT_STATE.md` and open the Week 9 real-episode workflow trial; do not add AI providers, configure accounts, or deploy as part of this feature.
+No Milestone 7 implementation remains. Finish Milestone 10F first. If the owner then explicitly starts AI work, follow `AI_GENERATION_PLAN.md` and implement AI-1 only with the fake provider and `generation_enabled=false`; do not create a provider account, configure a provider key, submit a paid request, or deploy production.
 
 ## Remaining Implementation Order
 

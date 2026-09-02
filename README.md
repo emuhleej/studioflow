@@ -4,7 +4,7 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: production core and live private-service integration are in the final Milestone 10F review. The private Netlify Deploy Preview is live at commit `20c7f44`; its existing owner session, Creator HQ, direct routes, browser console, and all supported responsive sizes are verified. The startup authorization race is fixed and the application, 69 unit/component tests, production build, and all 32 Playwright scenarios pass. A fresh sign-out/sign-in, one tiny preview-origin media lifecycle check, and the Netlify production auto-publish lock remain before 10F can be called complete.
+> Status: production core and live private-service integration are in the final Milestone 10F review. The private Netlify Deploy Preview contains the startup authorization fix from `20c7f44` and the fail-closed production-build guard from `5a56947`; its existing owner session, Creator HQ, direct routes, browser console, and all supported responsive sizes are verified. The application, 69 unit/component tests, production build, six guard checks, and all 32 Playwright scenarios pass. A fresh sign-out/sign-in, one tiny preview-origin media lifecycle check, and the Netlify production auto-publish lock remain before 10F can be called complete.
 
 Netlify published one initial `main` build while the site was being created despite the repository production-ignore rule. That URL remains behind Netlify access control and has no production browser variables, but it is not an approved StudioFlow production release. Do not remove its protection or publish another production build without separate approval.
 
@@ -80,6 +80,7 @@ Important operational documents:
 - [Ten-week learning rhythm](docs/BUILD-PLAN.md)
 - [Architecture decisions](docs/ARCHITECTURE.md)
 - [Milestone 9 workflow trial](docs/features/REAL_WORKFLOW_TRIAL_STATE.md)
+- [Proposed AI image and video plan](docs/features/AI_GENERATION_PLAN.md)
 
 ## Repository policy
 
