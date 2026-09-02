@@ -37,3 +37,9 @@ The key is never stored with the backup.
 7. Record the rehearsal date and delete the disposable project.
 
 Never overwrite the production database as the first restore attempt.
+
+## Verified rehearsal
+
+On 2026-09-02, StudioFlow created an encrypted backup from a fictional one-project workspace with two generated media records. The encrypted object was downloaded from the private bucket, decrypted locally, validated as an import-compatible version 1 workspace, and restored with the same non-destructive upsert ordering used by Settings. Project, asset, and upload-session counts matched after restore. The generated database records, B2 objects, decrypted file, encrypted local copy, and temporary credential transport were then permanently removed; the dedicated bucket returned to zero file versions.
+
+Weekly scheduling remains disabled until the owner stores an independent copy of `BACKUP_ENCRYPTION_KEY` in a password manager. The server-side Supabase secret is enough to create backups but is not a substitute for an owner-held disaster-recovery copy.

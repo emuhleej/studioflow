@@ -26,4 +26,4 @@ The first approved GitHub identity is registered directly in `app_owners`; the s
 
 ## Verification
 
-Hosted verification proves the signed-out login boundary, simulated non-owner read/write denial, and the configured owner's access to Creator HQ. `supabase/tests/database` additionally covers the function grants and owner policies; run that isolated pgTAP suite in GitHub Actions or on a capable development host whenever migrations or policies change. Live signed-media denial remains part of the B2 readiness checkpoint.
+Hosted verification proves the signed-out login boundary, simulated non-owner read/write denial, the configured owner's access to Creator HQ, and anonymous HTTP 401 denial at the media-signing boundary. `supabase/tests/database` additionally covers the function grants and owner policies; the full isolated pgTAP suite passed in GitHub Actions and must run again whenever migrations or policies change. The private B2 bucket, restricted application key, local-only CORS, lifecycle cleanup, and exact removal of all generated rehearsal objects were verified without placing credentials in the repository.

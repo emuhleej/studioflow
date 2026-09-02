@@ -1,12 +1,12 @@
 # Private Media Lifecycle — Implementation State
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Status
 
-**IMPLEMENTATION COMPLETE — LIVE VERIFICATION PENDING**
+**IMPLEMENTATION AND LIVE PROVIDER VERIFICATION COMPLETE**
 
-Current checkpoint: **Step 6D complete**
+Current checkpoint: **Milestone 10C complete**
 
 ## Purpose
 
@@ -90,15 +90,15 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 | Demo metadata and IndexedDB blobs | Implemented and tested |
 | Validation and quota rules | Implemented and unit-tested |
 | Upload-task lifecycle | Implemented and unit/component-tested |
-| Multipart completed-part recovery | Implemented; live B2 verification pending |
+| Multipart completed-part recovery | Live pause at 2%, resume, and completion verified with a 55 MB test file |
 | Private preview URL lifecycle | Implemented with loading, retry, pre-expiry refresh, and playback recovery |
 | Purpose-specific download access | Implemented with attachment disposition |
 | Editable notes and technical metadata | Implemented |
 | Multi-context asset links | Implemented in client, repository adapter, migration, backup, and UI |
-| Trash and restore | Implemented |
+| Trash and restore | Live provider-backed exercise passed |
 | Confirmed permanent deletion | Implemented with client and database reference cleanup |
-| Owner RLS and lifecycle database rules | Applied and live owner/non-owner behavior verified; isolated pgTAP execution remains pending |
-| B2 lifecycle configuration | Present; application/read-back pending provider setup |
+| Owner RLS and lifecycle database rules | Applied, live owner/non-owner behavior verified, and isolated pgTAP passed in GitHub Actions |
+| B2 lifecycle configuration | Applied and read back: one-day hidden-version cleanup and three-day abandoned-multipart cleanup |
 
 ## Complete
 
@@ -119,21 +119,24 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 - Explicit permanent-deletion confirmation and failure retention.
 - Orphan-reference cleanup for asset links, shot arrays, entity references, and generation arrays.
 - Responsive workflow verification at desktop, both iPad orientations, and 390 x 844 phone.
+- Private encrypted B2 bucket, bucket-restricted application key, local-only CORS, and server-only Supabase secrets configured.
+- Eight media/backup Edge Functions deployed and confirmed active.
+- Single-part upload, private image preview, attachment download, trash, restore, and anonymous HTTP 401 denial live-verified.
+- Multipart upload pause/resume and completed-part continuation live-verified with generated test media.
 
 ## Partially Implemented
 
-- Supabase, GitHub OAuth, and sole-owner authorization are configured and verified. B2-facing behavior is complete in code but cannot be called production-proven until the private bucket is configured and exercised.
+- Signed-URL expiry and a full 9 GB live-cap simulation remain optional pre-production stress exercises; deterministic application/database coverage passed.
 
 ## Not Started
 
-- Live B2 CORS, privacy, signed URL, multipart, lifecycle-rule, and deletion exercises.
 - Physical-device review using private owner media.
 
 ## Broken / Needs Verification
 
-- Docker is not installed in the current shell environment, so the new migration and pgTAP lifecycle tests cannot be executed locally.
-- The hosted schema and generated TypeScript types are current. B2 and Netlify are not configured.
-- Signed-out/non-owner media denial and real signed-URL expiry have not been exercised against live services.
+- Docker is not installed in the current shell environment; the migration and pgTAP lifecycle tests passed in GitHub Actions instead.
+- The hosted schema and generated TypeScript types are current. B2 is configured; Netlify is not configured.
+- Anonymous media denial and simulated non-owner database denial are verified. Real-time signed-URL expiry was not awaited during this checkpoint.
 
 ## Locked Decisions
 
@@ -152,19 +155,16 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 - Sequential multipart transfer may be slow near the 2 GB maximum.
 - Client and server MIME allowlists can drift if only one is updated.
 - Permanent deletion spans B2 and PostgreSQL and cannot be transactional across providers; B2 deletion is idempotent so a failed metadata step can be retried.
-- Real B2 behavior remains environment-dependent until the live acceptance exercise succeeds.
+- Cross-provider deletion remains non-transactional by design; exact provider and database cleanup succeeded during the rehearsal.
 
 ## Remaining Verification
 
-- Run all pgTAP tests in isolated CI or on a capable approved host.
-- Exercise single upload and multipart pause/resume/cancel against a private B2 bucket.
-- Verify private preview, attachment download, URL expiry/recovery, trash, restore, and permanent deletion.
-- Verify anonymous and non-owner denial.
-- Apply/read back B2 CORS and lifecycle rules.
+- Optionally wait through a real signed-URL expiry and simulate quota rejection before production release.
+- Complete the owner's physical-device review with private media.
 
 ## Exact Next Implementation Task
 
-Configure the dedicated private Backblaze B2 bucket, restricted application key, lifecycle rules, and server-side Supabase secrets; then exercise single and multipart upload, preview, download, cancellation, trash, restore, deletion, and quota behavior, record the results, and stop.
+Perform the owner's physical-device media trial only when private content and devices are available. Do not reopen provider setup or add new media infrastructure during that trial.
 
 Do not begin AI-provider execution, the video editor, social analytics, automatic deployment, or production release.
 

@@ -4,7 +4,7 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: production-core implementation. The fictional local demo is ready, and the hosted Supabase schema, GitHub OAuth, sole-owner allowlist, and owner access boundary are configured and verified. Private Backblaze B2 operations and Netlify still need live configuration and verification. No production deployment has been made.
+> Status: production core and live private-service integration are ready for preview review. Hosted Supabase, GitHub OAuth, the sole-owner boundary, private Backblaze B2 media, encrypted backup/restore, and isolated database-security CI are configured and verified. Netlify is not configured, and no production deployment has been made.
 
 ## What works
 
@@ -21,6 +21,7 @@ The repository is public so the engineering journey can be shared. Production re
 - Supabase schema, configured singleton owner allowlist, hardened row-level security, verified GitHub owner sign-in, pgTAP tests, and client error records.
 - Backblaze B2 Edge Functions for signed upload, multipart resume/cancel/complete, private preview, permanent deletion, and AES-256-GCM metadata backup.
 - 8 GB warning, 9 GB upload block, 2 GB file maximum, and lifecycle-rule configuration.
+- Live private B2 verification covering single upload, preview, download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup/decryption/restore, and exact test-data cleanup.
 
 ## Architecture
 
@@ -54,7 +55,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Database migrations and generated types may be verified against the connected hosted Supabase project. The full isolated pgTAP suite remains in GitHub Actions and may also run on a capable development machine with Docker:
+Database migrations and generated types are verified against the connected hosted Supabase project. The full isolated pgTAP suite passed in GitHub Actions and may also run on a capable development machine with Docker:
 
 ```powershell
 npm run supabase:start
@@ -62,7 +63,7 @@ npm run supabase:test
 npm run supabase:types
 ```
 
-Docker is deliberately not installed on the current older desktop. See [docs/SETUP.md](docs/SETUP.md) for the hosted-development route; this does not remove the CI database-security gate.
+Docker is deliberately not installed on the current older desktop. See [docs/SETUP.md](docs/SETUP.md) for the hosted-development route; GitHub Actions supplies the isolated database-security gate.
 
 ## Configure the private workspace
 

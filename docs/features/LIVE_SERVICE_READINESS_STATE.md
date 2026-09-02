@@ -2,7 +2,7 @@
 
 ## Status
 
-ACTIVE
+ACTIVE — MILESTONES 10A–10E COMPLETE
 
 ## Purpose
 
@@ -45,11 +45,11 @@ Connect StudioFlow's already-built production core to owner-controlled services 
 
 ## Data / Persistence
 
-The hosted Supabase project contains the six committed production-core migrations. It has one private authentication identity and one singleton owner-allowlist row, with no owner production records created for verification. Nineteen public tables have row-level security enabled. Browser production metadata remains Supabase-owned; media and encrypted backup bytes remain assigned to private Backblaze B2. The fictional demo continues to use browser-local storage only.
+The hosted Supabase project contains the six committed production-core migrations. It has one private authentication identity and one singleton owner-allowlist row. Nineteen public tables have row-level security enabled. Browser production metadata remains Supabase-owned; media and encrypted backup bytes remain in the private Backblaze B2 bucket. All fictional live-verification records and objects were removed after the rehearsal, so the owner workspace and dedicated bucket contain no test data. The fictional demo continues to use browser-local storage only.
 
 ## Integration Status
 
-The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, the local callback allowlist, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, and real owner access have been verified. B2 credentials and lifecycle rules, Edge Function secrets, live media operations, backup scheduling, isolated pgTAP execution, and Netlify preview configuration remain pending.
+The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, the local callback allowlist, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, real owner, and anonymous media-boundary behavior have been verified. The private B2 bucket, restricted application key, server-side encryption, CORS, lifecycle rules, Supabase secrets, and eight Edge Functions are configured. Single-part upload, private preview/download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup creation/download/decryption, non-destructive restore ordering, and exact cleanup are verified. The public repository is connected, and isolated database-security plus application CI passed. Netlify preview configuration remains pending and requires separate approval.
 
 ## Complete
 
@@ -69,20 +69,33 @@ The hosted Supabase project is connected and its migration history matches the s
 - Hosted security and performance advisors rechecked after the migration. Performance has no warnings or errors. Security has no errors; it retains the intentional deny-all `app_owners` informational notice and a leaked-password warning that is not applicable to StudioFlow because email/password authentication is disabled.
 - Unused email/password authentication disabled; GitHub is the only enabled owner sign-in provider.
 - Playwright's fictional-demo server isolated on port 4174 with demo mode forced, so private `.env.local` settings cannot contaminate the test suite.
+- Dedicated Backblaze B2 bucket created as private with default server-side encryption enabled and Object Lock disabled.
+- Restricted bucket-specific application key created; credentials are stored only as server-side Supabase secrets.
+- B2 lifecycle cleanup deletes hidden prior versions after one day and abandons unfinished multipart uploads after three days.
+- B2 CORS is limited to the approved local StudioFlow origins and the signed GET, HEAD, and PUT operations required by the existing media client.
+- All eight media and encrypted-backup Edge Functions deployed and confirmed active.
+- Live 68-byte image upload, private preview, private download, trash, and restore verified.
+- Live 55 MB multipart upload paused at 2%, resumed from the existing session, and completed.
+- Anonymous access to the media URL function denied with HTTP 401.
+- Encrypted metadata backup created in private B2, downloaded, decrypted, and verified to contain the current fictional project and two asset records.
+- Backup records restored with dependency-safe, non-destructive upserts and verified against project, asset, and upload-session counts.
+- Provider-level unfinished large-file cancellation verified.
+- Exact generated B2 objects, hosted database records, local media, decrypted backup, encrypted copy, and temporary credential transport permanently removed; zero test records remain.
+- Public repository `emuhleej/studioflow` created without a license or generated starter files and connected as `origin`.
+- First GitHub Actions application job passed; isolated Supabase/pgTAP database-security job passed in 2 minutes 49 seconds.
 
 ## Partially Implemented
 
-- Database security: live hosted behavior is verified, but the isolated pgTAP suite remains to run in GitHub Actions or on a capable approved host.
-- Media and backup integrations: implementation exists, but B2 secrets and live provider exercises are pending.
+- Signed-URL expiry and a full live 9 GB cap simulation were not stress-tested because they would add time or unnecessary provider bytes. Their deterministic application/database coverage passed.
+- The first-push secret-scan job hit the action's zero-base commit-range error after scanning zero bytes. A normal follow-up commit must rerun the scan against a valid range.
 
 ## Not Started
 
-- Live private B2 upload, preview, resume, delete, backup, and restore exercises.
 - Netlify preview configuration and review.
 
 ## Broken / Needs Verification
 
-- The isolated pgTAP suite has not run because Docker is intentionally absent from this desktop; it must run in GitHub Actions or on a capable approved host.
+- Docker remains absent from this desktop by design; the isolated pgTAP suite now runs successfully in GitHub Actions.
 - The security advisor's remaining `app_owners` notice is informational and expected: RLS is enabled with no browser policy so the allowlist remains deny-all to API clients.
 - The leaked-password advisor cannot be enabled on the free plan, so email/password authentication is disabled instead. GitHub OAuth remains the only enabled provider.
 - Performance advice now contains 22 informational unindexed-foreign-key and unused-index suggestions only. Review these separately before production release; they do not weaken the verified owner boundary.
@@ -100,25 +113,20 @@ The hosted Supabase project is connected and its migration history matches the s
 ## Known Risks
 
 - B2 credentials or backup keys could leak if placed in browser-prefixed variables or committed files.
-- Hosted-only schema checks do not replace isolated database tests.
-- Live media signing, expiry, multipart recovery, deletion, and quota behavior have not yet been exercised against the private bucket.
+- Real-time signed-URL expiry and full-capacity quota stress remain optional pre-production exercises. Provider cancellation and exact deletion/cleanup are complete.
 
 ## Remaining Verification
 
-- Run all pgTAP tests in an isolated CI/local Supabase stack.
-- Exercise private media lifecycle and quota behavior with the dedicated B2 bucket.
-- Complete an encrypted backup, download, decrypt, and restore rehearsal.
 - Review a Netlify branch preview before any production decision.
 
 ## Exact Next Implementation Task
 
-Configure the dedicated private Backblaze B2 bucket, restricted application key, lifecycle rules, and server-side Supabase secrets; then exercise the existing signed media lifecycle without beginning backup scheduling, Netlify configuration, AI providers, or production deployment.
+Prepare a Netlify branch preview for owner review only after separate approval. Do not promote to production, enable automatic production deployment, add AI providers, or change paid-service settings.
 
 ## Remaining Implementation Order
 
-1. Complete the exact 10C private Backblaze B2 media-lifecycle task above.
-2. Rehearse encrypted backup and restore.
-3. Run the isolated database-security job and resolve remaining readiness findings.
-4. Prepare a Netlify branch preview only after separate approval.
+1. Prepare a Netlify branch preview only after separate approval.
+2. Review the preview at desktop, iPad, and phone sizes.
+3. Stop for a separate production-deployment decision.
 
 Update this file after every meaningful live-service checkpoint.
