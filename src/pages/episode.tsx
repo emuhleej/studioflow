@@ -5,8 +5,8 @@ import { GenerationHistoryPanel } from "../components/generation-history-panel";
 import { MediaPreview } from "../components/media-preview";
 import { PromptHistoryPanel } from "../components/prompt-history-panel";
 import { StatusBadge } from "../components/status";
-import { Button, EmptyState, Field, Modal, PageHeading, SubmitButton } from "../components/ui";
-import { getEpisodeTotals } from "../lib/domain";
+import { Button, EmptyState, Field, IconButton, Modal, PageHeading, SubmitButton } from "../components/ui";
+import { getEpisodeAssets, getEpisodeTotals } from "../lib/domain";
 import { formatCurrency, formatDuration, formatShortDate, titleCase } from "../lib/format";
 import { episodeStatuses, useStudio } from "../state/studio-store";
 import type { BeatType, CostCategory, Platform, Shot } from "../types";
@@ -135,6 +135,7 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                     <div className="min-w-0">
                       <input
                         className="w-full border-0 bg-transparent text-sm font-semibold outline-none"
+                        aria-label={`Scene ${sceneIndex + 1} title`}
                         value={scene.title}
                         onChange={(event) => updateScene(scene.id, { title: event.target.value })}
                       />
@@ -144,12 +145,12 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                     </div>
                   </div>
                   <div className="flex gap-1.5">
-                    <Button variant="ghost" disabled={!canMoveSceneUp} onClick={() => moveScene(scene.id, "up")}>
+                    <IconButton label={`Move ${scene.title} scene up`} disabled={!canMoveSceneUp} onClick={() => moveScene(scene.id, "up")}>
                       <ChevronUp size={15} />
-                    </Button>
-                    <Button variant="ghost" disabled={!canMoveSceneDown} onClick={() => moveScene(scene.id, "down")}>
+                    </IconButton>
+                    <IconButton label={`Move ${scene.title} scene down`} disabled={!canMoveSceneDown} onClick={() => moveScene(scene.id, "down")}>
                       <ChevronDown size={15} />
-                    </Button>
+                    </IconButton>
                     <Button onClick={() => addShot(scene.id)}>
                       <Plus size={15} />Add shot
                     </Button>
@@ -161,20 +162,13 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                       const canMoveShotUp = shotIndex > 0;
                       const canMoveShotDown = shotIndex < shots.length - 1;
                       return (
-                          <div
-                            key={shot.id}
-                            className="list-row text-left"
-                            role="button"
-                            tabIndex={0}
+                        <div key={shot.id} className="list-row text-left">
+                          <button
+                            type="button"
+                            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--violet)]"
+                            aria-label={`Edit shot ${sceneIndex + 1}.${shotIndex + 1}: ${shot.title}`}
                             onClick={() => setShotEdit(structuredClone(shot))}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                setShotEdit(structuredClone(shot));
-                              }
-                            }}
                           >
-                          <div className="flex min-w-0 items-center gap-3">
                             <div className="quiet text-xs font-bold">
                               {sceneIndex + 1}.{shotIndex + 1}
                             </div>
@@ -182,30 +176,22 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                               <div className="truncate text-sm font-semibold">{shot.title}</div>
                               <div className="muted mt-1 truncate text-xs">{shot.framing} · {shot.action || "No action written"}</div>
                             </div>
-                          </div>
+                          </button>
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              className="h-9 w-9 rounded-lg border border-[var(--line)] disabled:opacity-45"
+                            <IconButton
+                              label={`Move ${shot.title} shot up`}
                               disabled={!canMoveShotUp}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                moveShot(shot.id, "up");
-                              }}
+                              onClick={() => moveShot(shot.id, "up")}
                             >
                               <ChevronUp size={15} />
-                            </button>
-                            <button
-                              type="button"
-                              className="h-9 w-9 rounded-lg border border-[var(--line)] disabled:opacity-45"
+                            </IconButton>
+                            <IconButton
+                              label={`Move ${shot.title} shot down`}
                               disabled={!canMoveShotDown}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                moveShot(shot.id, "down");
-                              }}
+                              onClick={() => moveShot(shot.id, "down")}
                             >
                               <ChevronDown size={15} />
-                            </button>
+                            </IconButton>
                             <span className="badge">{shot.durationSeconds}s</span>
                             <span className="badge">{titleCase(shot.status)}</span>
                           </div>
@@ -299,7 +285,7 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
 
 function EpisodeMediaTab({ episodeId }: { episodeId: string }) {
   const { data, setAssetReview } = useStudio();
-  const assets = data.assets.filter((asset) => asset.episodeId === episodeId && !asset.deletedAt);
+  const assets = getEpisodeAssets(data, episodeId).filter((asset) => !asset.deletedAt);
   return assets.length ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{assets.map((asset) => <article key={asset.id} className="panel p-3"><MediaPreview asset={asset} controls /><div className="mt-3 truncate text-sm font-semibold">{asset.filename}</div><div className="muted mt-1 text-xs">{titleCase(asset.kind)} · {titleCase(asset.reviewStatus)}</div><div className="mt-3 grid grid-cols-3 gap-2"><Button onClick={() => setAssetReview(asset.id, "selected")}><Check size={14} />Select</Button><Button onClick={() => setAssetReview(asset.id, "unreviewed")}>Reset</Button><Button onClick={() => setAssetReview(asset.id, "rejected")}>Reject</Button></div></article>)}</div> : <section className="panel"><EmptyState icon={<Image size={28} />} title="No media linked to this episode" description="Upload from the Media library and choose this episode, or add generated results later." action={<Link className="button button-primary" to="/media">Open media library</Link>} /></section>;
 }
 

@@ -7,6 +7,7 @@ import {
   canAcceptAsset,
   getActiveStorageBytes,
   getAssetLinkOptions,
+  getEpisodeAssets,
   getEpisodeTotals,
   getNextEpisodeNumber,
   getSitcomShotDurations,
@@ -80,6 +81,31 @@ describe("StudioFlow domain calculations", () => {
     expect(options).toContainEqual({ targetType: "shot", targetId: "shot-1", label: "Immediate argument" });
     expect(options).toContainEqual({ targetType: "entity", targetId: "entity-maya", label: "Maya" });
     expect(options.every((option) => option.targetId !== "other-episode")).toBe(true);
+  });
+
+  it("finds direct and production-linked episode media without duplicates", () => {
+    const workspace = structuredClone(demoWorkspace);
+    const episode = workspace.episodes[0];
+    const generation = workspace.generations[0];
+    const generatedAsset = workspace.assets.find((asset) => asset.id === "asset-shot-one")!;
+    const directAsset = workspace.assets.find((asset) => asset.id === "asset-fridge-ref")!;
+
+    directAsset.episodeId = episode.id;
+    generatedAsset.episodeId = undefined;
+    generation.assetIds = [generatedAsset.id];
+    workspace.assetLinks.push({
+      ...workspace.assetLinks[0],
+      id: "generation-result-link",
+      assetId: generatedAsset.id,
+      targetType: "generation",
+      targetId: generation.id,
+    });
+
+    const assets = getEpisodeAssets(workspace, episode.id);
+
+    expect(assets.map((asset) => asset.id)).toContain(directAsset.id);
+    expect(assets.filter((asset) => asset.id === generatedAsset.id)).toHaveLength(1);
+    expect(getEpisodeAssets(workspace, "episode-cart")).toHaveLength(0);
   });
 
   it("removes an asset and every embedded or explicit reference", () => {

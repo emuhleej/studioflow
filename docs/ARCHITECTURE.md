@@ -187,6 +187,8 @@ Pages consume the store through `useStudio()`. Domain calculations that do not r
 
 Client property names use camelCase. PostgreSQL columns use snake_case. `remote-repository.ts` owns the table mapping and key conversion between those representations.
 
+Explicit `asset_links` rows are the canonical relationship between a generation record and its result media. `generation_records.asset_ids` remains a backward-compatible projection for existing exports and clients. Browser commands update both representations together; PostgreSQL triggers synchronize them in either direction and reject duplicate or cross-project result references.
+
 ### Demo-mode persistence
 
 Demo mode is active when `VITE_DEMO_MODE` is true or Supabase browser configuration is absent.
@@ -218,7 +220,8 @@ Private mode requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, w
 4. `AuthGate` exposes the application only when the owner check succeeds.
 5. `loadRemoteWorkspace()` reads every mapped owner table in parallel and converts rows to the client model.
 6. Store commands update the in-memory aggregate and call `upsertRemoteRecord()` for remote persistence.
-7. PostgreSQL constraints, triggers, and RLS enforce rules independently of the browser.
+7. Generation-result commands persist the explicit asset link; database triggers synchronize the compatible generation result array.
+8. PostgreSQL constraints, triggers, and RLS enforce rules independently of the browser.
 
 The browser's route guard improves experience; it is not the authorization boundary. Direct database requests must remain protected by RLS and the singleton owner check.
 
@@ -312,6 +315,8 @@ page event -> StudioProvider command -> update WorkspaceData
 
 Database constraints and RLS remain authoritative even when the client updates optimistically. Rollback uses object identity so a failed older request cannot overwrite a newer local edit. Destructive remote operations remain pessimistic: local deletion occurs only after the provider operation succeeds.
 
+Generation result linking is one specialized mutation: the browser updates the explicit asset link and compatible result array together, while private persistence writes the canonical `asset_links` record. PostgreSQL validates owner/project context and synchronizes `generation_records.asset_ids`. Removing a result link completes remotely before the browser removes the local relationship.
+
 ### Media preview
 
 ```text
@@ -329,6 +334,8 @@ Private preview URLs are refreshed shortly before expiry. Downloads request atta
 - Import validates the structural envelope with Zod.
 - Imported owner IDs are normalized to the currently active owner.
 - Older workspaces without `assetLinks` normalize that collection to an empty array while preserving unknown fields.
+- Restore writes generation records before asset links so polymorphic generation targets exist before their links are validated.
+- Asset-link upserts reconcile on `(asset_id, target_type, target_id)`, allowing a database-synchronized compatibility link and its imported explicit link to resolve as one relationship.
 - In private mode, normalized records are persisted through the repository adapter before the imported workspace replaces current local state. Each record retries once; failure stops the restore and attempts to reload the authoritative remote workspace.
 
 Schema evolution must retain a migration or normalization path for previously exported workspaces.
@@ -444,6 +451,7 @@ The following rules must remain true unless the owner explicitly approves an arc
 14. **Cloudflare is excluded:** do not add Workers, D1, R2, Pages, or account-level Cloudflare dependencies.
 15. **Build is not deployment:** tests, CI, and preview builds do not authorize or imply a production release.
 16. **Failed cloud writes reconcile visibly:** ordinary metadata writes retry once and roll back only the still-current optimistic change after a second failure. Newer local edits are never overwritten by an older rollback.
+17. **Generation results have one canonical relationship:** explicit asset links are authoritative; the generation result-ID array remains synchronized only for backward compatibility and export continuity.
 
 ## When to update this document
 

@@ -35,6 +35,32 @@ export function getEpisodeTotals(data: WorkspaceData, episodeId: string): Episod
   return { durationSeconds, productionMinutes, costCents };
 }
 
+export function getEpisodeAssets(data: WorkspaceData, episodeId: string): Asset[] {
+  const sceneIds = new Set(data.scenes.filter((scene) => scene.episodeId === episodeId).map((scene) => scene.id));
+  const episodeShots = data.shots.filter((shot) => sceneIds.has(shot.sceneId));
+  const shotIds = new Set(episodeShots.map((shot) => shot.id));
+  const episodeGenerations = data.generations.filter((generation) => generation.episodeId === episodeId);
+  const generationIds = new Set(episodeGenerations.map((generation) => generation.id));
+  const linkedAssetIds = new Set<string>();
+
+  for (const shot of episodeShots) {
+    for (const assetId of shot.assetIds) linkedAssetIds.add(assetId);
+  }
+  for (const generation of episodeGenerations) {
+    for (const assetId of generation.assetIds) linkedAssetIds.add(assetId);
+  }
+  for (const link of data.assetLinks) {
+    const belongsToEpisode =
+      (link.targetType === "episode" && link.targetId === episodeId) ||
+      (link.targetType === "scene" && sceneIds.has(link.targetId)) ||
+      (link.targetType === "shot" && shotIds.has(link.targetId)) ||
+      (link.targetType === "generation" && generationIds.has(link.targetId));
+    if (belongsToEpisode) linkedAssetIds.add(link.assetId);
+  }
+
+  return data.assets.filter((asset) => asset.episodeId === episodeId || linkedAssetIds.has(asset.id));
+}
+
 export function getActiveStorageBytes(data: WorkspaceData): number {
   return data.assets.reduce((sum, asset) => sum + asset.bytes, 0);
 }

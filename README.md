@@ -14,7 +14,8 @@ The repository is public so the engineering journey can be shared. Production re
 - Local private-media demo with image, audio, and video preview.
 - Retained media upload tasks with progress, pause, resume, retry, cancellation, and multipart completed-part recovery.
 - Expiring private previews, purpose-specific downloads, editable media details, multi-context production links, recoverable trash, and confirmed deletion with orphan cleanup.
-- Shot-aware immutable prompt history and complete manual generation provenance for provider, model, prompt version, shot, cost, duration, and notes; result decisions remain in Milestones 7C–7D.
+- Shot-aware immutable prompt history and complete manual generation provenance for provider, model, prompt version, shot, cost, duration, notes, linked result media, and selected/rejected decisions.
+- Episode Media views that include direct uploads plus media linked through episode scenes, shots, and generation results.
 - Cloud metadata saves retry once and roll back only the still-current optimistic change after a second failure.
 - Time entries, cost entries, publication links, per-episode totals, metadata export, and restore.
 - Supabase schema, singleton owner allowlist, row-level security, pgTAP tests, and client error records.
@@ -72,6 +73,7 @@ Important operational documents:
 - [Production release gate](docs/PRODUCTION-RELEASE.md)
 - [Ten-week learning rhythm](docs/BUILD-PLAN.md)
 - [Architecture decisions](docs/ARCHITECTURE.md)
+- [Milestone 9 workflow trial](docs/features/REAL_WORKFLOW_TRIAL_STATE.md)
 
 ## Repository policy
 

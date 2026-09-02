@@ -11,9 +11,9 @@ This document is StudioFlow's current project dashboard. It records the state a 
 | Status | Active development |
 | Production | Stable |
 | Current major feature | Project Studio |
-| Active implementation unit | Prompt and generation history |
-| Latest completed checkpoint | Milestone 7B — manual generation records |
-| Next checkpoint to open | Milestone 7C — result assets and review decisions |
+| Active implementation unit | Milestone 9 account-free workflow rehearsal complete |
+| Latest completed checkpoint | Milestone 9D — responsive workflow verification and friction repair |
+| Next checkpoint to open | Live-service readiness — account setup and private integration verification |
 
 “Production: Stable” describes the current production-core code quality. StudioFlow has not been deployed to a production URL.
 
@@ -29,6 +29,7 @@ This document is StudioFlow's current project dashboard. It records the state a 
 - Supabase schema, singleton owner allowlist, row-level security, owner-scoped records, migrations, and pgTAP tests.
 - Supabase Edge Function code for private B2 upload, multipart signing, resume, completion, cancellation, preview URLs, deletion, and encrypted metadata backup.
 - Prompt-version and generation-provenance records without live AI-provider execution.
+- Same-project generation result linking, synchronized compatibility references, and selected/rejected/unreviewed attempt decisions.
 - Time, cost, publication, per-episode totals, metadata export, and restore workflows.
 - Vitest, Playwright, lint, type-check, production-build, and database-test configuration.
 - Modular workspace state with separate public context, demo persistence, upload management, current-state tracking, and cloud-save recovery.
@@ -36,9 +37,9 @@ This document is StudioFlow's current project dashboard. It records the state a 
 
 ## Current active work
 
-The current major feature is **Project Studio**, and the active implementation unit is prompt and generation history.
+The current major feature is **Project Studio**. Milestone 9 is complete within the account-free boundary: one fictional episode was taken through every existing production-core stage and verified across the supported browser sizes.
 
-Milestones 7A and 7B are complete. They added:
+Milestones 7A through 7D added:
 
 - Episode-wide and shot-specific immutable prompt versions.
 - Independent version chains by episode, optional shot, and prompt purpose.
@@ -49,8 +50,12 @@ Milestones 7A and 7B are complete. They added:
 - Optional immutable prompt-version references with matching episode and shot context.
 - Cost, duration, and notes capture without AI-provider execution.
 - Generation integrity rules preventing blank provider/model values, invalid numbers, and cross-context references.
+- Result-media attachment and removal using the existing asset-link system.
+- Selected, rejected, and unreviewed decisions for each external generation attempt.
+- Backward-compatible synchronization between canonical result links and generation result-ID arrays.
+- Reload persistence plus responsive verification on desktop, iPad landscape, iPad portrait, and 390 × 844 phone layouts.
 
-The exact next task is **Milestone 7C result assets and selected/rejected decisions**. Do not begin final 7D polish, AI-provider calls, account setup, or deployment without the matching owner instruction.
+The Milestone 9 rehearsal exposed and repaired two workflow issues: generation-linked result media now appears in the episode Media tab, and scene/shot planning controls now have explicit accessible names and 44-pixel touch targets. The next checkpoint is live-service readiness. It requires separate authorization and owner-controlled Supabase and Backblaze resources. Production deployment remains a later, separate approval gate.
 
 Repository maintenance completed on 2026-09-02 consolidated the project into the Documents workspace, split the central store into focused modules, and added guarded cloud-save retry and rollback. These changes did not advance or broaden the 7C feature boundary.
 
@@ -75,13 +80,13 @@ Repository maintenance completed on 2026-09-02 consolidated the project into the
 - The local Supabase database test suite cannot run because Docker is not installed in the verified shell environment.
 - Supabase, Backblaze B2, GitHub OAuth, and Netlify production resources are not connected or live-tested.
 - Multipart upload, private playback, signed-URL expiry, encrypted backup, and restore behavior still require live provider exercises after account setup is separately authorized.
-- The real episode workflow trial and final physical-device review require the owner's private content and devices.
+- A private owner-episode repetition and final physical-device review still require the owner's private content, configured services, and devices. The account-free fictional workflow rehearsal is complete.
 - The authoritative application source is `C:\Users\emrn2\OneDrive\Documents\ChatGPT\StudioFlow`. The previous Desktop working copy was retired after verification and the first local commit.
 
 ## Current build and deployment state
 
-- Latest repository-maintenance verification: lint passed, TypeScript passed, all 55 unit/component tests passed, and the production build passed.
-- The responsive Playwright suite passed all 24 desktop, iPad, and phone checks, including immutable prompt creation and complete manual generation provenance.
+- Latest Milestone 9 verification: TypeScript, lint, the production build, all 63 unit/component tests in the stable single-worker run, and all 13 focused domain tests passed. The default parallel unit run hit one five-second timeout on this slow Windows/OneDrive host; no assertion failed.
+- Playwright completed all 28 existing desktop, iPad, and phone scenarios plus all four new shot-planning accessibility scenarios. Browser inspection additionally verified the complete fictional rehearsal, reload persistence, dialog bounds, 44-pixel touch targets, and no page-level horizontal overflow at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844.
 - The prompt- and generation-history pgTAP cases are written but remain unexecuted because Docker is not installed.
 - The consolidated source has an initial local Git commit. It has not been published to the planned public GitHub repository.
 - No Netlify production deployment exists.
@@ -90,28 +95,25 @@ Repository maintenance completed on 2026-09-02 consolidated the project into the
 
 ## Next checkpoint
 
-Open **Milestone 7C — result assets and review decisions** only after re-reading:
+Open **Live-service readiness — account setup and private integration verification** only after re-reading:
 
 1. `CODEX.md`
 2. This `docs/PROJECT_STATE.md`
-3. `docs/features/GENERATION_HISTORY_STATE.md`
+3. `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` for the completed Milestone 9 boundary
 4. `README.md`
 5. `docs/ARCHITECTURE.md`
 6. `docs/SECURITY.md`
 7. `docs/BUILD-PLAN.md`
 8. `docs/SETUP.md`
-9. `src/lib/generation-history.ts`
-10. `src/state/studio-store.tsx`
-11. `src/components/generation-history-panel.tsx`
-12. `src/pages/episode.tsx`
-13. Existing generation-domain, database, and browser tests
+9. The selected episode workflow files and existing browser tests
 
-The checkpoint boundary is: link result assets to generation records and implement selected/rejected decisions with focused tests; update the feature checkpoint; then stop before Milestone 7D verification and polish.
+The checkpoint boundary is: configure only the explicitly authorized owner services and execute the already-written private database, media, backup, and restore checks. Do not add AI providers or deploy StudioFlow production without separate approval.
 
 ## Active documentation
 
 - `CODEX.md` — permanent Codex behavior, engineering, safety, testing, and release rules.
-- `docs/features/GENERATION_HISTORY_STATE.md` — active provenance feature scope, implementation status, verification, and exact next task.
+- `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` — completed fictional Milestone 9 rehearsal, fixes, verification, and remaining live checks.
+- `docs/features/GENERATION_HISTORY_STATE.md` — completed provenance feature scope, verification, and remaining provider-backed checks.
 - `docs/features/MEDIA_LIFECYCLE_STATE.md` — completed media feature scope and pending provider-backed verification.
 - `README.md` — product overview, current capabilities, local commands, and repository status.
 - `docs/BUILD-PLAN.md` — ten-week feature and learning progression.

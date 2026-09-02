@@ -2,7 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import type { BaseRecord, WorkspaceData } from "../types";
 
-type WorkspaceArrayKey = Exclude<keyof WorkspaceData, "version" | "ownerId">;
+export type WorkspaceArrayKey = Exclude<keyof WorkspaceData, "version" | "ownerId">;
 
 const tableByKey: Record<WorkspaceArrayKey, string> = {
   projects: "projects",
@@ -47,6 +47,10 @@ export function fromDatabaseRecord<T>(record: Record<string, unknown>): T {
   return convertKeys(record, toCamelCase) as T;
 }
 
+export function getRemoteUpsertOptions(key: WorkspaceArrayKey): { onConflict: string } | undefined {
+  return key === "assetLinks" ? { onConflict: "asset_id,target_type,target_id" } : undefined;
+}
+
 export async function loadRemoteWorkspace(user: User): Promise<WorkspaceData> {
   if (!supabase) throw new Error("Supabase is not configured.");
   const client = supabase;
@@ -89,7 +93,11 @@ export async function loadRemoteWorkspace(user: User): Promise<WorkspaceData> {
 
 export async function upsertRemoteRecord(key: WorkspaceArrayKey, record: BaseRecord): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from(tableByKey[key]).upsert(toDatabaseRecord(record as unknown as Record<string, unknown>));
+  const databaseRecord = toDatabaseRecord(record as unknown as Record<string, unknown>);
+  const options = getRemoteUpsertOptions(key);
+  const { error } = options
+    ? await supabase.from(tableByKey[key]).upsert(databaseRecord, options)
+    : await supabase.from(tableByKey[key]).upsert(databaseRecord);
   if (error) throw error;
 }
 

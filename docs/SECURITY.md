@@ -9,6 +9,7 @@
 - Edge Functions repeat owner verification using the bearer token before touching B2 or service-role database access.
 - B2 stays private. Browser access uses short-lived, purpose-specific inline-preview or attachment-download URLs that expire in 10–15 minutes.
 - Asset links are validated against records in the same owner workspace. Permanent deletion requires trash and removes explicit and embedded references through a service-role-only database function.
+- Generation result links additionally require media from the same project. Database triggers synchronize explicit result links with backward-compatible generation result arrays and reject duplicate or cross-project references.
 - Script and prompt versions are append-only at the database trigger level.
 - Client error records contain a short message, context label, route, and user agent—not scripts, prompts, form values, or media URLs.
 - Secrets, real exports, and real media are ignored by Git and scanned in CI.

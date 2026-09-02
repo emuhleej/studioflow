@@ -5,13 +5,17 @@ import { demoWorkspace } from "../data/demo";
 import { GenerationHistoryPanel } from "./generation-history-panel";
 
 const addGeneration = vi.fn();
+const linkGenerationAsset = vi.fn();
+const unlinkGenerationAsset = vi.fn();
+const setGenerationOutcome = vi.fn();
 
 vi.mock("../state/studio-store", () => ({
-  useStudio: () => ({ data: demoWorkspace, addGeneration }),
+  useStudio: () => ({ data: demoWorkspace, addGeneration, linkGenerationAsset, unlinkGenerationAsset, setGenerationOutcome }),
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  unlinkGenerationAsset.mockResolvedValue(undefined);
   addGeneration.mockImplementation((input) => ({
     ...demoWorkspace.generations[0],
     ...input,
@@ -60,11 +64,30 @@ describe("GenerationHistoryPanel", () => {
     expect(screen.getByText("Selected for expression and continuity.")).toBeInTheDocument();
   });
 
-  it("keeps provider execution and 7C decision controls out of the workflow", async () => {
+  it("links and removes result media through the generation workflow", async () => {
     const user = userEvent.setup();
     render(<GenerationHistoryPanel episodeId="episode-fridge" />);
-    await user.click(screen.getByRole("button", { name: "Log generation" }));
+    await user.click(screen.getByRole("button", { name: "Manage results" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Manage result media" });
+    expect(within(dialog).getByText("maya-fridge-hook-v03.mp4")).toBeInTheDocument();
+    await user.selectOptions(within(dialog).getByLabelText("Result media"), "asset-voice");
+    await user.click(within(dialog).getByRole("button", { name: "Attach result" }));
+    expect(linkGenerationAsset).toHaveBeenCalledWith("generation-hook-v3", "asset-voice");
+
+    await user.click(within(dialog).getByRole("button", { name: "Remove maya-fridge-hook-v03.mp4 from generation" }));
+    expect(unlinkGenerationAsset).toHaveBeenCalledWith("generation-hook-v3", "asset-shot-one");
+  });
+
+  it("records selected, rejected, and reset decisions without provider execution", async () => {
+    const user = userEvent.setup();
+    render(<GenerationHistoryPanel episodeId="episode-fridge" />);
     expect(screen.getByText(/StudioFlow does not call the provider\./)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /generate|select|reject/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^generate/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Reject Example Video cinema-v1" }));
+    expect(setGenerationOutcome).toHaveBeenCalledWith("generation-hook-v3", "rejected");
+    await user.click(screen.getByRole("button", { name: "Reset Example Video cinema-v1 review" }));
+    expect(setGenerationOutcome).toHaveBeenCalledWith("generation-hook-v3", "unreviewed");
   });
 });

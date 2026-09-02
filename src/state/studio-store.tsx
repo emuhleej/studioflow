@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getAssetLinkOptions, getNextEpisodeNumber, getSitcomShotDurations, removeAssetFromWorkspace } from "../lib/domain";
-import { validateGenerationInput } from "../lib/generation-history";
+import { validateGenerationAssetLink, validateGenerationInput, validateGenerationOutcome } from "../lib/generation-history";
 import { deleteAssetBlob } from "../lib/blob-store";
 import { deleteRemoteAsset } from "../lib/media-upload";
 import { loadRemoteWorkspace, permanentlyDeleteRemoteRecord, upsertRemoteRecord } from "../lib/remote-repository";
@@ -168,6 +168,83 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       });
     },
     [getData, setData, sync],
+  );
+
+  const linkGenerationAsset = useCallback(
+    (generationId: string, assetId: string): AssetLink => {
+      const current = getData();
+      const validationError = validateGenerationAssetLink(current, generationId, assetId);
+      if (validationError) throw new Error(validationError);
+      const existing = current.assetLinks.find(
+        (link) => link.assetId === assetId && link.targetType === "generation" && link.targetId === generationId,
+      );
+      const generation = current.generations.find((item) => item.id === generationId);
+      if (!generation) throw new Error("Generation record not found.");
+
+      if (existing) {
+        if (!generation.assetIds.includes(assetId)) mutateRecord("generations", generationId, { assetIds: [...generation.assetIds, assetId] });
+        return existing;
+      }
+
+      const record: AssetLink = {
+        ...createBaseRecord(current.ownerId),
+        assetId,
+        targetType: "generation",
+        targetId: generationId,
+      };
+      const attemptedGeneration: GenerationRecord = {
+        ...generation,
+        assetIds: [...generation.assetIds, assetId],
+        updatedAt: now(),
+      };
+      setData({
+        ...current,
+        assetLinks: [...current.assetLinks, record],
+        generations: current.generations.map((item) => item === generation ? attemptedGeneration : item),
+      });
+      sync("assetLinks", record, () => {
+        setData((latest) => {
+          if (!latest.assetLinks.some((link) => link === record)) return latest;
+          const remainingLinks = rollbackAppendedRecord(latest.assetLinks, record);
+          const stillLinked = remainingLinks.some(
+            (link) => link.assetId === assetId && link.targetType === "generation" && link.targetId === generationId,
+          );
+          return {
+            ...latest,
+            assetLinks: remainingLinks,
+            generations: latest.generations.map((item) => item.id === generationId && !stillLinked
+              ? { ...item, assetIds: item.assetIds.filter((id) => id !== assetId) }
+              : item),
+          };
+        });
+      });
+      return record;
+    },
+    [getData, mutateRecord, setData, sync],
+  );
+
+  const unlinkGenerationAsset = useCallback(
+    async (generationId: string, assetId: string): Promise<void> => {
+      const current = getData();
+      const generation = current.generations.find((item) => item.id === generationId);
+      if (!generation) throw new Error("Generation record not found.");
+      const link = current.assetLinks.find(
+        (item) => item.assetId === assetId && item.targetType === "generation" && item.targetId === generationId,
+      );
+      if (link && !demoMode) await permanentlyDeleteRemoteRecord("assetLinks", link.id);
+      if (!link) {
+        if (generation.assetIds.includes(assetId)) mutateRecord("generations", generationId, { assetIds: generation.assetIds.filter((id) => id !== assetId) });
+        return;
+      }
+      setData((latest) => ({
+        ...latest,
+        assetLinks: latest.assetLinks.filter((item) => item.id !== link.id),
+        generations: latest.generations.map((item) => item.id === generationId
+          ? { ...item, assetIds: item.assetIds.filter((id) => id !== assetId), updatedAt: now() }
+          : item),
+      }));
+    },
+    [getData, mutateRecord, setData],
   );
 
   const { uploadTasks, startUpload, pauseUpload, resumeUpload, retryUpload, cancelUpload, dismissUpload } = useUploadManager({
@@ -360,6 +437,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setAssetReview: (assetId, status) => mutateRecord("assets", assetId, { reviewStatus: status }),
       updateAssetMetadata: (assetId, patch) => mutateRecord("assets", assetId, patch),
       addAssetLink: (assetId, targetType, targetId) => {
+        if (targetType === "generation") return linkGenerationAsset(targetId, assetId);
         const existing = data.assetLinks.find(
           (link) => link.assetId === assetId && link.targetType === targetType && link.targetId === targetId,
         );
@@ -375,6 +453,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         return record;
       },
       removeAssetLink: async (linkId) => {
+        const link = getData().assetLinks.find((item) => item.id === linkId);
+        if (link?.targetType === "generation") {
+          await unlinkGenerationAsset(link.targetId, link.assetId);
+          return;
+        }
         if (!demoMode) await permanentlyDeleteRemoteRecord("assetLinks", linkId);
         setData((current) => ({ ...current, assetLinks: current.assetLinks.filter((link) => link.id !== linkId) }));
       },
@@ -430,6 +513,13 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         appendRecord("generations", record);
         return record;
       },
+      linkGenerationAsset,
+      unlinkGenerationAsset,
+      setGenerationOutcome: (generationId, outcome) => {
+        const validationError = validateGenerationOutcome(data, generationId, outcome);
+        if (validationError) throw new Error(validationError);
+        mutateRecord("generations", generationId, { outcome });
+      },
       quickCapture: (text) => appendRecord("captures", { ...createBaseRecord(data.ownerId), text }),
       convertCaptureToEpisode: (captureId, seriesId) => {
         const capture = data.captures.find((item) => item.id === captureId);
@@ -478,7 +568,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         setNotice({ tone: "success", message: "StudioFlow metadata was restored from the export." });
       },
     }),
-    [appendRecord, authLoading, cancelUpload, clearEpisodeDraft, data, dataLoading, dismissUpload, episodeDrafts, mutateRecord, notice, ownerAuthorized, patchEpisodeDraft, pauseUpload, resumeUpload, retryUpload, session, setData, startUpload, uploadTasks, user],
+    [appendRecord, authLoading, cancelUpload, clearEpisodeDraft, data, dataLoading, dismissUpload, episodeDrafts, getData, linkGenerationAsset, mutateRecord, notice, ownerAuthorized, patchEpisodeDraft, pauseUpload, resumeUpload, retryUpload, session, setData, startUpload, unlinkGenerationAsset, uploadTasks, user],
   );
 
   return <StudioContext.Provider value={value}>{children}</StudioContext.Provider>;

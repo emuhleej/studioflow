@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { demoWorkspace } from "../data/demo";
-import { getEpisodeGenerationHistory, getPromptVersionLabel, validateGenerationInput, type GenerationInput } from "./generation-history";
+import {
+  getEligibleGenerationAssets,
+  getEpisodeGenerationHistory,
+  getGenerationResultAssets,
+  getPromptVersionLabel,
+  validateGenerationAssetLink,
+  validateGenerationInput,
+  validateGenerationOutcome,
+  type GenerationInput,
+} from "./generation-history";
 
 const validInput: GenerationInput = {
   episodeId: "episode-fridge",
@@ -43,5 +52,37 @@ describe("generation history", () => {
 
   it("builds a readable immutable prompt reference label", () => {
     expect(getPromptVersionLabel(demoWorkspace.prompts[1], "Immediate argument")).toBe("Video v2 · Immediate argument");
+  });
+
+  it("combines legacy result IDs and explicit generation links without duplicates", () => {
+    const workspace = structuredClone(demoWorkspace);
+    workspace.assetLinks.push({
+      ...workspace.assetLinks[0],
+      id: "generation-result-link",
+      assetId: "asset-shot-one",
+      targetType: "generation",
+      targetId: "generation-hook-v3",
+    });
+    expect(getGenerationResultAssets(workspace, "generation-hook-v3").map((asset) => asset.id)).toEqual(["asset-shot-one"]);
+  });
+
+  it("offers active media from the generation project and rejects invalid links", () => {
+    const workspace = structuredClone(demoWorkspace);
+    workspace.assets.push({ ...workspace.assets[0], id: "trashed-result", deletedAt: "2026-09-01T00:00:00.000Z" });
+    workspace.projects.push({ ...workspace.projects[0], id: "other-project" });
+    workspace.assets.push({ ...workspace.assets[0], id: "other-project-result", projectId: "other-project" });
+
+    const eligibleIds = getEligibleGenerationAssets(workspace, "generation-hook-v3").map((asset) => asset.id);
+    expect(eligibleIds).toContain("asset-voice");
+    expect(eligibleIds).not.toContain("trashed-result");
+    expect(eligibleIds).not.toContain("other-project-result");
+    expect(validateGenerationAssetLink(workspace, "generation-hook-v3", "asset-voice")).toBeNull();
+    expect(validateGenerationAssetLink(workspace, "generation-hook-v3", "trashed-result")).toBe("Restore this media before linking it as a result.");
+    expect(validateGenerationAssetLink(workspace, "generation-hook-v3", "other-project-result")).toBe("Choose media from the same project as this generation.");
+  });
+
+  it("accepts only decisions for an existing generation", () => {
+    expect(validateGenerationOutcome(demoWorkspace, "generation-hook-v3", "selected")).toBeNull();
+    expect(validateGenerationOutcome(demoWorkspace, "missing-generation", "rejected")).toBe("Generation record not found.");
   });
 });

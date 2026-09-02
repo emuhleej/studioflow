@@ -1,4 +1,4 @@
-import type { GenerationRecord, PromptVersion, WorkspaceData } from "../types";
+import type { Asset, AssetReviewStatus, GenerationRecord, PromptVersion, WorkspaceData } from "../types";
 
 export interface GenerationInput {
   episodeId: string;
@@ -44,4 +44,49 @@ export function getEpisodeGenerationHistory(generations: GenerationRecord[], epi
 export function getPromptVersionLabel(prompt: PromptVersion, shotTitle?: string): string {
   const purpose = prompt.purpose.charAt(0).toUpperCase() + prompt.purpose.slice(1);
   return `${purpose} v${prompt.version} · ${shotTitle ?? "Episode-wide"}`;
+}
+
+export function getGenerationResultAssets(workspace: WorkspaceData, generationId: string): Asset[] {
+  const generation = workspace.generations.find((item) => item.id === generationId);
+  if (!generation) return [];
+  const linkedIds = new Set([
+    ...generation.assetIds,
+    ...workspace.assetLinks
+      .filter((link) => link.targetType === "generation" && link.targetId === generationId)
+      .map((link) => link.assetId),
+  ]);
+  return workspace.assets.filter((asset) => linkedIds.has(asset.id));
+}
+
+export function getEligibleGenerationAssets(workspace: WorkspaceData, generationId: string): Asset[] {
+  const generation = workspace.generations.find((item) => item.id === generationId);
+  if (!generation) return [];
+  const episode = workspace.episodes.find((item) => item.id === generation.episodeId);
+  const series = episode ? workspace.series.find((item) => item.id === episode.seriesId) : undefined;
+  if (!series) return [];
+  return workspace.assets
+    .filter((asset) => asset.projectId === series.projectId && !asset.deletedAt)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+export function validateGenerationAssetLink(workspace: WorkspaceData, generationId: string, assetId: string): string | null {
+  const generation = workspace.generations.find((item) => item.id === generationId);
+  if (!generation) return "Generation record not found.";
+  const asset = workspace.assets.find((item) => item.id === assetId);
+  if (!asset) return "Media asset not found.";
+  if (asset.deletedAt) return "Restore this media before linking it as a result.";
+  if (!getEligibleGenerationAssets(workspace, generationId).some((item) => item.id === assetId)) {
+    return "Choose media from the same project as this generation.";
+  }
+  return null;
+}
+
+export function validateGenerationOutcome(
+  workspace: WorkspaceData,
+  generationId: string,
+  outcome: AssetReviewStatus,
+): string | null {
+  if (!workspace.generations.some((item) => item.id === generationId)) return "Generation record not found.";
+  if (!["unreviewed", "selected", "rejected"].includes(outcome)) return "Choose a valid generation decision.";
+  return null;
 }

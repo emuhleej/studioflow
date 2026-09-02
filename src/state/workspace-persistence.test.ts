@@ -28,4 +28,8 @@ describe("workspace persistence", () => {
       expect(restored[key].every((record) => record.ownerId === "replacement-owner")).toBe(true);
     }
   });
+
+  it("restores generation targets before their polymorphic asset links", () => {
+    expect(workspaceCollectionKeys.indexOf("generations")).toBeLessThan(workspaceCollectionKeys.indexOf("assetLinks"));
+  });
 });

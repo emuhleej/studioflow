@@ -1,13 +1,21 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Plus, Sparkles } from "lucide-react";
-import { formatCurrency, formatShortDate } from "../lib/format";
-import { getEpisodeGenerationHistory, getPromptVersionLabel, validateGenerationInput, type GenerationInput } from "../lib/generation-history";
+import { Check, FileAudio, FileImage, FileVideo, Link2, Plus, RotateCcw, Sparkles, Unlink, X } from "lucide-react";
+import { formatCurrency, formatShortDate, titleCase } from "../lib/format";
+import {
+  getEligibleGenerationAssets,
+  getEpisodeGenerationHistory,
+  getGenerationResultAssets,
+  getPromptVersionLabel,
+  validateGenerationInput,
+  type GenerationInput,
+} from "../lib/generation-history";
 import { getEpisodePromptHistory } from "../lib/prompt-history";
 import { useStudio } from "../state/studio-store";
+import type { Asset, AssetReviewStatus } from "../types";
 import { Button, EmptyState, Field, Modal, SubmitButton } from "./ui";
 
 export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
-  const { data, addGeneration } = useStudio();
+  const { data, addGeneration, linkGenerationAsset, unlinkGenerationAsset, setGenerationOutcome } = useStudio();
   const [open, setOpen] = useState(false);
   const [provider, setProvider] = useState("");
   const [model, setModel] = useState("");
@@ -18,6 +26,9 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [manageGenerationId, setManageGenerationId] = useState("");
+  const [resultAssetId, setResultAssetId] = useState("");
+  const [resultError, setResultError] = useState("");
 
   const scenes = useMemo(
     () => data.scenes.filter((scene) => scene.episodeId === episodeId).sort((left, right) => left.position - right.position),
@@ -35,6 +46,15 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
   const promptsById = useMemo(() => new Map(prompts.map((prompt) => [prompt.id, prompt])), [prompts]);
   const generations = useMemo(() => getEpisodeGenerationHistory(data.generations, episodeId), [data.generations, episodeId]);
   const selectedPrompt = promptVersionId ? promptsById.get(promptVersionId) : undefined;
+  const managedGeneration = generations.find((generation) => generation.id === manageGenerationId);
+  const managedResults = managedGeneration ? getGenerationResultAssets(data, managedGeneration.id) : [];
+  const managedResultIds = new Set(managedResults.map((asset) => asset.id));
+  const availableResults = managedGeneration
+    ? getEligibleGenerationAssets(data, managedGeneration.id).filter((asset) => !managedResultIds.has(asset.id))
+    : [];
+  const effectiveResultAssetId = availableResults.some((asset) => asset.id === resultAssetId)
+    ? resultAssetId
+    : availableResults[0]?.id ?? "";
 
   const reset = () => {
     setProvider("");
@@ -79,6 +99,51 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
     }
   };
 
+  const openResults = (generationId: string) => {
+    setManageGenerationId(generationId);
+    setResultAssetId("");
+    setResultError("");
+  };
+
+  const closeResults = () => {
+    setManageGenerationId("");
+    setResultAssetId("");
+    setResultError("");
+  };
+
+  const attachResult = () => {
+    if (!managedGeneration || !effectiveResultAssetId) return;
+    try {
+      const asset = data.assets.find((item) => item.id === effectiveResultAssetId);
+      linkGenerationAsset(managedGeneration.id, effectiveResultAssetId);
+      setResultAssetId("");
+      setResultError("");
+      setMessage(`Attached ${asset?.filename ?? "media"} to ${managedGeneration.provider} · ${managedGeneration.model}.`);
+    } catch (caught) {
+      setResultError(caught instanceof Error ? caught.message : "The result could not be attached.");
+    }
+  };
+
+  const detachResult = async (asset: Asset) => {
+    if (!managedGeneration) return;
+    setResultError("");
+    try {
+      await unlinkGenerationAsset(managedGeneration.id, asset.id);
+      setMessage(`Removed ${asset.filename} from this generation record.`);
+    } catch (caught) {
+      setResultError(caught instanceof Error ? caught.message : "The result link could not be removed.");
+    }
+  };
+
+  const decide = (generationId: string, outcome: AssetReviewStatus) => {
+    try {
+      setGenerationOutcome(generationId, outcome);
+      setMessage(`Generation marked ${outcome}.`);
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : "The review decision could not be saved.");
+    }
+  };
+
   return (
     <section className="panel panel-pad">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,11 +157,12 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
         <div className="mt-4 grid gap-2">
           {generations.map((generation) => {
             const prompt = generation.promptVersionId ? promptsById.get(generation.promptVersionId) : undefined;
+            const results = getGenerationResultAssets(data, generation.id);
             return (
               <article className="rounded-xl border border-[var(--line)] p-3" key={generation.id}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <strong className="text-sm">{generation.provider} · {generation.model}</strong>
-                  <span className="badge">{formatCurrency(generation.costCents)}</span>
+                  <div className="flex flex-wrap items-center justify-end gap-2"><OutcomeBadge outcome={generation.outcome} /><span className="badge">{formatCurrency(generation.costCents)}</span></div>
                 </div>
                 <div className="quiet mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.65rem]">
                   <span>{generation.shotId ? shotsById.get(generation.shotId)?.title ?? "Unknown shot" : "Episode-wide"}</span>
@@ -107,6 +173,18 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
                   {prompt ? getPromptVersionLabel(prompt, prompt.shotId ? shotsById.get(prompt.shotId)?.title : undefined) : "No prompt version attached"}
                 </div>
                 <p className="muted mt-2 whitespace-pre-wrap text-xs leading-5">{generation.notes || "No notes."}</p>
+                <div className="mt-3 rounded-xl border border-[var(--line)] bg-black/10 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div><div className="text-xs font-semibold">Result media</div><div className="quiet mt-1 text-[0.65rem]">{results.length ? `${results.length} attached` : "No result attached"}</div></div>
+                    <Button onClick={() => openResults(generation.id)}><Link2 size={15} />Manage results</Button>
+                  </div>
+                  {results.length ? <div className="mt-2 flex flex-wrap gap-2">{results.map((asset) => <span className="badge max-w-full" key={asset.id}><AssetKindIcon asset={asset} /><span className="truncate">{asset.filename}</span>{asset.deletedAt ? " · In trash" : ""}</span>)}</div> : null}
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label={`Review ${generation.provider} ${generation.model}`}>
+                  <Button variant={generation.outcome === "selected" ? "primary" : "default"} aria-label={`Select ${generation.provider} ${generation.model}`} onClick={() => decide(generation.id, "selected")}><Check size={14} />Select</Button>
+                  <Button aria-label={`Reset ${generation.provider} ${generation.model} review`} onClick={() => decide(generation.id, "unreviewed")}><RotateCcw size={14} />Reset</Button>
+                  <Button variant={generation.outcome === "rejected" ? "danger" : "default"} aria-label={`Reject ${generation.provider} ${generation.model}`} onClick={() => decide(generation.id, "rejected")}><X size={14} />Reject</Button>
+                </div>
               </article>
             );
           })}
@@ -149,6 +227,54 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
           <div className="flex justify-end gap-2"><Button type="button" onClick={close}>Cancel</Button><SubmitButton>Save generation</SubmitButton></div>
         </form>
       </Modal>
+
+      <Modal
+        open={Boolean(managedGeneration)}
+        onClose={closeResults}
+        title="Manage result media"
+        description={managedGeneration ? `${managedGeneration.provider} · ${managedGeneration.model}` : undefined}
+      >
+        {managedGeneration ? (
+          <div className="grid gap-4">
+            <section>
+              <h3 className="text-sm font-semibold">Attached results</h3>
+              {managedResults.length ? (
+                <div className="mt-2 grid gap-2">
+                  {managedResults.map((asset) => (
+                    <div className="list-row" key={asset.id}>
+                      <div className="flex min-w-0 items-center gap-3"><AssetKindIcon asset={asset} /><div className="min-w-0"><div className="truncate text-xs font-semibold">{asset.filename}</div><div className="quiet mt-1 text-[0.65rem]">{titleCase(asset.kind)} · {titleCase(asset.reviewStatus)}{asset.deletedAt ? " · In trash" : ""}</div></div></div>
+                      <Button className="icon-button" aria-label={`Remove ${asset.filename} from generation`} onClick={() => void detachResult(asset)}><Unlink size={15} /></Button>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="muted mt-2 text-xs">No media is attached to this generation yet.</p>}
+            </section>
+            <section className="rounded-xl border border-[var(--line)] bg-black/10 p-3">
+              <Field label="Add result media" hint="Only active media from this project is available.">
+                <select className="select" aria-label="Result media" value={effectiveResultAssetId} onChange={(event) => setResultAssetId(event.target.value)} disabled={!availableResults.length}>
+                  {availableResults.length
+                    ? availableResults.map((asset) => <option key={asset.id} value={asset.id}>{asset.filename} · {titleCase(asset.kind)}</option>)
+                    : <option value="">All available media is already attached</option>}
+                </select>
+              </Field>
+              <div className="mt-3 flex justify-end"><Button onClick={attachResult} disabled={!effectiveResultAssetId}><Link2 size={15} />Attach result</Button></div>
+            </section>
+            {resultError ? <p role="alert" className="text-xs text-[var(--danger)]">{resultError}</p> : null}
+            <div className="flex justify-end"><Button onClick={closeResults}>Done</Button></div>
+          </div>
+        ) : null}
+      </Modal>
     </section>
   );
+}
+
+function AssetKindIcon({ asset }: { asset: Asset }) {
+  if (asset.kind === "image") return <FileImage size={15} aria-hidden="true" />;
+  if (asset.kind === "audio") return <FileAudio size={15} aria-hidden="true" />;
+  return <FileVideo size={15} aria-hidden="true" />;
+}
+
+function OutcomeBadge({ outcome }: { outcome: AssetReviewStatus }) {
+  const color = outcome === "selected" ? "var(--mint)" : outcome === "rejected" ? "var(--danger)" : "var(--muted)";
+  return <span className="badge" style={{ color, borderColor: `color-mix(in srgb, ${color} 35%, transparent)` }}>{titleCase(outcome)}</span>;
 }

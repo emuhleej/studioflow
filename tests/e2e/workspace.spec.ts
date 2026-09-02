@@ -88,6 +88,66 @@ test("manual generation history preserves complete provider provenance", async (
   await expect(page.getByText("Manual provenance browser test.")).toBeVisible();
 });
 
+test("generation results and review decisions persist across reload", async ({ page }) => {
+  await page.goto("/episodes/episode-fridge");
+  await page.getByRole("tab", { name: "Prompts & generations" }).click();
+  await page.getByRole("button", { name: "Manage results" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Manage result media" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Result media").selectOption("asset-fridge-ref");
+  await dialog.getByRole("button", { name: "Attach result" }).click();
+  await expect(dialog.getByText("fridge-display-reference.webp")).toBeVisible();
+
+  const viewport = page.viewportSize();
+  const dialogBox = await dialog.boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(dialogBox).not.toBeNull();
+  expect(dialogBox!.x).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(viewport!.width);
+  expect(dialogBox!.y).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.y + dialogBox!.height).toBeLessThanOrEqual(viewport!.height);
+
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("button", { name: "Reject Example Video cinema-v1" }).click();
+  await expect(page.getByRole("status")).toHaveText("Generation marked rejected.");
+
+  const reviewButtons = page.getByRole("group", { name: "Review Example Video cinema-v1" }).getByRole("button");
+  for (let index = 0; index < await reviewButtons.count(); index += 1) {
+    const box = await reviewButtons.nth(index).boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Prompts & generations" }).click();
+  await expect(page.getByText("fridge-display-reference.webp")).toBeVisible();
+  await expect(page.getByText("Rejected", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Media" }).click();
+  await expect(page.getByText("fridge-display-reference.webp")).toBeVisible();
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+});
+
+test("shot planning exposes labelled 44px ordering and edit controls", async ({ page }) => {
+  await page.goto("/episodes/episode-fridge");
+  await page.getByRole("tab", { name: "Scenes & shots" }).click();
+
+  const controls = [
+    page.getByRole("button", { name: "Move Cold open scene down" }),
+    page.getByRole("button", { name: "Edit shot 1.1: Immediate argument" }),
+    page.getByRole("button", { name: "Move Immediate argument shot up" }),
+  ];
+
+  for (const control of controls) {
+    await expect(control).toBeVisible();
+    const box = await control.boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+});
+
 test("media details support metadata, production links, and safe deletion confirmation", async ({ page }) => {
   await page.goto("/media");
   await expect(page.getByRole("heading", { name: "Every asset, with context." })).toBeVisible();

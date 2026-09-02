@@ -90,6 +90,9 @@ export interface StudioContextValue {
   addPublication: (episodeId: string, platform: Platform, url: string) => Publication;
   addPromptVersion: (episodeId: string, purpose: PromptPurpose, content: string, shotId?: string) => PromptVersion;
   addGeneration: (input: GenerationInput) => GenerationRecord;
+  linkGenerationAsset: (generationId: string, assetId: string) => AssetLink;
+  unlinkGenerationAsset: (generationId: string, assetId: string) => Promise<void>;
+  setGenerationOutcome: (generationId: string, outcome: AssetReviewStatus) => void;
   quickCapture: (text: string) => void;
   convertCaptureToEpisode: (captureId: string, seriesId: string) => void;
   archiveProject: (projectId: string) => void;

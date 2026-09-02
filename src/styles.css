@@ -405,7 +405,7 @@ textarea:focus-visible {
 }
 
 .tab {
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
   border-radius: 9px;
   background: transparent;

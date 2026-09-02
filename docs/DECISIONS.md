@@ -436,6 +436,34 @@ Leaving a rejected record visible makes the browser and PostgreSQL disagree. Bli
 - Rolling back by record ID and overwriting a newer edit.
 - Adding an unrelated offline database or background-sync service.
 
+## DEC-016 — Explicit asset links are canonical for generation results
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-02
+- **Area:** Provenance and compatibility
+
+### Decision
+
+An `asset_links` record targeting a generation is the canonical relationship between result media and a generation attempt. The existing `generation_records.asset_ids` array remains as a backward-compatible projection for stored workspaces and exports. Browser commands update both views together, and PostgreSQL triggers synchronize them in either direction while rejecting duplicate and cross-project result references.
+
+### Rationale
+
+The explicit link system already represents media relationships consistently across projects, episodes, shots, entities, and generations. Keeping a second independently authoritative relationship would allow the same generation to show different results depending on which screen or export path was used.
+
+### Consequences
+
+- Generation result controls use the existing asset-link persistence path.
+- Existing exports containing only generation result arrays remain readable.
+- Private restore writes generation records before generation-targeted asset links.
+- Permanent media deletion continues to remove both explicit and compatible embedded references.
+- Database trigger verification remains pending until Docker/Supabase is available.
+
+### Rejected alternatives
+
+- Treating `asset_ids` and `asset_links` as unrelated sources of truth.
+- Removing the result array destructively from existing records and exports.
+- Allowing result media from a different project because the owner happens to be the same.
+
 ## Frequently re-proposed ideas that remain rejected
 
 Future agents should not reopen these suggestions without new constraints or explicit owner direction:
@@ -457,6 +485,7 @@ Future agents should not reopen these suggestions without new constraints or exp
 | “Deploy automatically after tests pass.” | DEC-013 |
 | “Add MIT by default.” | DEC-014 |
 | “Leave failed cloud saves visible and let the next refresh fix them.” | DEC-015 |
+| “Keep generation result arrays and asset links independently editable.” | DEC-016 |
 
 ## When to update this document
 
