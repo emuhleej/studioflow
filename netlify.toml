@@ -10,6 +10,11 @@
 [build.environment]
   NODE_VERSION = "24"
 
+# Production remains locked until the owner separately approves a release.
+# Deploy Previews use their own context and continue to build normally.
+[context.production]
+  ignore = "exit 0"
+
 [[headers]]
   for = "/*"
   [headers.values]
