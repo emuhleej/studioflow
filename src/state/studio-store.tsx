@@ -81,7 +81,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       }
       if (!cancelled) setDataLoading(true);
       try {
-        const { data: allowed, error } = await supabase.rpc("is_app_owner", { candidate: user.id });
+        const { data: allowed, error } = await supabase.rpc("current_user_is_app_owner");
         if (error) throw error;
         if (cancelled) return;
         setOwnerAuthorized(Boolean(allowed));

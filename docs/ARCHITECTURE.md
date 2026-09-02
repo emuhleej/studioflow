@@ -216,7 +216,7 @@ Private mode requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, w
 
 1. `supabase.ts` creates the browser client and performs GitHub OAuth.
 2. `StudioProvider` observes the Supabase session.
-3. It calls `is_app_owner` for the authenticated UUID.
+3. It calls the no-argument `current_user_is_app_owner()` self-check. The browser cannot supply an arbitrary UUID.
 4. `AuthGate` exposes the application only when the owner check succeeds.
 5. `loadRemoteWorkspace()` reads every mapped owner table in parallel and converts rows to the client model.
 6. Store commands update the in-memory aggregate and call `upsertRemoteRecord()` for remote persistence.
@@ -239,7 +239,7 @@ The migration under `supabase/migrations/` defines:
 - owner-scoped row-level security policies
 - backup and client-error metadata tables
 
-Every production record that belongs to a workspace carries `owner_id`. Owner access requires both `owner_id = auth.uid()` and `is_app_owner(auth.uid())`. Anonymous access is revoked.
+Every production record that belongs to a workspace carries `owner_id`. Owner access requires both `owner_id = auth.uid()` and the private `private.is_app_owner()` helper. The helper derives identity only from `auth.uid()` and is not exposed through the API schema. Authenticated clients may call only the security-invoker `current_user_is_app_owner()` self-check; anonymous access is revoked.
 
 ### Edge Function boundary
 

@@ -3,8 +3,10 @@
 ## Controls
 
 - GitHub OAuth establishes identity; it does not by itself grant workspace access.
+- GitHub is the only enabled authentication provider; unused email/password login is disabled.
 - `app_owners_singleton_idx` allows exactly one owner UUID.
-- Every production table has an indexed `owner_id` and RLS checks both `auth.uid()` and `is_app_owner()`.
+- Every production table has an indexed `owner_id`; RLS checks `auth.uid()` and the non-exposed `private.is_app_owner()` helper.
+- Authenticated clients may call only `current_user_is_app_owner()`, a no-argument security-invoker self-check. Anonymous callers cannot execute it, and clients cannot test arbitrary UUIDs.
 - Anonymous table grants are revoked. Non-owner sessions receive no rows and cannot insert, update, or delete.
 - Edge Functions repeat owner verification using the bearer token before touching B2 or service-role database access.
 - B2 stays private. Browser access uses short-lived, purpose-specific inline-preview or attachment-download URLs that expire in 10–15 minutes.
@@ -20,8 +22,8 @@ The application assumes the owner's GitHub, Supabase, Netlify, Backblaze, and lo
 
 ## Owner setup check
 
-After the first GitHub sign-in, insert exactly that authenticated user's UUID into `app_owners` using the Supabase SQL editor. The singleton index prevents accidentally adding a second owner. Do not place the UUID in source code.
+The first approved GitHub identity is registered directly in `app_owners`; the singleton index prevents a second owner. The configured owner UUID remains private database data and is not present in source code.
 
 ## Verification
 
-`supabase/tests/database` proves configured-owner access and anonymous/non-owner denial. Run it whenever migrations or policies change. Use a second test account during the production-readiness review and confirm it sees the denial screen and cannot retrieve a signed media URL.
+Hosted verification proves the signed-out login boundary, simulated non-owner read/write denial, and the configured owner's access to Creator HQ. `supabase/tests/database` additionally covers the function grants and owner policies; run that isolated pgTAP suite in GitHub Actions or on a capable development host whenever migrations or policies change. Live signed-media denial remains part of the B2 readiness checkpoint.

@@ -4,7 +4,7 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: production-core implementation. The fictional local demo is ready, and the reviewed schema is applied to the connected hosted Supabase project. GitHub OAuth, the sole-owner allowlist, private Backblaze B2 operations, and Netlify still need live configuration and verification. No production deployment has been made.
+> Status: production-core implementation. The fictional local demo is ready, and the hosted Supabase schema, GitHub OAuth, sole-owner allowlist, and owner access boundary are configured and verified. Private Backblaze B2 operations and Netlify still need live configuration and verification. No production deployment has been made.
 
 ## What works
 
@@ -18,7 +18,7 @@ The repository is public so the engineering journey can be shared. Production re
 - Episode Media views that include direct uploads plus media linked through episode scenes, shots, and generation results.
 - Cloud metadata saves retry once and roll back only the still-current optimistic change after a second failure.
 - Time entries, cost entries, publication links, per-episode totals, metadata export, and restore.
-- Supabase schema, singleton owner allowlist, row-level security, pgTAP tests, and client error records.
+- Supabase schema, configured singleton owner allowlist, hardened row-level security, verified GitHub owner sign-in, pgTAP tests, and client error records.
 - Backblaze B2 Edge Functions for signed upload, multipart resume/cancel/complete, private preview, permanent deletion, and AES-256-GCM metadata backup.
 - 8 GB warning, 9 GB upload block, 2 GB file maximum, and lifecycle-rule configuration.
 

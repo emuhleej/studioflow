@@ -17,6 +17,9 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     exclude: ["tests/e2e/**", "node_modules/**", "dist/**"],
     css: true,
+    env: {
+      VITE_DEMO_MODE: "true",
+    },
     coverage: {
       reporter: ["text", "html"],
     },

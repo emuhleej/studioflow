@@ -987,11 +987,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_is_app_owner: { Args: never; Returns: boolean }
       delete_asset_metadata: {
         Args: { target_asset_id: string; target_owner_id: string }
         Returns: undefined
       }
-      is_app_owner: { Args: { candidate?: string }; Returns: boolean }
     }
     Enums: {
       asset_kind: "image" | "audio" | "video"

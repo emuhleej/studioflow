@@ -36,6 +36,7 @@ Connect StudioFlow's already-built production core to owner-controlled services 
 - `src/lib/supabase.ts`
 - `src/lib/remote-repository.ts`
 - `src/state/studio-store.tsx`
+- `playwright.config.ts`
 - `.env.example`
 - `docs/SETUP.md`
 - `docs/SECURITY.md`
@@ -44,43 +45,47 @@ Connect StudioFlow's already-built production core to owner-controlled services 
 
 ## Data / Persistence
 
-The hosted Supabase project contains the five committed production-core migrations and no owner production records yet. Nineteen public tables have row-level security enabled. Browser production metadata remains Supabase-owned; media and encrypted backup bytes remain assigned to private Backblaze B2. The fictional demo continues to use browser-local storage only.
+The hosted Supabase project contains the six committed production-core migrations. It has one private authentication identity and one singleton owner-allowlist row, with no owner production records created for verification. Nineteen public tables have row-level security enabled. Browser production metadata remains Supabase-owned; media and encrypted backup bytes remain assigned to private Backblaze B2. The fictional demo continues to use browser-local storage only.
 
 ## Integration Status
 
-The hosted Supabase project is connected. Migration history exactly matches the five reviewed repository migrations. Generated TypeScript types now reflect the live schema. GitHub OAuth, the owner allowlist, B2 credentials and lifecycle rules, Edge Function secrets, live media operations, backup scheduling, and Netlify preview configuration are not yet complete.
+The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, the local callback allowlist, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, and real owner access have been verified. B2 credentials and lifecycle rules, Edge Function secrets, live media operations, backup scheduling, isolated pgTAP execution, and Netlify preview configuration remain pending.
 
 ## Complete
 
 - Local Milestone 7–9 checkpoint commit created.
 - Docker deliberately skipped on the current older desktop.
 - Hosted Supabase project linked through the approved connection.
-- Five reviewed migrations applied with repository timestamps intact.
-- Schema verified with 19 of 19 public tables using row-level security.
-- Anonymous public-table grants verified at zero.
+- Six reviewed migrations applied with repository timestamps intact.
+- Owner authorization hardened behind a non-exposed `private.is_app_owner()` helper that derives identity only from `auth.uid()`.
+- Browser access limited to the authenticated-only, no-argument `current_user_is_app_owner()` self-check; the old arbitrary-UUID RPC was removed.
+- All 18 owner RLS policies rebuilt with stable selected authentication checks.
+- Schema verified with 19 of 19 public tables using row-level security and zero anonymous public-table grants.
+- GitHub OAuth application created and securely stored in Supabase; no OAuth credential was added to the repository.
+- Local site and redirect URLs configured for `127.0.0.1` and `localhost` on port 4173.
+- First GitHub identity registered as the singleton owner without committing or displaying its UUID.
+- Signed-out login-only behavior, simulated non-owner read/write denial, and real owner access to Creator HQ verified.
 - Generated TypeScript database types refreshed from the hosted schema.
-- Supabase security and performance advisors reviewed.
-- Full application verification passed after type regeneration: type-check, lint, 63 unit/component tests, and production build.
+- Hosted security and performance advisors rechecked after the migration. Performance has no warnings or errors. Security has no errors; it retains the intentional deny-all `app_owners` informational notice and a leaked-password warning that is not applicable to StudioFlow because email/password authentication is disabled.
+- Unused email/password authentication disabled; GitHub is the only enabled owner sign-in provider.
+- Playwright's fictional-demo server isolated on port 4174 with demo mode forced, so private `.env.local` settings cannot contaminate the test suite.
 
 ## Partially Implemented
 
-- Database security: RLS and grants are present, but live owner/non-owner behavior and pgTAP remain to be exercised.
-- Private mode: client and repository code exist, but OAuth and the sole-owner row are not configured.
+- Database security: live hosted behavior is verified, but the isolated pgTAP suite remains to run in GitHub Actions or on a capable approved host.
 - Media and backup integrations: implementation exists, but B2 secrets and live provider exercises are pending.
 
 ## Not Started
 
-- GitHub OAuth provider configuration and callback verification.
-- Sole-owner allowlist insertion after the first approved sign-in.
 - Live private B2 upload, preview, resume, delete, backup, and restore exercises.
 - Netlify preview configuration and review.
 
 ## Broken / Needs Verification
 
 - The isolated pgTAP suite has not run because Docker is intentionally absent from this desktop; it must run in GitHub Actions or on a capable approved host.
-- The security advisor reports that `public.is_app_owner(uuid)` is executable by anonymous and authenticated API roles. Its grants must be narrowed before live auth acceptance.
-- The advisor reports `app_owners` has RLS but no policy. This is intended to deny browser access, but the deny-all behavior must be verified during owner-access testing.
-- Performance advice includes unindexed foreign keys and per-row auth evaluation in RLS policies. Review and address these through a committed migration before production readiness.
+- The security advisor's remaining `app_owners` notice is informational and expected: RLS is enabled with no browser policy so the allowlist remains deny-all to API clients.
+- The leaked-password advisor cannot be enabled on the free plan, so email/password authentication is disabled instead. GitHub OAuth remains the only enabled provider.
+- Performance advice now contains 22 informational unindexed-foreign-key and unused-index suggestions only. Review these separately before production release; they do not weaken the verified owner boundary.
 
 ## Locked Decisions
 
@@ -88,19 +93,18 @@ The hosted Supabase project is connected. Migration history exactly matches the 
 - Docker is not installed on the current desktop; hosted Supabase plus CI is the approved route.
 - Migrations remain source-controlled and additive; do not repair live schema with ad hoc dashboard edits.
 - Mutating pgTAP fixtures never run against the hosted owner project.
+- OAuth credentials and the owner UUID remain private provider/database configuration, never repository data.
 - Production deployment remains a separate explicit approval.
 - AI providers and social automation remain outside this feature.
 
 ## Known Risks
 
-- OAuth misconfiguration could create an authenticated user who is not yet the allowed owner.
-- Security-definer execute grants must be hardened before considering the owner boundary verified.
 - B2 credentials or backup keys could leak if placed in browser-prefixed variables or committed files.
 - Hosted-only schema checks do not replace isolated database tests.
+- Live media signing, expiry, multipart recovery, deletion, and quota behavior have not yet been exercised against the private bucket.
 
 ## Remaining Verification
 
-- Confirm signed-out, non-owner, and configured-owner access at the API level.
 - Run all pgTAP tests in an isolated CI/local Supabase stack.
 - Exercise private media lifecycle and quota behavior with the dedicated B2 bucket.
 - Complete an encrypted backup, download, decrypt, and restore rehearsal.
@@ -108,14 +112,13 @@ The hosted Supabase project is connected. Migration history exactly matches the 
 
 ## Exact Next Implementation Task
 
-Configure GitHub OAuth and the singleton owner allowlist, harden the owner-check function grants through a reviewed migration, and verify signed-out, non-owner, and owner access. Do not begin Backblaze configuration or deploy StudioFlow.
+Configure the dedicated private Backblaze B2 bucket, restricted application key, lifecycle rules, and server-side Supabase secrets; then exercise the existing signed media lifecycle without beginning backup scheduling, Netlify configuration, AI providers, or production deployment.
 
 ## Remaining Implementation Order
 
-1. Complete the exact 10B owner-authentication task above.
-2. Configure and verify the private Backblaze B2 media lifecycle.
-3. Rehearse encrypted backup and restore.
-4. Run the isolated database-security job and resolve remaining readiness findings.
-5. Prepare a Netlify branch preview only after separate approval.
+1. Complete the exact 10C private Backblaze B2 media-lifecycle task above.
+2. Rehearse encrypted backup and restore.
+3. Run the isolated database-security job and resolve remaining readiness findings.
+4. Prepare a Netlify branch preview only after separate approval.
 
 Update this file after every meaningful live-service checkpoint.

@@ -97,7 +97,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 | Multi-context asset links | Implemented in client, repository adapter, migration, backup, and UI |
 | Trash and restore | Implemented |
 | Confirmed permanent deletion | Implemented with client and database reference cleanup |
-| Owner RLS and lifecycle database rules | Implemented; pgTAP execution pending Docker |
+| Owner RLS and lifecycle database rules | Applied and live owner/non-owner behavior verified; isolated pgTAP execution remains pending |
 | B2 lifecycle configuration | Present; application/read-back pending provider setup |
 
 ## Complete
@@ -122,19 +122,17 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 
 ## Partially Implemented
 
-- Provider-facing behavior is complete in code but cannot be called production-proven until Supabase and B2 are configured and exercised.
+- Supabase, GitHub OAuth, and sole-owner authorization are configured and verified. B2-facing behavior is complete in code but cannot be called production-proven until the private bucket is configured and exercised.
 
 ## Not Started
 
-- Live provider/account setup.
 - Live B2 CORS, privacy, signed URL, multipart, lifecycle-rule, and deletion exercises.
 - Physical-device review using private owner media.
 
 ## Broken / Needs Verification
 
 - Docker is not installed in the current shell environment, so the new migration and pgTAP lifecycle tests cannot be executed locally.
-- `src/lib/database.types.ts` cannot be regenerated from the new migration until the local Supabase stack is available. The migration changes link cardinality and adds a server-only cleanup RPC; it does not change browser table row shapes.
-- Supabase, B2, GitHub OAuth, and Netlify are not configured.
+- The hosted schema and generated TypeScript types are current. B2 and Netlify are not configured.
 - Signed-out/non-owner media denial and real signed-URL expiry have not been exercised against live services.
 
 ## Locked Decisions
@@ -158,8 +156,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 
 ## Remaining Verification
 
-- Apply migrations and run all pgTAP tests after Docker/Supabase setup.
-- Regenerate and review `src/lib/database.types.ts` from the verified local schema.
+- Run all pgTAP tests in isolated CI or on a capable approved host.
 - Exercise single upload and multipart pause/resume/cancel against a private B2 bucket.
 - Verify private preview, attachment download, URL expiry/recovery, trash, restore, and permanent deletion.
 - Verify anonymous and non-owner denial.
@@ -167,7 +164,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 
 ## Exact Next Implementation Task
 
-After the owner separately authorizes Supabase and Backblaze account setup, run the documented live private-media acceptance exercise, regenerate database types, record results, and stop.
+Configure the dedicated private Backblaze B2 bucket, restricted application key, lifecycle rules, and server-side Supabase secrets; then exercise single and multipart upload, preview, download, cancellation, trash, restore, deletion, and quota behavior, record the results, and stop.
 
 Do not begin AI-provider execution, the video editor, social analytics, automatic deployment, or production release.
 

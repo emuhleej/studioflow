@@ -13,7 +13,7 @@ Each week follows the same loop: complete one vertical feature slice, walk throu
 | 7 | Prompt and generation provenance | Milestones 7A–7D implemented and application-tested; hosted generation migrations are applied; isolated pgTAP and live owner-workspace verification remain pending |
 | 8 | Time, cost, publication records, and dashboard totals | Implemented |
 | 9 | Real episode trial and device polish | Account-free fictional rehearsal and browser-size polish complete; private owner episode and physical-device review remain pending configured services/devices |
-| 10 | Export, encrypted backup, restore guide, quota, logging, release review | Implemented in code; 10A hosted database foundation complete; OAuth, B2, live restore, and release review remain gated |
+| 10 | Export, encrypted backup, restore guide, quota, logging, release review | Implemented in code; 10A hosted database foundation and 10B owner authentication are complete; B2, live restore, and release review remain gated |
 
 Budget 6–10 hours for each learning week. A repository feature being present is not a substitute for the walkthrough and owner-coded modification.
 

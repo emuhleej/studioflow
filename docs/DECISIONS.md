@@ -73,7 +73,7 @@ The repository should document the coding journey without publishing the creativ
 
 ### Decision
 
-GitHub OAuth establishes identity, but workspace access requires the authenticated UUID to match the singleton `app_owners` allowlist. Every owner-scoped table carries indexed `owner_id`, PostgreSQL RLS checks both identity and owner membership, and privileged Edge Functions repeat owner verification.
+GitHub OAuth establishes identity, but workspace access requires the authenticated UUID to match the singleton `app_owners` allowlist. Every owner-scoped table carries indexed `owner_id`, PostgreSQL RLS checks both identity and owner membership, and privileged Edge Functions repeat owner verification. The RLS helper lives in the non-exposed `private` schema and derives identity only from `auth.uid()`; browser clients receive only a no-argument, security-invoker self-check.
 
 ### Rationale
 
@@ -84,6 +84,7 @@ A route guard or hidden application URL cannot protect direct database and stora
 - `AuthGate` is an experience layer, not the security boundary.
 - Anonymous and non-owner requests must fail at PostgreSQL and Edge Function boundaries.
 - The owner UUID is configured in the database, not embedded in browser source.
+- Anonymous callers cannot execute the owner self-check, and authenticated callers cannot probe arbitrary UUIDs.
 - Multi-owner or team access requires a new authorization decision and migration.
 
 ### Rejected alternatives

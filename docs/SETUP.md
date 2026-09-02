@@ -30,14 +30,14 @@ Do not install or troubleshoot Docker on this computer as an ordinary StudioFlow
    On the current desktop, generate committed database types from the linked hosted project through the approved Supabase connection. Never hand-edit `src/lib/database.types.ts` as a competing schema, and never run destructive test fixtures against the hosted project.
 
 3. Create a GitHub OAuth app. Put its client ID and secret in Supabase Auth, not in this repository.
-4. Enable GitHub under Supabase Auth providers and configure the local, Netlify-preview, and eventual production callback URLs.
-5. Sign in once through StudioFlow. Find that user in Supabase Auth and insert its UUID through the SQL editor:
+4. Enable GitHub and disable the unused email provider under Supabase Auth providers. During local development, set the site URL to `http://127.0.0.1:4173` and allow both that address and `http://localhost:4173` as redirects. Add preview or production URLs only at their separately approved deployment gates.
+5. Sign in once through StudioFlow. Find that user in Supabase Auth and insert its UUID through an owner-controlled database operation:
 
    ```sql
    insert into public.app_owners (user_id) values ('YOUR_AUTH_USER_UUID');
    ```
 
-   The database permits one row only. Do not commit the UUID.
+   The database permits one row only. Do not commit or display the UUID. The configured StudioFlow project has completed steps 1–5; repeat them only for a deliberately new Supabase project.
 
 ## 3. Private Backblaze B2 bucket
 
