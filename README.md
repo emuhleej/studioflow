@@ -4,7 +4,9 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: production core and live private-service integration are ready for preview review. Hosted Supabase, GitHub OAuth, the sole-owner boundary, private Backblaze B2 media, encrypted backup/restore, and isolated database-security CI are configured and verified. Netlify is not configured, and no production deployment has been made.
+> Status: production core and live private-service integration are in the final Milestone 10F review. The private Netlify Deploy Preview is live at commit `20c7f44`; its existing owner session, Creator HQ, direct routes, browser console, and all supported responsive sizes are verified. The startup authorization race is fixed and the application, 69 unit/component tests, production build, and all 32 Playwright scenarios pass. A fresh sign-out/sign-in, one tiny preview-origin media lifecycle check, and the Netlify production auto-publish lock remain before 10F can be called complete.
+
+Netlify published one initial `main` build while the site was being created despite the repository production-ignore rule. That URL remains behind Netlify access control and has no production browser variables, but it is not an approved StudioFlow production release. Do not remove its protection or publish another production build without separate approval.
 
 ## What works
 
@@ -19,6 +21,7 @@ The repository is public so the engineering journey can be shared. Production re
 - Cloud metadata saves retry once and roll back only the still-current optimistic change after a second failure.
 - Time entries, cost entries, publication links, per-episode totals, metadata export, and restore.
 - Supabase schema, configured singleton owner allowlist, hardened row-level security, verified GitHub owner sign-in, pgTAP tests, and client error records.
+- Race-safe owner authorization that treats verification errors as retryable failures instead of falsely labeling the signed-in owner as a non-owner.
 - Backblaze B2 Edge Functions for signed upload, multipart resume/cancel/complete, private preview, permanent deletion, and AES-256-GCM metadata backup.
 - 8 GB warning, 9 GB upload block, 2 GB file maximum, and lifecycle-rule configuration.
 - Live private B2 verification covering single upload, preview, download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup/decryption/restore, and exact test-data cleanup.
@@ -81,7 +84,7 @@ Important operational documents:
 ## Repository policy
 
 - `main` must remain releasable; weekly work uses short-lived `week-N/...` branches and pull requests.
-- Netlify branch previews are allowed after configuration.
+- Netlify Deploy Previews are configured with preview-only browser variables; production remains a separate approval gate.
 - Production deploys require a separate, explicit approval and a protected-URL verification.
 - The project intentionally has no license for now. Default copyright applies.
 

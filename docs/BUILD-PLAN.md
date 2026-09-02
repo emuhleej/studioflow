@@ -13,7 +13,7 @@ Each week follows the same loop: complete one vertical feature slice, walk throu
 | 7 | Prompt and generation provenance | Milestones 7A–7D implemented and application-tested; hosted generation migrations are applied; isolated pgTAP passed in CI; live AI-provider execution remains later scope |
 | 8 | Time, cost, publication records, and dashboard totals | Implemented |
 | 9 | Real episode trial and device polish | Account-free fictional rehearsal and browser-size polish complete; private owner episode and physical-device review remain pending configured services/devices |
-| 10 | Export, encrypted backup, restore guide, quota, logging, release review | 10A–10E complete: hosted database, owner authentication, private B2, encrypted backup/restore rehearsal, public repository, and isolated CI verified; Netlify preview and production approval remain separate gates |
+| 10 | Export, encrypted backup, restore guide, quota, logging, release review | 10A–10E complete; 10F auth stabilization, private preview deployment, route/console review, and all supported responsive checks pass. Production auto-publish locking, a fresh preview login cycle, and a tiny preview-origin media lifecycle check remain; production approval is separate |
 
 Budget 6–10 hours for each learning week. A repository feature being present is not a substitute for the walkthrough and owner-coded modification.
 

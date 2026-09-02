@@ -56,7 +56,7 @@ Prove that one coherent episode can move through StudioFlow's production core wi
 | Time, cost, and publication records | Completed and reload-verified |
 | Desktop and iPad layouts | Browser-verified |
 | 390 × 844 phone layout | Browser-verified |
-| Live private provider workflow | Pending accounts and separate authorization |
+| Live private provider workflow | Provider-backed foundation verified; tiny Deploy Preview media cycle pending |
 | Physical-device review | Pending owner devices |
 
 ## Complete
@@ -81,8 +81,8 @@ Prove that one coherent episode can move through StudioFlow's production core wi
 
 ## Broken / Needs Verification
 
-- Docker is not installed, so the pgTAP database suite remains unexecuted locally.
-- External service accounts are not configured, so private cloud persistence and signed media behavior remain untested live.
+- Docker is intentionally not installed on this desktop; the isolated pgTAP database suite passed in GitHub Actions.
+- Supabase, GitHub OAuth, B2, Edge Functions, and the private Netlify Deploy Preview are configured. Provider-backed media and backup/restore behavior is live-verified; one tiny preview-origin media cycle remains for Milestone 10F.
 - The default combined unit run hit one five-second prompt-history timeout on the slow Windows/OneDrive host. The stable single-worker run with a ten-second per-test allowance then passed all 63 tests.
 - Playwright completed the 28 existing scenarios and the four new shot-planning scenarios; its temporary local web server required manual termination after reporting the final passes on this Windows host.
 
@@ -101,17 +101,17 @@ Prove that one coherent episode can move through StudioFlow's production core wi
 
 ## Remaining Verification
 
-- Run the database suite after Docker is installed.
-- Repeat the workflow with owner-approved private content after Supabase and B2 are configured.
+- Complete the remaining Milestone 10F fresh-login and tiny preview-origin media checks after the production auto-publish lock is confirmed.
+- Repeat the complete workflow with owner-approved private content when the owner is ready.
 - Perform final physical iPad and phone review before production approval.
 
 ## Exact Next Implementation Task
 
-Open a separately authorized live-service readiness checkpoint to configure the owner-controlled Supabase and Backblaze resources, then run the existing private media and backup/restore verification. Do not deploy production.
+Complete the remaining Milestone 10F live checks after confirming the Netlify production auto-publish lock: fresh owner sign-out/sign-in plus one tiny preview-origin private-media lifecycle exercise with exact cleanup. Do not promote production.
 
 ## Remaining Implementation Order
 
-1. Live owner-service setup and database/media verification after explicit authorization.
-2. Physical iPad and phone review.
-3. Netlify preview review.
-4. Separately approved production deployment and protected-URL verification.
+1. Confirm the production auto-publish lock and finish the fresh-login and tiny preview-origin media checks.
+2. Merge the preview pull request only after its tests, privacy checks, and live verification all pass.
+3. Perform the owner-private episode and physical iPad/phone trial when the owner is ready.
+4. Make a separate production-release decision and, only if approved, complete protected-URL verification.

@@ -372,6 +372,7 @@ Local implementation, external configuration, preview review, and production rel
 - A successful build is not a deployment.
 - Production release follows `docs/PRODUCTION-RELEASE.md` and includes signed-out, non-owner, owner, media-access, and URL-expiry checks.
 - No workflow may automatically promote `main` to production.
+- Netlify's provider-level auto-publish lock is the authoritative promotion gate. The repository also skips ordinary production builds and fails closed if a production build bypasses that skip without a separately managed full commit SHA that exactly matches Netlify's current commit.
 - Live status is reported only after the exact protected URL is verified.
 
 ### Rejected alternatives

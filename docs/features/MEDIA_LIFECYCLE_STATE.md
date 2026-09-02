@@ -119,7 +119,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 - Explicit permanent-deletion confirmation and failure retention.
 - Orphan-reference cleanup for asset links, shot arrays, entity references, and generation arrays.
 - Responsive workflow verification at desktop, both iPad orientations, and 390 x 844 phone.
-- Private encrypted B2 bucket, bucket-restricted application key, local-only CORS, and server-only Supabase secrets configured.
+- Private encrypted B2 bucket, bucket-restricted application key, exact local and approved Deploy Preview CORS origins, and server-only Supabase secrets configured.
 - Eight media/backup Edge Functions deployed and confirmed active.
 - Single-part upload, private image preview, attachment download, trash, restore, and anonymous HTTP 401 denial live-verified.
 - Multipart upload pause/resume and completed-part continuation live-verified with generated test media.
@@ -135,7 +135,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 ## Broken / Needs Verification
 
 - Docker is not installed in the current shell environment; the migration and pgTAP lifecycle tests passed in GitHub Actions instead.
-- The hosted schema and generated TypeScript types are current. B2 is configured; Netlify is not configured.
+- The hosted schema and generated TypeScript types are current. B2 and the private Netlify Deploy Preview are configured; a tiny preview-origin media lifecycle check remains for Milestone 10F.
 - Anonymous media denial and simulated non-owner database denial are verified. Real-time signed-URL expiry was not awaited during this checkpoint.
 
 ## Locked Decisions
@@ -160,17 +160,18 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 ## Remaining Verification
 
 - Optionally wait through a real signed-URL expiry and simulate quota rejection before production release.
+- Complete one tiny private upload, preview, download, trash, restore, and permanent-delete cycle from the approved Deploy Preview origin, then verify exact provider/database cleanup.
 - Complete the owner's physical-device review with private media.
 
 ## Exact Next Implementation Task
 
-Perform the owner's physical-device media trial only when private content and devices are available. Do not reopen provider setup or add new media infrastructure during that trial.
+After the Netlify production auto-publish lock is confirmed, complete the remaining Milestone 10F preview-origin media lifecycle check with a tiny fictional file and exact cleanup. Do not add new media infrastructure during this verification.
 
 Do not begin AI-provider execution, the video editor, social analytics, automatic deployment, or production release.
 
 ## Remaining Implementation Order
 
-1. Complete the exact provider-backed acceptance exercise above after explicit account-setup authorization.
+1. Complete the tiny Milestone 10F preview-origin media lifecycle check and exact cleanup.
 2. Perform the owner’s real-episode and physical-device trial as a separate checkpoint.
 
 ## Update Rule
