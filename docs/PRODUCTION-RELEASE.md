@@ -2,6 +2,13 @@
 
 Production is intentionally not deployed by repository setup or CI.
 
+## Current Netlify lock
+
+- The Netlify project is `studioflowhq` and remains private.
+- `[context.production] ignore = "exit 0"` in `netlify.toml` prevents the `main` branch from producing a deployment.
+- The Supabase browser URL, publishable key, and `VITE_DEMO_MODE=false` are configured only for the Deploy Previews context.
+- Do not remove the production guard, add production-context values, or change project visibility without separate owner approval.
+
 ## Weekly preview
 
 1. Open a pull request and wait for CI.
