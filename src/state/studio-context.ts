@@ -33,12 +33,14 @@ export interface StudioContextValue {
   session: Session | null;
   user: User | null;
   ownerAuthorized: boolean | null;
+  ownerVerificationError: string | null;
   authLoading: boolean;
   dataLoading: boolean;
   notice: Notice;
   clearNotice: () => void;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  retryOwnerVerification: () => void;
   episodeDrafts: Record<string, EpisodeDraft>;
   patchEpisodeDraft: (episodeId: string, patch: Partial<EpisodeDraft>) => void;
   clearEpisodeDraft: (episodeId: string) => void;

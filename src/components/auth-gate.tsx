@@ -1,12 +1,37 @@
-import { LoaderCircle, LockKeyhole, ShieldX, Sparkles } from "lucide-react";
+import { LoaderCircle, LockKeyhole, ShieldAlert, ShieldX, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { useStudio } from "../state/studio-store";
 import { Button } from "./ui";
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { isDemo, user, ownerAuthorized, authLoading, dataLoading, login, logout } = useStudio();
+  const {
+    isDemo,
+    user,
+    ownerAuthorized,
+    ownerVerificationError,
+    authLoading,
+    dataLoading,
+    login,
+    logout,
+    retryOwnerVerification,
+  } = useStudio();
 
   if (isDemo) return children;
+  if (user && ownerVerificationError) {
+    return (
+      <main className="grid min-h-screen place-items-center p-5">
+        <section className="panel w-full max-w-md p-7 text-center" role="alert">
+          <ShieldAlert className="mx-auto text-[var(--gold)]" size={34} />
+          <h1 className="mt-4 text-2xl font-semibold text-white">StudioFlow couldn’t verify this sign-in.</h1>
+          <p className="muted mt-3 text-sm leading-6">Your account may still be the owner. The verification request failed, so StudioFlow did not make an access decision.</p>
+          <div className="mt-5 grid gap-3">
+            <Button variant="primary" className="w-full" onClick={retryOwnerVerification}>Try verification again</Button>
+            <Button className="w-full" onClick={() => void logout()}>Sign out</Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
   if (authLoading || dataLoading || (user && ownerAuthorized === null)) {
     return <div className="grid min-h-screen place-items-center"><div className="grid justify-items-center gap-3 muted"><LoaderCircle className="animate-spin" /><span className="text-sm">Opening your studio…</span></div></div>;
   }
