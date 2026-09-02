@@ -2,7 +2,7 @@
 
 ## Status
 
-PROPOSED — DO NOT START UNTIL MILESTONE 10F CLOSES
+PROPOSED — MILESTONE 10F COMPLETE; AWAITING EXPLICIT OWNER APPROVAL TO START AI-1
 
 ## Purpose
 
@@ -318,4 +318,4 @@ Live acceptance requires one separately approved low-cost image and one separate
 
 ## Exact Next Implementation Task
 
-After Milestone 10F is complete and the owner explicitly starts AI work, implement **AI-1 only** with the fake provider and `generation_enabled=false`. Do not create a Runway account, configure a provider key, or submit a paid generation.
+If the owner explicitly starts AI work, implement **AI-1 only** with the fake provider and `generation_enabled=false`. Do not create a Runway account, configure a provider key, or submit a paid generation.

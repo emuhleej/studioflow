@@ -6,7 +6,7 @@ Last updated: 2026-09-02
 
 **IMPLEMENTATION AND LIVE PROVIDER VERIFICATION COMPLETE**
 
-Current checkpoint: **Milestone 10C complete**
+Current checkpoint: **Milestone 10F preview-origin verification complete**
 
 ## Purpose
 
@@ -97,6 +97,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 | Multi-context asset links | Implemented in client, repository adapter, migration, backup, and UI |
 | Trash and restore | Live provider-backed exercise passed |
 | Confirmed permanent deletion | Implemented with client and database reference cleanup |
+| Approved Deploy Preview lifecycle | 522-byte PNG upload, preview, matching-hash download, trash, restore, permanent deletion, and exact hosted-record cleanup passed |
 | Owner RLS and lifecycle database rules | Applied, live owner/non-owner behavior verified, and isolated pgTAP passed in GitHub Actions |
 | B2 lifecycle configuration | Applied and read back: one-day hidden-version cleanup and three-day abandoned-multipart cleanup |
 
@@ -123,6 +124,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 - Eight media/backup Edge Functions deployed and confirmed active.
 - Single-part upload, private image preview, attachment download, trash, restore, and anonymous HTTP 401 denial live-verified.
 - Multipart upload pause/resume and completed-part continuation live-verified with generated test media.
+- From the approved Deploy Preview, a 522-byte PNG uploaded to private B2, previewed at 16 × 16, downloaded with the same byte count and SHA-256 hash, moved to trash, restored, and permanently deleted. The Edge Function returned success after its awaited B2 deletion path, all queried temporary workflow tables returned to zero, and no browser warnings or errors remained.
 
 ## Partially Implemented
 
@@ -135,7 +137,7 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 ## Broken / Needs Verification
 
 - Docker is not installed in the current shell environment; the migration and pgTAP lifecycle tests passed in GitHub Actions instead.
-- The hosted schema and generated TypeScript types are current. B2 and the private Netlify Deploy Preview are configured; a tiny preview-origin media lifecycle check remains for Milestone 10F.
+- The hosted schema and generated TypeScript types are current. B2 and the private Netlify Deploy Preview are configured, and the tiny preview-origin lifecycle passed with exact cleanup.
 - Anonymous media denial and simulated non-owner database denial are verified. Real-time signed-URL expiry was not awaited during this checkpoint.
 
 ## Locked Decisions
@@ -160,19 +162,17 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 ## Remaining Verification
 
 - Optionally wait through a real signed-URL expiry and simulate quota rejection before production release.
-- Complete one tiny private upload, preview, download, trash, restore, and permanent-delete cycle from the approved Deploy Preview origin, then verify exact provider/database cleanup.
 - Complete the owner's physical-device review with private media.
 
 ## Exact Next Implementation Task
 
-After the Netlify production auto-publish lock is confirmed, complete the remaining Milestone 10F preview-origin media lifecycle check with a tiny fictional file and exact cleanup. Do not add new media infrastructure during this verification.
+When the owner explicitly authorizes the physical-device checkpoint, perform one private-media review on the owner's iPad and phone. Do not add new media infrastructure during that verification.
 
 Do not begin AI-provider execution, the video editor, social analytics, automatic deployment, or production release.
 
 ## Remaining Implementation Order
 
-1. Complete the tiny Milestone 10F preview-origin media lifecycle check and exact cleanup.
-2. Perform the owner’s real-episode and physical-device trial as a separate checkpoint.
+1. Perform the owner's physical-device private-media review as a separate checkpoint.
 
 ## Update Rule
 

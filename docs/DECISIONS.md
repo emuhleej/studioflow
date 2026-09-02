@@ -458,7 +458,7 @@ The explicit link system already represents media relationships consistently acr
 - Existing exports containing only generation result arrays remain readable.
 - Private restore writes generation records before generation-targeted asset links.
 - Permanent media deletion continues to remove both explicit and compatible embedded references.
-- Database trigger verification remains pending until Docker/Supabase is available.
+- Generation-result triggers passed the isolated pgTAP suite in GitHub Actions and the hosted non-destructive restore rehearsal.
 
 ### Rejected alternatives
 

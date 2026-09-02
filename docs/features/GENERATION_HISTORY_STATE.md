@@ -136,7 +136,7 @@ Prompt and generation history preserves how each attempted result was made. It k
 
 ## Exact Next Implementation Task
 
-No Milestone 7 implementation remains. Finish Milestone 10F first. If the owner then explicitly starts AI work, follow `AI_GENERATION_PLAN.md` and implement AI-1 only with the fake provider and `generation_enabled=false`; do not create a provider account, configure a provider key, submit a paid request, or deploy production.
+No Milestone 7 implementation remains. If the owner explicitly starts AI work, follow `AI_GENERATION_PLAN.md` and implement AI-1 only with the fake provider and `generation_enabled=false`; do not create a provider account, configure a provider key, submit a paid request, or deploy production.
 
 ## Remaining Implementation Order
 

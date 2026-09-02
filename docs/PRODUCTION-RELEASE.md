@@ -8,20 +8,24 @@ No approved StudioFlow production release exists. Repository setup produced one 
 - `[context.production] ignore = "exit 0"` in `netlify.toml` is intended to skip ordinary `main` builds.
 - If Netlify bypasses the ignore check, the production-context command runs `scripts/netlify-production-guard.mjs` and fails closed unless the separately managed `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` value is a full 40-character SHA exactly matching Netlify's current `COMMIT_REF`.
 - The Supabase browser URL, publishable key, and `VITE_DEMO_MODE=false` are configured only for the Deploy Previews context.
+- Netlify provider-level Auto Publishing is locked and must remain locked.
 - Do not remove the production guard, add production-context values, or change project visibility without separate owner approval.
 
-The original repository ignore rule did not prevent Netlify from publishing the initial `main` build at commit `6c18ece` while the site was being created. That build remains behind Netlify access control and has no production browser values, so it cannot open the private StudioFlow workspace. It is not an approved production release. The later fail-closed production command guards against the same bypass recurring. A provider-level production auto-publish lock must still be enabled and verified before Milestone 10F is complete; the repository guards remain defense in depth.
+The original repository ignore rule did not prevent Netlify from publishing the initial `main` build at commit `6c18ece` while the site was being created. That build remains behind Netlify access control and has no production browser values, so it cannot open the private StudioFlow workspace. It is not an approved production release. The later fail-closed production command and the verified provider-level Auto Publishing lock guard against the same bypass recurring; the repository guards remain defense in depth.
 
 ## Current Milestone 10F preview
 
-- Last functionally reviewed guarded Deploy Preview: deployment `6a98a96257fc900008411d91` at commit `5a56947`; later documentation-only commits do not change the reviewed application bundle.
-- The existing owner session opened Creator HQ, and `/library` plus `/media` survived direct navigation and refresh.
+- Last functionally reviewed guarded Deploy Preview: deployment `6a98ade0b248ff000843f8f0` at commit `294acc8`; later documentation-only commits do not change the reviewed application bundle.
+- Creator HQ opened successfully, and `/library` plus `/media` survived direct navigation and refresh.
 - The browser console showed no warnings or errors.
 - Responsive review passed at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844.
 - `npm run verify` passed with 69 unit/component tests and a production build; Playwright passed all 32 scenarios.
-- PR #5 currently has six successful checks and one neutral check and is ready for its remaining live verification, but it must not be merged yet.
+- A fresh GitHub sign-out/sign-in returned to the exact preview as the owner; three subsequent reloads preserved owner authorization.
+- A 522-byte PNG completed private upload, 16 × 16 preview, matching-hash download, trash, restore, and permanent deletion. The delete function returned HTTP 200 after its awaited B2 deletion path, every queried temporary hosted record returned to zero, and the browser remained free of warnings and errors.
+- Netlify Auto Publishing is locked.
+- PR #5 head `294acc8` had six successful checks and one neutral check and remains unmerged pending a separate owner action.
 
-Still required: confirm the provider-level production auto-publish lock, perform a fresh owner sign-out/sign-in, and complete one tiny preview-origin private-media lifecycle check with exact provider/database cleanup.
+Milestone 10F preview verification is complete. PR #5 still requires a separately approved description correction and merge after its documentation-only closeout head is green. Neither that merge nor Milestone 10F authorizes a production release.
 
 ## Weekly preview
 
