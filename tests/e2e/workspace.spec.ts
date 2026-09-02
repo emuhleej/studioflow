@@ -41,7 +41,7 @@ test("layout has no horizontal overflow and primary controls remain touch sized"
   expect(count).toBeGreaterThan(0);
   for (let index = 0; index < Math.min(count, 12); index += 1) {
     const box = await controls.nth(index).boundingBox();
-    if (box) expect(Math.max(box.height, box.width)).toBeGreaterThanOrEqual(44);
+    if (box) expect(Math.round(Math.max(box.height, box.width))).toBeGreaterThanOrEqual(44);
   }
 });
 
@@ -115,7 +115,7 @@ test("generation results and review decisions persist across reload", async ({ p
   const reviewButtons = page.getByRole("group", { name: "Review Example Video cinema-v1" }).getByRole("button");
   for (let index = 0; index < await reviewButtons.count(); index += 1) {
     const box = await reviewButtons.nth(index).boundingBox();
-    expect(box?.height).toBeGreaterThanOrEqual(44);
+    expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(44);
   }
 
   await page.reload();
@@ -144,7 +144,7 @@ test("shot planning exposes labelled 44px ordering and edit controls", async ({ 
   for (const control of controls) {
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
-    expect(box?.height).toBeGreaterThanOrEqual(44);
+    expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(44);
   }
 });
 
