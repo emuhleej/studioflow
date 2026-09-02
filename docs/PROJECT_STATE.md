@@ -11,9 +11,9 @@ This document is StudioFlow's current project dashboard. It records the state a 
 | Status | Active development |
 | Production | Stable |
 | Current major feature | Project Studio |
-| Active implementation unit | Milestone 9 account-free workflow rehearsal complete |
-| Latest completed checkpoint | Milestone 9D — responsive workflow verification and friction repair |
-| Next checkpoint to open | Live-service readiness — account setup and private integration verification |
+| Active implementation unit | Live-service readiness |
+| Latest completed checkpoint | Milestone 10A — hosted Supabase database foundation |
+| Next checkpoint to open | Milestone 10B — owner authentication and access verification |
 
 “Production: Stable” describes the current production-core code quality. StudioFlow has not been deployed to a production URL.
 
@@ -26,7 +26,7 @@ This document is StudioFlow's current project dashboard. It records the state a 
 - Fictional browser-only demo workspace using localStorage and IndexedDB.
 - Media metadata, asset links, upload-session records, trash state, review state, and image/audio/video classifications.
 - Media safeguards for supported formats, non-empty files, a 2 GB per-file maximum, an 8 GB warning, and a 9 GB upload block.
-- Supabase schema, singleton owner allowlist, row-level security, owner-scoped records, migrations, and pgTAP tests.
+- Connected hosted Supabase schema with five reviewed migrations, 19 row-level-secured public tables, a singleton owner allowlist design, generated TypeScript types, and pgTAP coverage ready for isolated CI execution.
 - Supabase Edge Function code for private B2 upload, multipart signing, resume, completion, cancellation, preview URLs, deletion, and encrypted metadata backup.
 - Prompt-version and generation-provenance records without live AI-provider execution.
 - Same-project generation result linking, synchronized compatibility references, and selected/rejected/unreviewed attempt decisions.
@@ -37,27 +37,11 @@ This document is StudioFlow's current project dashboard. It records the state a 
 
 ## Current active work
 
-The current major feature is **Project Studio**. Milestone 9 is complete within the account-free boundary: one fictional episode was taken through every existing production-core stage and verified across the supported browser sizes.
+The current major feature remains **Project Studio**. The account-free production workflow through Milestone 9 is complete and preserved in local Git checkpoint `8f2413c`.
 
-Milestones 7A through 7D added:
+Milestone 10A connected the hosted Supabase project, applied the five reviewed repository migrations, reconciled migration history to the repository timestamps, regenerated `src/lib/database.types.ts` from the hosted schema, and ran schema, security, and performance checks. All 19 public tables have row-level security enabled and anonymous public-table grants are zero.
 
-- Episode-wide and shot-specific immutable prompt versions.
-- Independent version chains by episode, optional shot, and prompt purpose.
-- Exact prompt preservation, blank-content rejection, and same-episode shot validation.
-- Read-only history cards and a safe “Use as next draft” action that never edits prior records.
-- Database integrity rules and focused unit, component, pgTAP, and responsive browser coverage.
-- Manual provider and model records for generations performed in external tools.
-- Optional immutable prompt-version references with matching episode and shot context.
-- Cost, duration, and notes capture without AI-provider execution.
-- Generation integrity rules preventing blank provider/model values, invalid numbers, and cross-context references.
-- Result-media attachment and removal using the existing asset-link system.
-- Selected, rejected, and unreviewed decisions for each external generation attempt.
-- Backward-compatible synchronization between canonical result links and generation result-ID arrays.
-- Reload persistence plus responsive verification on desktop, iPad landscape, iPad portrait, and 390 × 844 phone layouts.
-
-The Milestone 9 rehearsal exposed and repaired two workflow issues: generation-linked result media now appears in the episode Media tab, and scene/shot planning controls now have explicit accessible names and 44-pixel touch targets. The next checkpoint is live-service readiness. It requires separate authorization and owner-controlled Supabase and Backblaze resources. Production deployment remains a later, separate approval gate.
-
-Repository maintenance completed on 2026-09-02 consolidated the project into the Documents workspace, split the central store into focused modules, and added guarded cloud-save retry and rollback. These changes did not advance or broaden the 7C feature boundary.
+The exact next unit is Milestone 10B: configure GitHub OAuth and the singleton owner allowlist, harden the owner-check function grants through a reviewed migration, and verify signed-out, non-owner, and owner access. Backblaze configuration, Netlify preview, AI providers, and production deployment are outside that next unit.
 
 ## Locked project-level decisions
 
@@ -77,8 +61,10 @@ Repository maintenance completed on 2026-09-02 consolidated the project into the
 
 ## Known project-level blockers
 
-- The local Supabase database test suite cannot run because Docker is not installed in the verified shell environment.
-- Supabase, Backblaze B2, GitHub OAuth, and Netlify production resources are not connected or live-tested.
+- Docker is intentionally not installed on this older desktop. The isolated pgTAP database suite must run in GitHub Actions or on a separately approved capable host before production release.
+- GitHub OAuth, the singleton owner allowlist, Backblaze B2, and Netlify are not configured or live-tested.
+- Supabase's security advisor reports that the `is_app_owner(uuid)` security-definer function is executable by anonymous and authenticated API roles. A reviewed grant-hardening migration and access tests are required in 10B.
+- Supabase's performance advisor reports missing foreign-key indexes and per-row auth evaluation in RLS policies. These findings require reviewed migration work before production readiness.
 - Multipart upload, private playback, signed-URL expiry, encrypted backup, and restore behavior still require live provider exercises after account setup is separately authorized.
 - A private owner-episode repetition and final physical-device review still require the owner's private content, configured services, and devices. The account-free fictional workflow rehearsal is complete.
 - The authoritative application source is `C:\Users\emrn2\OneDrive\Documents\ChatGPT\StudioFlow`. The previous Desktop working copy was retired after verification and the first local commit.
@@ -87,31 +73,36 @@ Repository maintenance completed on 2026-09-02 consolidated the project into the
 
 - Latest Milestone 9 verification: TypeScript, lint, the production build, all 63 unit/component tests in the stable single-worker run, and all 13 focused domain tests passed. The default parallel unit run hit one five-second timeout on this slow Windows/OneDrive host; no assertion failed.
 - Playwright completed all 28 existing desktop, iPad, and phone scenarios plus all four new shot-planning accessibility scenarios. Browser inspection additionally verified the complete fictional rehearsal, reload persistence, dialog bounds, 44-pixel touch targets, and no page-level horizontal overflow at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844.
-- The prompt- and generation-history pgTAP cases are written but remain unexecuted because Docker is not installed.
-- The consolidated source has an initial local Git commit. It has not been published to the planned public GitHub repository.
+- Milestone 10A applied all five repository migrations to the hosted Supabase project. Verification found 19 of 19 public tables using RLS, 18 policies, no anonymous public-table grants, and migration history matching the source filenames.
+- Hosted-schema TypeScript types were regenerated, and `npm run verify` passed: type-check, lint, all 63 unit/component tests, and the production build.
+- Supabase security and performance advisors ran successfully; their unresolved findings are recorded in `docs/features/LIVE_SERVICE_READINESS_STATE.md`.
+- The isolated pgTAP cases remain unexecuted because Docker is intentionally absent; GitHub Actions or another capable host must run them.
+- Local Git checkpoints now include the initial production core and Milestones 7–9 (`8f2413c`). The repository has not been published to the planned public GitHub repository.
 - No Netlify production deployment exists.
-- No production URL, custom domain, connected OAuth application, live B2 bucket, or live Supabase project has been verified.
+- No production URL, custom domain, connected OAuth application, configured owner, or live B2 integration has been verified. The hosted Supabase schema itself is connected and verified.
 - Provider configuration and production deployment remain separate approval gates.
 
 ## Next checkpoint
 
-Open **Live-service readiness — account setup and private integration verification** only after re-reading:
+Open **Milestone 10B — owner authentication and access verification** only after re-reading:
 
 1. `CODEX.md`
 2. This `docs/PROJECT_STATE.md`
-3. `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` for the completed Milestone 9 boundary
-4. `README.md`
-5. `docs/ARCHITECTURE.md`
-6. `docs/SECURITY.md`
-7. `docs/BUILD-PLAN.md`
-8. `docs/SETUP.md`
-9. The selected episode workflow files and existing browser tests
+3. `docs/features/LIVE_SERVICE_READINESS_STATE.md`
+4. `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` for the completed Milestone 9 boundary
+5. `README.md`
+6. `docs/ARCHITECTURE.md`
+7. `docs/SECURITY.md`
+8. `docs/BUILD-PLAN.md`
+9. `docs/SETUP.md`
+10. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-The checkpoint boundary is: configure only the explicitly authorized owner services and execute the already-written private database, media, backup, and restore checks. Do not add AI providers or deploy StudioFlow production without separate approval.
+The checkpoint boundary is: configure GitHub OAuth and the singleton owner allowlist, harden the owner-check function grants through a reviewed migration, and prove signed-out, non-owner, and owner behavior. Do not begin Backblaze configuration, add AI providers, prepare Netlify, or deploy StudioFlow.
 
 ## Active documentation
 
 - `CODEX.md` — permanent Codex behavior, engineering, safety, testing, and release rules.
+- `docs/features/LIVE_SERVICE_READINESS_STATE.md` — active account-integration status, completed 10A foundation, known findings, and exact 10B task.
 - `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` — completed fictional Milestone 9 rehearsal, fixes, verification, and remaining live checks.
 - `docs/features/GENERATION_HISTORY_STATE.md` — completed provenance feature scope, verification, and remaining provider-backed checks.
 - `docs/features/MEDIA_LIFECYCLE_STATE.md` — completed media feature scope and pending provider-backed verification.

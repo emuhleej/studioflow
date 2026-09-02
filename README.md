@@ -4,7 +4,7 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: production-core implementation. The fictional local demo is ready. Supabase, Backblaze B2, GitHub OAuth, and Netlify accounts still need to be connected. No production deployment has been made.
+> Status: production-core implementation. The fictional local demo is ready, and the reviewed schema is applied to the connected hosted Supabase project. GitHub OAuth, the sole-owner allowlist, private Backblaze B2 operations, and Netlify still need live configuration and verification. No production deployment has been made.
 
 ## What works
 
@@ -54,13 +54,15 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The local Supabase database suite additionally requires Docker Desktop:
+Database migrations and generated types may be verified against the connected hosted Supabase project. The full isolated pgTAP suite remains in GitHub Actions and may also run on a capable development machine with Docker:
 
 ```powershell
 npm run supabase:start
 npm run supabase:test
 npm run supabase:types
 ```
+
+Docker is deliberately not installed on the current older desktop. See [docs/SETUP.md](docs/SETUP.md) for the hosted-development route; this does not remove the CI database-security gate.
 
 ## Configure the private workspace
 

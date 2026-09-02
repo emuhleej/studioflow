@@ -2,29 +2,32 @@
 
 The fictional demo needs no cloud account. Complete these steps only when you are ready to create the real private workspace.
 
-## 1. Local tools
+## 1. Local tools on this desktop
 
-Install Node.js 24, Git, and Docker Desktop with the WSL 2 backend. Docker must be running before the local Supabase commands work.
+Install Node.js 24 and Git. Docker Desktop is deliberately skipped on the current older StudioFlow desktop. Application checks run locally; reviewed database migrations, generated types, and advisor checks use the connected hosted Supabase project; the isolated pgTAP suite runs in GitHub Actions or on a separate capable development host.
 
 ```powershell
 npm install
-npm run supabase:start
-npm run supabase:test
-npm run supabase:types
+npm run verify
+npx playwright install chromium
+npm run test:e2e
 ```
 
-If Docker cannot start, verify the Windows build, current WSL version, virtualization support, and Docker's current Windows requirements before changing project code.
+Do not install or troubleshoot Docker on this computer as an ordinary StudioFlow task. The project-local `supabase:start`, `supabase:test`, and local `supabase:types` scripts remain available for GitHub Actions or another machine that intentionally supports Docker.
 
 ## 2. Supabase
 
 1. Create a free Supabase project with spend controls and automatic paid usage disabled.
-2. Link this checkout and push the migration:
+2. Authenticate the project-local Supabase CLI, link the checkout, review the migration list, and push only committed migrations:
 
    ```powershell
    npx supabase login
    npx supabase link --project-ref YOUR_PROJECT_REF
+   npx supabase migration list
    npx supabase db push
    ```
+
+   On the current desktop, generate committed database types from the linked hosted project through the approved Supabase connection. Never hand-edit `src/lib/database.types.ts` as a competing schema, and never run destructive test fixtures against the hosted project.
 
 3. Create a GitHub OAuth app. Put its client ID and secret in Supabase Auth, not in this repository.
 4. Enable GitHub under Supabase Auth providers and configure the local, Netlify-preview, and eventual production callback URLs.

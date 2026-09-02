@@ -464,6 +464,36 @@ The explicit link system already represents media relationships consistently acr
 - Removing the result array destructively from existing records and exports.
 - Allowing result media from a different project because the owner happens to be the same.
 
+## DEC-017 — The current desktop uses hosted Supabase and CI instead of Docker
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-02
+- **Area:** Development infrastructure and database verification
+
+### Decision
+
+Do not install or operate Docker Desktop on the current older StudioFlow computer. Local application checks remain on this host. Reviewed migrations, generated database types, and read-only advisor checks use the connected hosted Supabase project. The isolated, mutating pgTAP suite remains required in GitHub Actions or on a separately approved capable development host before production release.
+
+### Rationale
+
+The current computer is at the practical edge of Docker Desktop's supported Windows and memory requirements. A hosted-development route avoids destabilizing the owner's machine while preserving migration review, schema verification, and an independent database-security test gate.
+
+### Consequences
+
+- Docker absence on this computer is an intentional constraint, not a reason to invent another persistence system.
+- Hosted migrations must come from reviewed files in `supabase/migrations/`; ordinary dashboard edits are not the schema workflow.
+- Generated types come from the verified hosted schema on this machine and remain committed.
+- Mutating pgTAP fixtures must not run against the hosted owner project.
+- GitHub Actions or another capable host must pass the database-security job before a production release.
+- The existing local Supabase scripts remain for CI and capable development hosts.
+
+### Rejected alternatives
+
+- Forcing Docker onto the current computer despite its resource and support limitations.
+- Dropping database tests because the primary desktop does not run Docker.
+- Running mutating test fixtures against the hosted owner project.
+- Maintaining a second local database implementation for this machine.
+
 ## Frequently re-proposed ideas that remain rejected
 
 Future agents should not reopen these suggestions without new constraints or explicit owner direction:
@@ -486,6 +516,7 @@ Future agents should not reopen these suggestions without new constraints or exp
 | “Add MIT by default.” | DEC-014 |
 | “Leave failed cloud saves visible and let the next refresh fix them.” | DEC-015 |
 | “Keep generation result arrays and asset links independently editable.” | DEC-016 |
+| “Install Docker here anyway or skip database tests.” | DEC-017 |
 
 ## When to update this document
 

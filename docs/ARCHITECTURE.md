@@ -404,6 +404,10 @@ TypeScript project build/type-check
 
 ### Database verification
 
+The current older desktop does not run Docker. It applies only reviewed, committed migrations to the connected hosted Supabase project, regenerates types from that verified hosted schema, and runs Supabase security and performance advisors. Mutating pgTAP fixtures do not run against the hosted project.
+
+GitHub Actions or a separately approved capable development host performs the isolated local-stack path:
+
 ```text
 npm run supabase:start
   -> local Supabase services through Docker
@@ -420,7 +424,7 @@ npm run supabase:types
 GitHub Actions contains three independent jobs:
 
 1. **Application:** install from lockfile, audit runtime dependencies, run `npm run verify`, install Chromium, and run Playwright.
-2. **Database security:** start local Supabase, run pgTAP tests, and stop the stack.
+2. **Database security:** start an isolated local Supabase stack, run pgTAP tests, and stop the stack. This remains the authoritative mutating database-test gate for the no-Docker desktop workflow.
 3. **Secret scan:** run Gitleaks across repository history.
 
 CI validates code; it does not deploy production.
