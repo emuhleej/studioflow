@@ -1,0 +1,3 @@
+-- Remote production data is never seeded from the public repository.
+-- The React application includes a fictional browser-only demo workspace.
+-- Local database records are created through the app after adding a local auth user to app_owners.

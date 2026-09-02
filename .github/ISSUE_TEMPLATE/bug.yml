@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible StudioFlow defect using fictional or redacted data.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never attach real scripts, prompts, media, signed URLs, exports, credentials, or owner UUIDs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      placeholder: Describe the observed behavior with fictional data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Fictional reproduction steps
+      placeholder: "1. Open…\n2. Select…\n3. Observe…"
+    validations:
+      required: true
+  - type: dropdown
+    id: viewport
+    attributes:
+      label: Viewport
+      options:
+        - Desktop
+        - iPad landscape
+        - iPad portrait
+        - Phone 390×844
+        - Not layout-specific
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed real production data and secrets.
+          required: true

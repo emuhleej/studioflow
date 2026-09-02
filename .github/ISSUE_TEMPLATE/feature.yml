@@ -1,0 +1,33 @@
+name: Feature slice
+description: Propose one bounded production or learning improvement.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: friction
+    attributes:
+      label: Production friction
+      description: What repeated creative task or decision should become easier?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Observable outcome
+      description: Describe what the owner can do when this slice is complete.
+    validations:
+      required: true
+  - type: textarea
+    id: excluded
+    attributes:
+      label: Explicitly excluded
+      description: Keep the slice small by naming what it will not do.
+    validations:
+      required: true
+  - type: textarea
+    id: learning
+    attributes:
+      label: Owner-coded learning modification
+      description: What meaningful follow-up change can the owner make after the walkthrough?
+    validations:
+      required: true
