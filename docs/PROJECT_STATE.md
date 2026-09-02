@@ -78,7 +78,7 @@ Milestones 10C–10E are complete. The private bucket, restricted key, lifecycle
 - Milestones 10A–10B applied all six repository migrations to the hosted Supabase project. Verification found 19 of 19 public tables using RLS, 18 hardened owner policies, no anonymous public-table grants, and migration history matching the source filenames.
 - Hosted-schema TypeScript types were regenerated, and `npm run verify` passed: type-check, lint, all 63 unit/component tests, and the production build.
 - Supabase security and performance advisors ran successfully with no errors and no performance warnings. The expected GitHub-only authentication caveat and informational findings are recorded in `docs/features/LIVE_SERVICE_READINESS_STATE.md`.
-- The isolated pgTAP database-security job passed in GitHub Actions in 2 minutes 49 seconds. The application CI job also passed, including install, audit, type-check, lint, 63 tests, production build, and Playwright.
+- The isolated pgTAP database-security job passed in GitHub Actions in 2 minutes 49 seconds. The application CI job also passed, including install, audit, type-check, lint, 63 tests, production build, and Playwright. The first normal follow-up secret scan detected no leaks.
 - Local Git checkpoints now include the initial production core and Milestones 7–9 (`8f2413c`). The repository is published at `emuhleej/studioflow` and tracks `origin/main`.
 - No Netlify production deployment exists.
 - GitHub OAuth, local callbacks, the singleton owner, private owner access, and the live B2 integration are configured and verified. No production URL, custom domain, or Netlify deployment exists.

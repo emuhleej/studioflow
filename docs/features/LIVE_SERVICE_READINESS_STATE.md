@@ -83,11 +83,11 @@ The hosted Supabase project is connected and its migration history matches the s
 - Exact generated B2 objects, hosted database records, local media, decrypted backup, encrypted copy, and temporary credential transport permanently removed; zero test records remain.
 - Public repository `emuhleej/studioflow` created without a license or generated starter files and connected as `origin`.
 - First GitHub Actions application job passed; isolated Supabase/pgTAP database-security job passed in 2 minutes 49 seconds.
+- Follow-up secret scan completed against a valid commit range with no leaks detected.
 
 ## Partially Implemented
 
 - Signed-URL expiry and a full live 9 GB cap simulation were not stress-tested because they would add time or unnecessary provider bytes. Their deterministic application/database coverage passed.
-- The first-push secret-scan job hit the action's zero-base commit-range error after scanning zero bytes. A normal follow-up commit must rerun the scan against a valid range.
 
 ## Not Started
 
