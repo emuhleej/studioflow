@@ -15,6 +15,9 @@ const workspaceTables = {
   assetLinks: "asset_links",
   prompts: "prompt_versions",
   generations: "generation_records",
+  generationInputs: "generation_input_assets",
+  generationEvents: "generation_events",
+  generationBudgetSettings: "generation_budget_settings",
   timeEntries: "time_entries",
   costEntries: "cost_entries",
   publications: "publications",
@@ -55,7 +58,7 @@ Deno.serve(async (request) => {
 
     const results: Array<{ ownerId: string; storageKey: string; bytes: number }> = [];
     for (const ownerId of ownerIds) {
-      const workspace: Record<string, unknown> = { version: 1, ownerId };
+      const workspace: Record<string, unknown> = { version: 2, ownerId };
       for (const [key, table] of Object.entries(workspaceTables)) {
         const { data, error } = await admin.from(table).select("*").eq("owner_id", ownerId);
         if (error) throw error;
@@ -68,7 +71,7 @@ Deno.serve(async (request) => {
         infrastructure[table] = data ?? [];
       }
       const content = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         ownerId,
         createdAt: new Date().toISOString(),
         workspace,
@@ -88,7 +91,7 @@ Deno.serve(async (request) => {
         Key: storageKey,
         Body: encrypted,
         ContentType: "application/octet-stream",
-        Metadata: { algorithm: "AES-256-GCM", envelope: "12-byte-nonce-plus-ciphertext", schema: "1" },
+        Metadata: { algorithm: "AES-256-GCM", envelope: "12-byte-nonce-plus-ciphertext", schema: "2" },
       }));
       const { error: recordError } = await admin.from("backup_runs").insert({
         owner_id: ownerId,

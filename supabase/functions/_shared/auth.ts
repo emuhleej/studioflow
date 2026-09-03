@@ -47,3 +47,14 @@ export function isBackupJob(request: Request): boolean {
   const supplied = request.headers.get("x-backup-secret") ?? "";
   return configured.length >= 32 && configured === supplied;
 }
+
+export function requireGenerationJob(request: Request): void {
+  if (request.headers.has("authorization")) {
+    throw new Error("Unauthorized: generation recovery accepts internal service authentication only.");
+  }
+  const configured = Deno.env.get("GENERATION_JOB_SECRET") ?? "";
+  const supplied = request.headers.get("x-generation-job-secret") ?? "";
+  if (configured.length < 32 || configured !== supplied) {
+    throw new Error("Unauthorized: invalid generation recovery credential.");
+  }
+}

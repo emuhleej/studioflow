@@ -88,6 +88,35 @@ test("manual generation history preserves complete provider provenance", async (
   await expect(page.getByText("Manual provenance browser test.")).toBeVisible();
 });
 
+test("account-free generation simulation completes without provider access and survives reload", async ({ page }) => {
+  await page.goto("/episodes/episode-fridge");
+  await page.getByRole("tab", { name: "Prompts & generations" }).click();
+  await expect(page.getByText("Real generation off")).toBeVisible();
+  await page.getByRole("button", { name: "Try free simulation" }).click();
+  await page.getByLabel("Simulation type").selectOption("image");
+  await page.getByLabel("Locked prompt version").selectOption("prompt-shot-one-v2");
+  await page.getByLabel("Optional reference image").selectOption("asset-fridge-ref");
+  const simulate = page.getByRole("button", { name: "Run free simulation" });
+  const buttonBox = await simulate.boundingBox();
+  expect(Math.round(buttonBox?.height ?? 0)).toBeGreaterThanOrEqual(44);
+  await simulate.click();
+
+  await expect(page.getByText(/^Free simulation started\./)).toContainText("No AI provider or paid service was contacted");
+  await expect(page.getByText("studioflow-fake · fake-image-v1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(page.getByText("studioflow-simulated-image.png", { exact: true })).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Prompts & generations" }).click();
+  await expect(page.getByText("studioflow-fake · fake-image-v1", { exact: true })).toBeVisible();
+  await expect(page.getByText("studioflow-simulated-image.png", { exact: true })).toBeVisible();
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+});
+
 test("generation results and review decisions persist across reload", async ({ page }) => {
   await page.goto("/episodes/episode-fridge");
   await page.getByRole("tab", { name: "Prompts & generations" }).click();

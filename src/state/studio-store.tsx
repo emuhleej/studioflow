@@ -27,6 +27,7 @@ import type {
 import { rollbackAppendedRecord, rollbackUpdatedRecord, saveWithRetry } from "./cloud-save";
 import { StudioContext, type EpisodeDraft, type Notice, type StudioContextValue } from "./studio-context";
 import { useUploadManager } from "./use-upload-manager";
+import { useGenerationManager } from "./use-generation-manager";
 import { isOwnerWorkspaceLoading, useOwnerAuthorization } from "./use-owner-authorization";
 import {
   createBaseRecord,
@@ -273,6 +274,15 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     getWorkspace: getData,
     setWorkspace: setData,
     appendAsset: (asset) => appendRecord("assets", asset),
+    setNotice,
+  });
+
+  const { simulateGeneration, cancelManagedGeneration, resolveUnknownSubmission } = useGenerationManager({
+    data,
+    isDemo: demoMode,
+    user,
+    getWorkspace: getData,
+    setWorkspace: setData,
     setNotice,
   });
 
@@ -529,14 +539,28 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         const record: GenerationRecord = {
           ...createBaseRecord(data.ownerId),
           ...input,
+          executionMode: "manual",
+          operationalStatus: "recorded",
           provider: input.provider.trim(),
           model: input.model.trim(),
+          requestSettings: {},
+          estimatedCostMicros: input.costCents * 10_000,
+          calculatedCostMicros: input.costCents * 10_000,
+          reservedMaxCostMicros: 0,
+          pricingSnapshot: {},
+          estimatedOutputBytes: 0,
+          reservedOutputBytes: 0,
+          pollAttempts: 0,
+          ingestAttempts: 0,
           outcome: "unreviewed",
           assetIds: [],
         };
         appendRecord("generations", record);
         return record;
       },
+      simulateGeneration,
+      cancelManagedGeneration,
+      resolveUnknownSubmission,
       linkGenerationAsset,
       unlinkGenerationAsset,
       setGenerationOutcome: (generationId, outcome) => {
@@ -592,7 +616,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         setNotice({ tone: "success", message: "StudioFlow metadata was restored from the export." });
       },
     }),
-    [appendRecord, authLoading, cancelUpload, clearEpisodeDraft, data, dataLoading, dismissUpload, episodeDrafts, getData, linkGenerationAsset, mutateRecord, notice, ownerAuthorized, ownerVerificationError, patchEpisodeDraft, pauseUpload, resumeUpload, retryOwnerVerification, retryUpload, session, setData, startUpload, unlinkGenerationAsset, uploadTasks, user],
+    [appendRecord, authLoading, cancelManagedGeneration, cancelUpload, clearEpisodeDraft, data, dataLoading, dismissUpload, episodeDrafts, getData, linkGenerationAsset, mutateRecord, notice, ownerAuthorized, ownerVerificationError, patchEpisodeDraft, pauseUpload, resolveUnknownSubmission, resumeUpload, retryOwnerVerification, retryUpload, session, setData, simulateGeneration, startUpload, unlinkGenerationAsset, uploadTasks, user],
   );
 
   return <StudioContext.Provider value={value}>{children}</StudioContext.Provider>;

@@ -17,6 +17,38 @@ export type CostCategory = "image" | "video" | "voice" | "music" | "editing" | "
 export type EntityKind = "character" | "location" | "prop" | "style";
 export type Platform = "tiktok" | "youtube" | "facebook" | "instagram";
 export type AssetLinkTarget = "project" | "series" | "episode" | "scene" | "shot" | "entity" | "generation";
+export type GenerationExecutionMode = "manual" | "managed";
+export type GenerationMediaKind = "image" | "video";
+export type GenerationOperationalStatus =
+  | "recorded"
+  | "draft"
+  | "submitting"
+  | "queued"
+  | "running"
+  | "saving"
+  | "completed"
+  | "failed"
+  | "cancel_requested"
+  | "cancelled"
+  | "submission_unknown";
+
+export interface GenerationRequestSettings {
+  aspectRatio: "9:16" | "16:9" | "1:1";
+  qualityTier: "draft" | "final";
+  durationSeconds?: number;
+  outputCount: 1;
+  seed?: number;
+}
+
+export interface GenerationPricingSnapshot {
+  provider: string;
+  model: string;
+  currency: "USD";
+  unit: "request" | "second";
+  unitCostMicros: number;
+  creditsPerUnit: number;
+  capturedAt: string;
+}
 
 export interface BaseRecord {
   id: Id;
@@ -107,6 +139,7 @@ export interface Asset extends BaseRecord {
   storageKey: string;
   reviewStatus: AssetReviewStatus;
   source: "upload" | "generation" | "demo";
+  sourceGenerationId?: Id;
   notes: string;
 }
 
@@ -128,13 +161,66 @@ export interface GenerationRecord extends BaseRecord {
   episodeId: Id;
   shotId?: Id;
   promptVersionId?: Id;
+  executionMode: GenerationExecutionMode;
+  mediaKind?: GenerationMediaKind;
+  operationalStatus: GenerationOperationalStatus;
+  clientRequestId?: Id;
   provider: string;
   model: string;
+  providerJobId?: string;
+  apiVersion?: string;
+  modelVersion?: string;
+  requestSettings: GenerationRequestSettings | Record<string, never>;
+  estimatedCostMicros: number;
+  calculatedCostMicros?: number;
+  providerReportedCostMicros?: number;
+  reservedMaxCostMicros: number;
+  pricingSnapshot: GenerationPricingSnapshot | Record<string, never>;
+  providerCreditUnits?: number;
+  estimatedOutputBytes: number;
+  reservedOutputBytes: number;
+  submittedAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  nextPollAt?: string;
+  pollAttempts: number;
+  ingestAttempts: number;
+  failureCode?: string;
+  failureMessage?: string;
+  submissionClaimId?: Id;
+  submissionClaimExpiresAt?: string;
+  providerSubmissionStartedAt?: string;
   costCents: number;
   durationSeconds?: number;
   outcome: AssetReviewStatus;
   assetIds: Id[];
   notes: string;
+}
+
+export interface GenerationInputAsset extends BaseRecord {
+  generationId: Id;
+  assetId: Id;
+  role: "reference_image" | "start_image";
+  position: number;
+}
+
+export interface GenerationEvent extends BaseRecord {
+  generationId: Id;
+  eventType: string;
+  fromStatus?: GenerationOperationalStatus;
+  toStatus?: GenerationOperationalStatus;
+  message: string;
+  detail: Record<string, string | number | boolean | null>;
+}
+
+export interface GenerationBudgetSettings extends BaseRecord {
+  generationEnabled: boolean;
+  maxImageRequestMicros: number;
+  maxVideoRequestMicros: number;
+  dailyLimitMicros: number;
+  monthlyLimitMicros: number;
+  generatedOutputLimitBytes: number;
+  referenceImageLimitBytes: number;
 }
 
 export interface TimeEntry extends BaseRecord {
@@ -147,6 +233,7 @@ export interface TimeEntry extends BaseRecord {
 
 export interface CostEntry extends BaseRecord {
   episodeId: Id;
+  sourceGenerationId?: Id;
   category: CostCategory;
   amountCents: number;
   provider: string;
@@ -181,6 +268,9 @@ export interface WorkspaceData {
   assetLinks: AssetLink[];
   prompts: PromptVersion[];
   generations: GenerationRecord[];
+  generationInputs: GenerationInputAsset[];
+  generationEvents: GenerationEvent[];
+  generationBudgetSettings: GenerationBudgetSettings[];
   timeEntries: TimeEntry[];
   costEntries: CostEntry[];
   publications: Publication[];

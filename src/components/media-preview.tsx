@@ -58,7 +58,7 @@ export function MediaPreview({ asset, controls = false }: { asset: Asset; contro
     };
   }, [asset, isDemo, requestVersion]);
 
-  if (asset.source === "demo") return <MediaPlaceholder asset={asset} />;
+  if (asset.source === "demo" || asset.storageKey.startsWith("fake://")) return <MediaPlaceholder asset={asset} />;
   if (error) {
     return (
       <div className="media-placeholder flex-col gap-2 p-4 text-center" role="alert">

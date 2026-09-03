@@ -87,10 +87,11 @@ Maintain these boundaries:
 - B2 stores private media bytes and encrypted backups.
 - The browser stores temporary UI state and fictional demo data only.
 - Large media uploads directly between the browser and B2 using short-lived signed URLs. Do not proxy large files through Netlify or Supabase.
+- Generated provider outputs have one narrow exception: an internal-only Edge Function may stream one bounded result directly from an exact approved provider host into private B2. It accepts only a stored generation ID, never a caller-supplied URL, never follows redirects, never buffers the complete object, and never stores or returns the temporary provider URL.
 - Cloudflare is deliberately excluded.
 - The public web shell is not a security boundary. Authentication, the singleton owner allowlist, RLS, authenticated Edge Functions, and private B2 objects provide security.
 
-Every owner-scoped database record must carry an indexed `owner_id`. Anonymous and non-owner access must be denied at the database layer, not only hidden in the interface. Edge Functions using privileged credentials must repeat owner verification.
+Every owner-scoped database record must carry an indexed `owner_id`. Anonymous and non-owner access must be denied at the database layer, not only hidden in the interface. Browser-started Edge Functions using privileged credentials must repeat owner verification. Scheduled generation recovery is the only internal-service exception: it uses a separate server-only secret, accepts no caller-supplied owner/job/storage identifiers, selects due records itself, and remains scoped to the singleton owner.
 
 Prefer small vertical feature slices. Reuse existing types, domain helpers, state patterns, shared components, and design tokens before adding new abstractions or dependencies. Do not introduce a new service, framework, state library, database, storage provider, or paid dependency without explicit approval.
 
@@ -169,6 +170,7 @@ Never commit, paste into source, or expose in logs, screenshots, issues, pull re
 
 - `.env` files or secrets.
 - OAuth credentials, service-role keys, B2 keys, encryption keys, tokens, or signed URLs.
+- AI-provider credentials, provider-only signed reference URLs, or temporary generated-output URLs.
 - The production owner UUID or other private account identifiers.
 - Real scripts, prompts, story ideas, generation records, or publication history.
 - Real media, database exports, encrypted backups, or decrypted backup contents.
@@ -185,6 +187,15 @@ Maintain the media safeguards unless the owner explicitly approves a reviewed ch
 - Cancel unfinished multipart uploads after three days.
 - Remove hidden prior B2 versions after one day.
 - Never automatically delete current owner media.
+
+Maintain managed-generation safeguards unless the owner explicitly approves a reviewed change:
+
+- Keep the server-owned `generation_enabled` switch false until the separately approved first paid test.
+- Recalculate and atomically reserve the maximum request cost and expected output bytes before any provider request.
+- Allow only one active managed job, one immutable prepared-intent ID, one linked generated asset, and one generation-linked cost entry.
+- Keep provider calls, credentials, reference URLs, and temporary output URLs outside the browser, database, exports, logs, screenshots, and chat.
+- Treat lost submission responses and uncertain cancellation charges as `submission_unknown`; do not retry a potentially charged request automatically.
+- Do not configure a provider account, key, scheduler secret, paid balance, live function deployment, or production release as part of AI-1 or AI-2.
 
 If a secret or private value may have been exposed, stop, avoid repeating it, explain the scope without quoting it, and recommend rotation or containment.
 

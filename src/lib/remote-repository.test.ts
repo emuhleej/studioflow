@@ -10,5 +10,8 @@ describe("remote repository mapping", () => {
   it("reconciles asset links by their natural relationship during restore", () => {
     expect(getRemoteUpsertOptions("assetLinks")).toEqual({ onConflict: "asset_id,target_type,target_id" });
     expect(getRemoteUpsertOptions("generations")).toBeUndefined();
+    expect(getRemoteUpsertOptions("generationInputs")).toEqual({ onConflict: "generation_id,asset_id,role" });
+    expect(getRemoteUpsertOptions("generationEvents")).toEqual({ onConflict: "id", ignoreDuplicates: true });
+    expect(getRemoteUpsertOptions("generationBudgetSettings")).toEqual({ onConflict: "owner_id" });
   });
 });

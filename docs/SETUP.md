@@ -87,6 +87,16 @@ VITE_DEMO_MODE=false
 
 The Supabase server secret and all B2 values must never use a `VITE_` prefix.
 
+## Managed AI configuration boundary
+
+AI-1 and AI-2 require no AI-provider account or API key. Their fake-provider lifecycle and Runway-shaped adapter tests are account-free, and `generation_enabled` remains false. Do not create or add any of the following until the separate AI-3 approval gates in `docs/features/AI_GENERATION_PLAN.md`:
+
+- `RUNWAYML_API_SECRET` — Runway server credential; never a browser or Netlify variable.
+- `RUNWAY_OUTPUT_HOSTS` — comma-separated exact output hostnames verified at the live-test gate; never use wildcards or inferred parent domains.
+- `GENERATION_JOB_SECRET` — independent random internal-service credential for scheduled reconciliation/ingest; never reuse the backup secret or accept it from browser code.
+
+The source tree contains `generation-start`, `generation-cancel`, `generation-ingest`, and `generation-reconcile` for mocked AI-2 verification. AI-2 does not deploy or schedule these functions. Future deployment requires its own approval, server-secret configuration, an exact-host review, and verification that the global switch is still false before the separately approved paid test.
+
 ## 5. Netlify preview
 
 Connect the GitHub repository to Netlify, configure the same three public browser values, and leave production publishing unapproved. Branch previews may be reviewed first. Confirm the deploy context does not enable paid add-ons or automatic overages.

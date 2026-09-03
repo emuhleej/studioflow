@@ -1,6 +1,7 @@
 import { createContext } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import type { GenerationInput } from "../lib/generation-history";
+import type { PrepareManagedGenerationInput } from "../lib/managed-generation";
 import type { PromptPurpose } from "../lib/prompt-history";
 import type { UploadTask } from "../lib/upload-task";
 import type {
@@ -92,6 +93,13 @@ export interface StudioContextValue {
   addPublication: (episodeId: string, platform: Platform, url: string) => Publication;
   addPromptVersion: (episodeId: string, purpose: PromptPurpose, content: string, shotId?: string) => PromptVersion;
   addGeneration: (input: GenerationInput) => GenerationRecord;
+  simulateGeneration: (input: PrepareManagedGenerationInput) => Promise<string>;
+  cancelManagedGeneration: (generationId: string) => Promise<void>;
+  resolveUnknownSubmission: (
+    generationId: string,
+    outcome: "no_charge" | "confirmed_charge",
+    confirmedCostMicros?: number,
+  ) => void;
   linkGenerationAsset: (generationId: string, assetId: string) => AssetLink;
   unlinkGenerationAsset: (generationId: string, assetId: string) => Promise<void>;
   setGenerationOutcome: (generationId: string, outcome: AssetReviewStatus) => void;

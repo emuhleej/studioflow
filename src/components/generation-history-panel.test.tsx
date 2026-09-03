@@ -8,14 +8,28 @@ const addGeneration = vi.fn();
 const linkGenerationAsset = vi.fn();
 const unlinkGenerationAsset = vi.fn();
 const setGenerationOutcome = vi.fn();
+const simulateGeneration = vi.fn();
+const cancelManagedGeneration = vi.fn();
+const resolveUnknownSubmission = vi.fn();
 
 vi.mock("../state/studio-store", () => ({
-  useStudio: () => ({ data: demoWorkspace, addGeneration, linkGenerationAsset, unlinkGenerationAsset, setGenerationOutcome }),
+  useStudio: () => ({
+    data: demoWorkspace,
+    isDemo: true,
+    addGeneration,
+    simulateGeneration,
+    cancelManagedGeneration,
+    resolveUnknownSubmission,
+    linkGenerationAsset,
+    unlinkGenerationAsset,
+    setGenerationOutcome,
+  }),
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
   unlinkGenerationAsset.mockResolvedValue(undefined);
+  simulateGeneration.mockResolvedValue("simulated-generation");
   addGeneration.mockImplementation((input) => ({
     ...demoWorkspace.generations[0],
     ...input,
@@ -26,6 +40,27 @@ beforeEach(() => {
 });
 
 describe("GenerationHistoryPanel", () => {
+  it("starts an account-free image simulation with a locked prompt and optional reference", async () => {
+    const user = userEvent.setup();
+    render(<GenerationHistoryPanel episodeId="episode-fridge" />);
+    expect(screen.getByText("Real generation off")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try free simulation" }));
+    await user.selectOptions(screen.getByLabelText("Simulation type"), "image");
+    await user.selectOptions(screen.getByLabelText("Locked prompt version"), "prompt-shot-one-v2");
+    await user.selectOptions(screen.getByLabelText("Optional reference image"), "asset-fridge-ref");
+    await user.click(screen.getByRole("button", { name: "Run free simulation" }));
+    expect(simulateGeneration).toHaveBeenCalledWith({
+      episodeId: "episode-fridge",
+      shotId: "shot-1",
+      promptVersionId: "prompt-shot-one-v2",
+      mediaKind: "image",
+      model: "fake-image-v1",
+      settings: { aspectRatio: "9:16", qualityTier: "draft", durationSeconds: undefined, outputCount: 1 },
+      references: [{ assetId: "asset-fridge-ref", role: "reference_image" }],
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("No AI provider or paid service was contacted");
+  });
+
   it("saves complete manual provenance with a prompt and matching shot", async () => {
     const user = userEvent.setup();
     render(<GenerationHistoryPanel episodeId="episode-fridge" />);
@@ -58,7 +93,7 @@ describe("GenerationHistoryPanel", () => {
   it("shows the prompt, shot, duration, cost, and notes for an existing record", () => {
     render(<GenerationHistoryPanel episodeId="episode-fridge" />);
     expect(screen.getByText("Example Video · cinema-v1")).toBeInTheDocument();
-    expect(screen.getByText("Video v2 · Immediate argument")).toBeInTheDocument();
+    expect(screen.getAllByText("Video v2 · Immediate argument")).not.toHaveLength(0);
     expect(screen.getByText("6s")).toBeInTheDocument();
     expect(screen.getByText("$1.84")).toBeInTheDocument();
     expect(screen.getByText("Selected for expression and continuity.")).toBeInTheDocument();

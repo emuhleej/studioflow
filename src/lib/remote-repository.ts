@@ -16,6 +16,9 @@ const tableByKey: Record<WorkspaceArrayKey, string> = {
   assetLinks: "asset_links",
   prompts: "prompt_versions",
   generations: "generation_records",
+  generationInputs: "generation_input_assets",
+  generationEvents: "generation_events",
+  generationBudgetSettings: "generation_budget_settings",
   timeEntries: "time_entries",
   costEntries: "cost_entries",
   publications: "publications",
@@ -47,8 +50,12 @@ export function fromDatabaseRecord<T>(record: Record<string, unknown>): T {
   return convertKeys(record, toCamelCase) as T;
 }
 
-export function getRemoteUpsertOptions(key: WorkspaceArrayKey): { onConflict: string } | undefined {
-  return key === "assetLinks" ? { onConflict: "asset_id,target_type,target_id" } : undefined;
+export function getRemoteUpsertOptions(key: WorkspaceArrayKey): { onConflict: string; ignoreDuplicates?: boolean } | undefined {
+  if (key === "assetLinks") return { onConflict: "asset_id,target_type,target_id" };
+  if (key === "generationInputs") return { onConflict: "generation_id,asset_id,role" };
+  if (key === "generationEvents") return { onConflict: "id", ignoreDuplicates: true };
+  if (key === "generationBudgetSettings") return { onConflict: "owner_id" };
+  return undefined;
 }
 
 export async function loadRemoteWorkspace(user: User): Promise<WorkspaceData> {
@@ -56,7 +63,7 @@ export async function loadRemoteWorkspace(user: User): Promise<WorkspaceData> {
   const client = supabase;
 
   const data: WorkspaceData = {
-    version: 1,
+    version: 2,
     ownerId: user.id,
     projects: [],
     series: [],
@@ -69,6 +76,9 @@ export async function loadRemoteWorkspace(user: User): Promise<WorkspaceData> {
     assetLinks: [],
     prompts: [],
     generations: [],
+    generationInputs: [],
+    generationEvents: [],
+    generationBudgetSettings: [],
     timeEntries: [],
     costEntries: [],
     publications: [],

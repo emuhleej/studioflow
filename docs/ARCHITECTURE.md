@@ -184,6 +184,7 @@ Pages consume the store through `useStudio()`. Domain calculations that do not r
 - production entities
 - assets and asset links
 - prompt versions and generation records
+- ordered generation inputs, append-only generation events, and owner generation-budget settings
 - time entries and cost entries
 - publications and quick captures
 
@@ -223,7 +224,8 @@ Private mode requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, w
 5. `loadRemoteWorkspace()` reads every mapped owner table in parallel and converts rows to the client model.
 6. Store commands update the in-memory aggregate and call `upsertRemoteRecord()` for remote persistence.
 7. Generation-result commands persist the explicit asset link; database triggers synchronize the compatible generation result array.
-8. PostgreSQL constraints, triggers, and RLS enforce rules independently of the browser.
+8. Managed generation commands use provider-neutral browser/domain contracts. Account-free demo work uses the deterministic fake provider; private provider execution is owned by authenticated Edge Functions and PostgreSQL claims rather than by the browser.
+9. PostgreSQL constraints, triggers, and RLS enforce rules independently of the browser.
 
 The browser's route guard improves experience; it is not the authorization boundary. Direct database requests must remain protected by RLS and the singleton owner check.
 
@@ -248,6 +250,17 @@ Every production record that belongs to a workspace carries `owner_id`. Owner ac
 `supabase/functions/_shared/auth.ts` authenticates the bearer token and verifies the singleton owner before returning privileged database access. Edge Functions must use this helper rather than independently inventing authorization.
 
 `supabase/functions/_shared/b2.ts` owns B2 client creation, bucket lookup, storage-key construction, media limits, multipart constants, and server-side MIME validation. Media functions reuse these values and helpers.
+
+Managed AI orchestration is split deliberately:
+
+- `src/lib/generation-provider.ts` defines provider-neutral capabilities, requests, estimates, jobs, and normalized results. `src/lib/managed-generation.ts` owns the pure lifecycle, reservation, interruption, and idempotent demo rules.
+- `src/state/use-generation-manager.ts` runs the deterministic account-free simulation and refreshes visible private job state. It does not hold an AI credential or call a real provider.
+- `supabase/functions/_shared/runway.ts` is the first provider adapter. AI-2 verifies it only with mocked HTTP; no Runway credential or live request is part of that checkpoint.
+- `generation-start` and `generation-cancel` require the authenticated singleton owner and accept only a generation ID. The server reloads the immutable prompt, settings, inputs, and pricing context before acting.
+- `generation-reconcile` uses a separate internal-service credential, accepts no caller-supplied record identifiers, selects due singleton-owner rows itself, and applies bounded polling/recovery.
+- `generation-ingest` is internal-only and accepts only a generation ID. It retrieves the provider result through the adapter, keeps the temporary URL in memory, verifies an exact HTTPS host with redirects disabled, then streams at most the persisted output reservation into private B2.
+
+Provider-only signed reference URLs and temporary generated-output URLs are never returned to the browser, written to PostgreSQL, included in exports/backups, or logged. The real-generation switch remains false through AI-2.
 
 ### Media lifecycle
 
@@ -284,11 +297,13 @@ sequenceDiagram
 - Permanent deletion requires the metadata record to be in trash first. The server cleanup transaction removes explicit links and asset IDs embedded in shots, entities, and generation records.
 - B2 lifecycle rules live in `infra/b2-lifecycle-rules.json`.
 
-The browser must never receive B2 application credentials. Large media must never be proxied through Netlify or Supabase.
+The browser must never receive B2 application credentials. Ordinary large media must never be proxied through Netlify or Supabase.
+
+Generated provider results are the narrow exception to the ordinary direct browser/B2 transfer rule. They are not ordinary 2 GB uploads: one internal Edge invocation streams a single generated image or video through a bounded 250 MB-or-lower reservation, with a required direct `200`, declared length, approved MIME type, exact provider hostname, and no redirects. The metadata completion transaction uses the generation ID as its idempotent asset identity and creates at most one asset, one canonical asset link, and one linked cost entry.
 
 ### Backup and error recording
 
-- `metadata-backup` reads owner-scoped records, creates an import-compatible workspace package, encrypts it with AES-256-GCM, and writes the encrypted object to private B2 storage.
+- `metadata-backup` reads owner-scoped records, including generation inputs, lifecycle events, budget settings, and linked costs, creates an import-compatible version 2 workspace package, encrypts it with AES-256-GCM, and writes the encrypted object to private B2 storage.
 - `scripts/decrypt-backup.mjs` is the local decryption tool. The key remains outside the repository.
 - `recordClientError()` records a bounded error message, context, route, and user agent for authenticated users. It must not include scripts, prompts, form values, signed URLs, or media content.
 
@@ -448,8 +463,8 @@ The following rules must remain true unless the owner explicitly approves an arc
 2. **One application command layer:** pages and components mutate workspace records through `StudioProvider`; do not add an unrelated global store or direct persistence path for the same records.
 3. **Two explicit persistence modes:** fictional demo storage is browser-local; the private workspace uses Supabase for metadata and B2 for media. Both modes present the same domain model to the UI.
 4. **Owner enforcement is server-side:** route guards are not sufficient. Owner-scoped tables require indexed `owner_id`, RLS, and the singleton allowlist.
-5. **Privileged functions re-authenticate:** every Edge Function using service credentials or B2 access verifies the bearer token and configured owner.
-6. **Media bytes bypass application hosting:** browser-to-B2 signed transfer is mandatory for large files. Supabase and Netlify do not proxy media bodies.
+5. **Privileged functions authenticate by purpose:** browser-started Edge Functions verify the bearer token and configured owner. Internal generation recovery/ingest uses a distinct server-only secret, accepts no caller-supplied owner or storage context, and selects or reloads records itself.
+6. **Media bytes bypass application hosting:** browser-to-B2 signed transfer is mandatory for ordinary large files. The only proxy exception is bounded internal streaming of a provider-generated result directly into private B2; temporary provider URLs never cross into product state.
 7. **B2 remains private:** browser access uses short-lived, purpose-specific signed URLs. Credentials never enter the browser bundle.
 8. **History is append-only:** script and prompt revisions create new records and remain immutable at the database layer.
 9. **Storage safety is enforced twice:** media type, non-empty size, 2 GB maximum, and 9 GB cap are validated before upload and enforced by server/database rules.
@@ -461,6 +476,8 @@ The following rules must remain true unless the owner explicitly approves an arc
 15. **Build is not deployment:** tests, CI, and preview builds do not authorize or imply a production release.
 16. **Failed cloud writes reconcile visibly:** ordinary metadata writes retry once and roll back only the still-current optimistic change after a second failure. Newer local edits are never overwritten by an older rollback.
 17. **Generation results have one canonical relationship:** explicit asset links are authoritative; the generation result-ID array remains synchronized only for backward compatibility and export continuity.
+18. **Managed generation is provider-neutral and server-owned:** browser/domain code uses normalized contracts; adapters translate provider fields only on the server; atomic claims, reservations, lifecycle transitions, and idempotency constraints remain authoritative in PostgreSQL.
+19. **AI-2 is inert by default:** the fake provider is account-free, the Runway adapter is mock-tested, `generation_enabled` is false, and no live provider key, request, scheduler, function deployment, or production promotion is implied.
 
 ## When to update this document
 

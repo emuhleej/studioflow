@@ -5,7 +5,7 @@ const now = "2026-08-31T20:00:00.000Z";
 const base = { ownerId, createdAt: now, updatedAt: now };
 
 export const demoWorkspace: WorkspaceData = {
-  version: 1,
+  version: 2,
   ownerId,
   projects: [
     {
@@ -302,13 +302,39 @@ export const demoWorkspace: WorkspaceData = {
       episodeId: "episode-fridge",
       shotId: "shot-1",
       promptVersionId: "prompt-shot-one-v2",
+      executionMode: "manual",
+      operationalStatus: "recorded",
       provider: "Example Video",
       model: "cinema-v1",
+      requestSettings: {},
+      estimatedCostMicros: 1_840_000,
+      calculatedCostMicros: 1_840_000,
+      reservedMaxCostMicros: 0,
+      pricingSnapshot: {},
+      estimatedOutputBytes: 0,
+      reservedOutputBytes: 0,
+      pollAttempts: 0,
+      ingestAttempts: 0,
       costCents: 184,
       durationSeconds: 6,
       outcome: "selected",
       assetIds: ["asset-shot-one"],
       notes: "Selected for expression and continuity.",
+    },
+  ],
+  generationInputs: [],
+  generationEvents: [],
+  generationBudgetSettings: [
+    {
+      ...base,
+      id: "generation-budget-demo",
+      generationEnabled: false,
+      maxImageRequestMicros: 100_000,
+      maxVideoRequestMicros: 300_000,
+      dailyLimitMicros: 2_000_000,
+      monthlyLimitMicros: 10_000_000,
+      generatedOutputLimitBytes: 250_000_000,
+      referenceImageLimitBytes: 16_000_000,
     },
   ],
   timeEntries: [
