@@ -11,9 +11,9 @@ This document is StudioFlow's current project dashboard. It records the state a 
 | Status | Active development |
 | Production | Stable |
 | Current major feature | Project Studio |
-| Active implementation unit | Repository gate — PR #5 awaits separate owner approval to correct and merge |
-| Latest completed checkpoint | Milestone 10F — guarded private-preview and live-service verification |
-| Next checkpoint to open | PR #5 merge decision; production release and AI-1 remain separate later decisions |
+| Active implementation unit | None — awaiting the owner's next explicitly selected gate |
+| Latest completed checkpoint | Repository gate — PR #5 merged into `main` as `0914fd9` with production still locked |
+| Next checkpoint to open | Choose exactly one: the production-release gate or AI-1; neither is currently approved |
 
 “Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
 
@@ -48,7 +48,7 @@ Milestone 10A connected the hosted Supabase project, applied the five production
 
 Milestones 10C–10E are complete. The private bucket, restricted key, lifecycle/CORS safeguards, server-only secrets, and eight functions are configured. Generated media proved single upload, preview, download, trash/restore, multipart pause/resume, provider cancellation, and anonymous denial. The encrypted backup was created, privately downloaded, decrypted, validated, and restored with non-destructive upsert ordering. All generated provider, database, and local test data was then removed. The public GitHub repository is connected, and its isolated database-security and application jobs passed.
 
-Milestone 10F is complete. The authorization startup race is permanently fixed in commit `20c7f44`; commit `5a56947` adds the fail-closed production-build guard and its verified tests. Guarded private Deploy Preview `6a98ade0b248ff000843f8f0` serves commit `294acc8`. Netlify Auto Publishing is locked. A fresh GitHub sign-out/sign-in returned to the exact preview as the owner, and three reloads did not reproduce the false non-owner state. A 522-byte PNG completed upload, private 16 × 16 preview, matching-hash download, trash, restore, and permanent deletion; the delete function returned success, all queried temporary workflow tables returned to zero, and the browser console remained clear. The earlier direct-route, responsive, local-test, Playwright, and CI checks also pass. PR #5 remains unmerged pending a separate owner decision. AI-provider execution and production release remain separate approval gates.
+Milestone 10F is complete. The authorization startup race is permanently fixed in commit `20c7f44`; commit `5a56947` adds the fail-closed production-build guard and its verified tests. Guarded private Deploy Preview `6a98ade0b248ff000843f8f0` serves commit `294acc8`. Netlify Auto Publishing is locked. A fresh GitHub sign-out/sign-in returned to the exact preview as the owner, and three reloads did not reproduce the false non-owner state. A 522-byte PNG completed upload, private 16 × 16 preview, matching-hash download, trash, restore, and permanent deletion; the delete function returned success, all queried temporary workflow tables returned to zero, and the browser console remained clear. The earlier direct-route, responsive, local-test, Playwright, and CI checks also pass. Final PR head `3d850db` was merged into `main` as `0914fd9`; Netlify canceled the merge-triggered production attempt while Auto Publishing remained locked, and the published shell stayed at `6c18ece`. AI-provider execution and production release remain separate approval gates.
 
 ## Locked project-level decisions
 
@@ -82,8 +82,8 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 - Milestones 10A–10B applied all six repository migrations to the hosted Supabase project. Verification found 19 of 19 public tables using RLS, 18 hardened owner policies, no anonymous public-table grants, and migration history matching the source filenames.
 - Hosted-schema TypeScript types were regenerated, and `npm run verify` passed: type-check, lint, all 63 unit/component tests, and the production build.
 - Supabase security and performance advisors ran successfully with no errors and no performance warnings. The expected GitHub-only authentication caveat and informational findings are recorded in `docs/features/LIVE_SERVICE_READINESS_STATE.md`.
-- The isolated pgTAP database-security job passed in GitHub Actions in 2 minutes 49 seconds. All seven checks on documentation-only closeout head `faef374` concluded without failure: six successful and one neutral. Local verification passed type-check, lint, 69 unit/component tests, the production build, and all 32 Playwright scenarios. The first normal follow-up secret scan detected no leaks.
-- Local Git checkpoints now include the initial production core and Milestones 7–9 (`8f2413c`). The repository is published at `emuhleej/studioflow` and tracks `origin/main`.
+- The isolated pgTAP database-security job passed in GitHub Actions in 2 minutes 49 seconds. All seven checks on documentation-only closeout head `faef374` concluded without failure: six successful and one neutral. Final PR head `3d850db` was merged into `main` as `0914fd9`. Local verification passed type-check, lint, 69 unit/component tests, the production build, and all 32 Playwright scenarios. The first normal follow-up secret scan detected no leaks.
+- Local Git checkpoints now include the initial production core and Milestones 7–9 (`8f2413c`). The repository is published at `emuhleej/studioflow`; local `main` was synchronized with merged remote commit `0914fd9` before this documentation update.
 - Guarded private Netlify Deploy Preview deployment `6a98ade0b248ff000843f8f0` at application revision `294acc8` contains the auth fix, production guard, and proposed provider-neutral AI plan. Owner access, a fresh OAuth cycle, three reloads, Creator HQ, `/library`, `/media`, a clean console, route refreshes, all four supported viewport sizes, and the exact tiny-media cleanup cycle are verified. Documentation-only closeout deployment `6a98b784104acf0008957b1c` at `faef374` completed; the canonical preview still opened Creator HQ as the owner with no browser warnings or errors.
 - The authorization-race regression suite increased the verified application total to 69 unit/component tests; `npm run verify` and all 32 Playwright scenarios pass.
 - Netlify published an initial production-context build of `main` at `6c18ece` during site creation. It remains edge-protected, has no production browser values, and is not an approved release. Site-level Auto Publishing is locked.
@@ -93,7 +93,7 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 
 ## Next checkpoint
 
-Open the **PR #5 repository gate** only after re-reading:
+Before opening the next separately approved gate, re-read:
 
 1. `CODEX.md`
 2. This `docs/PROJECT_STATE.md`
@@ -106,7 +106,7 @@ Open the **PR #5 repository gate** only after re-reading:
 9. `docs/SETUP.md`
 10. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-The exact next task is to obtain separate owner approval to correct the stale PR #5 description and merge the fully checked branch, then verify the merge without triggering production. Do not promote production, start AI-1, add AI providers, buy a domain, or change paid-service settings under that approval.
+The exact next task is to obtain the owner's explicit selection of exactly one next gate: the production-release procedure or AI-1. Do not begin either gate, add AI providers, buy a domain, or change paid-service settings until that selection is made.
 
 ## Active documentation
 
