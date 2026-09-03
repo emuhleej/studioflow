@@ -18,3 +18,9 @@ Each week follows the same loop: complete one vertical feature slice, walk throu
 Budget 6–10 hours for each learning week. A repository feature being present is not a substitute for the walkthrough and owner-coded modification.
 
 On the current desktop, application verification runs locally while hosted Supabase handles reviewed schema application, type generation, and advisor checks. GitHub Actions retains the isolated pgTAP database-security gate.
+
+## Post-production-core AI checkpoint
+
+AI-1 and AI-2 are complete as an account-free follow-on checkpoint. The application now includes the provider-neutral managed-generation model, deterministic fictional simulator, budget/storage reservations, lifecycle recovery, mocked Runway translation, and bounded private-output-ingest source. Hosted Supabase contains the additive schema with real generation disabled. No provider account, key, request, charge, generation-function deployment, merge, preview deployment, or production release is part of this checkpoint.
+
+The next unit is AI-3 Gate 1 only and requires a new owner approval before any Runway account or prepaid balance is created.

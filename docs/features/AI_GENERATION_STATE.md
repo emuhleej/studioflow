@@ -61,7 +61,7 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 
 - Fictional demo: integrated and account-free; image/video simulation uses the fake provider and creates a labeled private-placeholder record at $0.00.
 - Private browser workspace: managed collections load through the existing repository; active rows refresh every 15 seconds.
-- Supabase schema: additive migration prepared and covered by isolated pgTAP.
+- Supabase schema: additive migration applied to the hosted project; generated types refreshed; all 22 public tables have RLS enabled; the singleton settings row is disabled.
 - Backblaze B2: existing private storage path retained; generated-output ingest is source-only and not deployed.
 - Runway: adapter and HTTP behavior mocked only; no account, key, request, origin, timeout, output, or charge has been live-verified.
 - Netlify/production: unchanged and locked.
@@ -79,6 +79,8 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 - Exactly-once generated asset, canonical link, and generation-linked cost completion rules.
 - Version 2 import/export/backup model and version 1 normalization.
 - Permanent architecture, security, and decision documentation for the two narrow server exceptions.
+- Hosted migration history, schema lint, generated database types, RLS/table inventory, generation-switch state, and security/performance advisors verified after application.
+- GitHub application, secret, 36-scenario browser, and 80-assertion database-security checks pass on the AI-1/AI-2 branch.
 
 ## Partially Implemented
 

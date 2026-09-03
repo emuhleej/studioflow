@@ -4,7 +4,7 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: Milestone 10F private-preview validation is complete. Guarded Deploy Preview `6a98ade0b248ff000843f8f0` at commit `294acc8` includes the startup authorization fix from `20c7f44` and the fail-closed production-build guard from `5a56947`. Netlify Auto Publishing is locked; a fresh GitHub sign-out/sign-in and three reloads preserved owner access; and a 522-byte private image completed upload, preview, download, trash, restore, permanent deletion, and exact database cleanup with no browser warnings or errors. The application, 69 unit/component tests, production build, six guard checks, and all 32 Playwright scenarios pass. PR #5 was merged into `main` as `0914fd9`; the merge-triggered production attempt was canceled by the lock, and production remains separately unapproved.
+> Status: AI-1 and AI-2 are complete on draft PR #6. StudioFlow now has an account-free image/video simulator, provider-neutral managed-generation records, hard cost/storage safeguards, recoverable job state, and a Runway-shaped connector tested only with mocks. The additive schema is live with real generation disabled. Local verification passes 87 unit/component tests, six production-lock checks, and the production build; GitHub passes all 36 browser scenarios, secret scanning, and all 80 database assertions. No AI account, key, request, charge, generation-function deployment, merge, preview deployment, or production release was performed.
 
 Netlify published one initial `main` build while the site was being created despite the repository production-ignore rule. That URL remains behind Netlify access control and has no production browser variables, but it is not an approved StudioFlow production release. Do not remove its protection or publish another production build without separate approval.
 
@@ -17,6 +17,8 @@ Netlify published one initial `main` build while the site was being created desp
 - Retained media upload tasks with progress, pause, resume, retry, cancellation, and multipart completed-part recovery.
 - Expiring private previews, purpose-specific downloads, editable media details, multi-context production links, recoverable trash, and confirmed deletion with orphan cleanup.
 - Shot-aware immutable prompt history and complete manual generation provenance for provider, model, prompt version, shot, cost, duration, notes, linked result media, and selected/rejected decisions.
+- Deterministic account-free image/video simulation with lifecycle history, cancellation, reload recovery, and $0.00 fictional results.
+- Provider-neutral managed-generation contracts, atomic budget/storage reservations, append-only events, duplicate prevention, and source-only mocked Runway/recovery/private-ingest functions. Real generation remains switched off.
 - Episode Media views that include direct uploads plus media linked through episode scenes, shots, and generation results.
 - Cloud metadata saves retry once and roll back only the still-current optimistic change after a second failure.
 - Time entries, cost entries, publication links, per-episode totals, metadata export, and restore.
@@ -58,7 +60,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Database migrations and generated types are verified against the connected hosted Supabase project. The full isolated pgTAP suite passed in GitHub Actions and may also run on a capable development machine with Docker:
+Database migrations and generated types are verified against the connected hosted Supabase project. The full isolated 80-assertion pgTAP suite passed in GitHub Actions and may also run on a capable development machine with Docker:
 
 ```powershell
 npm run supabase:start
@@ -80,7 +82,8 @@ Important operational documents:
 - [Ten-week learning rhythm](docs/BUILD-PLAN.md)
 - [Architecture decisions](docs/ARCHITECTURE.md)
 - [Milestone 9 workflow trial](docs/features/REAL_WORKFLOW_TRIAL_STATE.md)
-- [Proposed AI image and video plan](docs/features/AI_GENERATION_PLAN.md)
+- [AI image and video checkpoint](docs/features/AI_GENERATION_STATE.md)
+- [AI image and video plan](docs/features/AI_GENERATION_PLAN.md)
 
 ## Repository policy
 
@@ -89,4 +92,4 @@ Important operational documents:
 - Production deploys require a separate, explicit approval and a protected-URL verification.
 - The project intentionally has no license for now. Default copyright applies.
 
-AI generation, automatic posting, analytics imports, customer accounts, teams, billing, and the full editor are later phases—not hidden version-one promises.
+Live paid AI generation begins only at the separately approved AI-3 gates. Automatic posting, analytics imports, customer accounts, teams, billing, and the full editor remain later phases—not hidden version-one promises.

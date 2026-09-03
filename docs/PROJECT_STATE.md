@@ -1,6 +1,6 @@
 # StudioFlow Project State
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 This document is StudioFlow's current project dashboard. It records the state a fresh coding agent needs in order to resume work safely. Read `CODEX.md` first, then this file, before opening a feature checkpoint.
 
@@ -10,10 +10,10 @@ This document is StudioFlow's current project dashboard. It records the state a 
 | --- | --- |
 | Status | Active development |
 | Production | Stable |
-| Current major feature | Project Studio |
-| Active implementation unit | None — awaiting the owner's next explicitly selected gate |
-| Latest completed checkpoint | Repository gate — PR #5 merged into `main` as `0914fd9` with production still locked |
-| Next checkpoint to open | Choose exactly one: the production-release gate or AI-1; neither is currently approved |
+| Current major feature | AI Image and Video Generation |
+| Active implementation unit | None — AI-1 and AI-2 are complete; the feature is paused before AI-3 |
+| Latest completed checkpoint | Account-free AI foundation and mocked Runway connector on draft PR #6; production remains locked |
+| Next checkpoint to open | AI-3 Gate 1 only, after explicit owner approval for a Runway account and minimum prepaid balance |
 
 “Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
 
@@ -26,13 +26,15 @@ This document is StudioFlow's current project dashboard. It records the state a 
 - Fictional browser-only demo workspace using localStorage and IndexedDB.
 - Media metadata, asset links, upload-session records, trash state, review state, and image/audio/video classifications.
 - Media safeguards for supported formats, non-empty files, a 2 GB per-file maximum, an 8 GB warning, and a 9 GB upload block.
-- Connected hosted Supabase schema with six reviewed migrations, 19 row-level-secured public tables, a configured singleton owner allowlist, hardened owner-only RLS, generated TypeScript types, and pgTAP coverage ready for isolated CI execution.
+- Connected hosted Supabase schema with seven reviewed migrations, 22 row-level-secured public tables, a configured singleton owner allowlist, hardened owner-only RLS, generated TypeScript types, and passing isolated pgTAP coverage.
 - Configured GitHub OAuth with verified signed-out, non-owner, and real owner behavior; OAuth credentials and the owner UUID remain outside the repository.
 - Supabase Edge Function code for private B2 upload, multipart signing, resume, completion, cancellation, preview URLs, deletion, and encrypted metadata backup.
 - Connected private Backblaze B2 bucket with server-side encryption, restricted credentials, exact local and approved Deploy Preview CORS origins, one-day hidden-version cleanup, and three-day abandoned-multipart cleanup.
 - Eight active Supabase Edge Functions with provider and backup credentials stored only as server-side secrets.
 - Prompt-version and generation-provenance records without live AI-provider execution.
 - Same-project generation result linking, synchronized compatibility references, and selected/rejected/unreviewed attempt decisions.
+- Provider-neutral managed-generation records, immutable input/history records, hard budget and storage reservations, atomic submission/ingest rules, one-active-job enforcement, and a server-authoritative generation switch that remains off.
+- Deterministic account-free image/video simulation in the fictional workspace plus source-only, mocked Runway request, cancellation, reconciliation, and private-output-ingest adapters. No generation function is deployed.
 - Time, cost, publication, per-episode totals, metadata export, and restore workflows.
 - Vitest, Playwright, lint, type-check, production-build, and database-test configuration.
 - Modular workspace state with separate public context, demo persistence, upload management, current-state tracking, and cloud-save recovery.
@@ -42,7 +44,11 @@ This document is StudioFlow's current project dashboard. It records the state a 
 
 ## Current active work
 
-The current major feature remains **Project Studio**. The account-free production workflow through Milestone 9 is complete and preserved in local Git checkpoint `8f2413c`.
+The current major feature is **AI Image and Video Generation**. AI-1 and AI-2 are complete on `codex/ai-1-2-foundation` and draft PR #6. The account-free simulator is integrated with the fictional episode workspace, while the provider connector and recovery/ingest functions remain source-only and mock-tested.
+
+The additive managed-generation migration is applied to hosted Supabase, the hosted TypeScript definitions are regenerated, all 22 public tables have RLS enabled, and the singleton generation settings row is confirmed disabled. Live database lint reports no schema errors. Current advisors add no AI-related security warning or error; performance results are informational, including expected unused fresh indexes and an optional generation-event foreign-key index.
+
+No Runway account, organization, balance, key, provider call, paid request, scheduled recovery job, generation-function deployment, preview deployment, production deployment, or merge was performed. AI-3 requires a new explicit approval.
 
 Milestone 10A connected the hosted Supabase project, applied the five production-core migrations, regenerated `src/lib/database.types.ts`, and ran hosted checks. Milestone 10B added and applied the reviewed owner-auth hardening migration, configured GitHub OAuth and local callbacks, disabled unused email/password login, registered the single owner, and verified signed-out, non-owner, and real owner access. All 19 public tables have row-level security enabled and anonymous public-table grants are zero.
 
@@ -88,6 +94,8 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 - The authorization-race regression suite increased the verified application total to 69 unit/component tests; `npm run verify` and all 32 Playwright scenarios pass.
 - Netlify published an initial production-context build of `main` at `6c18ece` during site creation. It remains edge-protected, has no production browser values, and is not an approved release. Site-level Auto Publishing is locked.
 - GitHub OAuth, exact local and preview redirects, the singleton owner, private owner access, eight Edge Functions, server-only secrets, and the live B2 integration are configured. No custom domain or approved production release exists.
+- AI-1/AI-2 verification passes locally with TypeScript, lint, 87 unit/component tests, six production-lock checks, and the production build. GitHub Actions run `33705389130` passes the same application checks, all 36 Playwright scenarios, secret scanning, and all 80 pgTAP assertions across six database suites.
+- Hosted migration history now matches all seven source migrations. Live database lint reports no schema errors; all 22 public tables have RLS enabled; generated hosted types include the three managed-generation tables and four service-only database functions; `generation_enabled` remains false.
 - The private B2 integration is live-verified. Two generated test assets and one encrypted test backup were written, exercised, restored, and permanently removed; the dedicated bucket and hosted owner workspace returned to zero test records.
 - Provider configuration and production deployment remain separate approval gates.
 
@@ -106,7 +114,7 @@ Before opening the next separately approved gate, re-read:
 9. `docs/SETUP.md`
 10. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-The exact next task is to obtain the owner's explicit selection of exactly one next gate: the production-release procedure or AI-1. Do not begin either gate, add AI providers, buy a domain, or change paid-service settings until that selection is made.
+The exact next task is to obtain explicit owner approval for **AI-3 Gate 1 only**: create the Runway Developer Portal account/organization and purchase the minimum prepaid balance. Do not create an API key, configure a server secret, deploy generation functions, submit a provider request, incur a generation charge, merge PR #6, or release production without the separately named approval.
 
 ## Active documentation
 
@@ -114,7 +122,8 @@ The exact next task is to obtain the owner's explicit selection of exactly one n
 - `docs/features/LIVE_SERVICE_READINESS_STATE.md` — completed 10A–10F live-service integration and the separate repository/release boundaries.
 - `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` — completed fictional Milestone 9 rehearsal and remaining owner-private/physical-device trials.
 - `docs/features/GENERATION_HISTORY_STATE.md` — completed manual provenance scope, hosted verification, and the boundary to future managed generation.
-- `docs/features/AI_GENERATION_PLAN.md` — proposed provider-neutral image/video implementation units; blocked until the owner explicitly starts AI work.
+- `docs/features/AI_GENERATION_STATE.md` — current feature checkpoint: AI-1/AI-2 complete and paused before AI-3.
+- `docs/features/AI_GENERATION_PLAN.md` — provider-neutral image/video implementation order and separate paid-service gates.
 - `docs/features/MEDIA_LIFECYCLE_STATE.md` — completed media feature scope, live provider results, and remaining physical-device review.
 - `README.md` — product overview, current capabilities, local commands, and repository status.
 - `docs/BUILD-PLAN.md` — ten-week feature and learning progression.
