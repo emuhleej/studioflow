@@ -91,4 +91,10 @@ The Supabase server secret and all B2 values must never use a `VITE_` prefix.
 
 Connect the GitHub repository to Netlify, configure the same three public browser values, and leave production publishing unapproved. Branch previews may be reviewed first. Confirm the deploy context does not enable paid add-ons or automatic overages.
 
+The configured StudioFlow site is `studioflowhq`. Its Supabase URL, publishable key, and `VITE_DEMO_MODE=false` exist only in the Deploy Previews context; the production context has no StudioFlow browser values. Each approved preview origin must be added exactly to all three allowlists: Supabase Auth redirects, the Edge Function `APP_ORIGINS` secret, and B2 CORS. Do not use a broad wildcard.
+
+Keep all production protections enabled: the repository `[context.production] ignore = "exit 0"` rule, the fail-closed production command in `scripts/netlify-production-guard.mjs`, and Netlify's provider-level production auto-publish lock. The original ignore rule did not prevent an initial protected `main` build during site creation, so it is not sufficient by itself. That initial build has no production browser values and is not an approved release. Do not create `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` unless a separate production release has authorized one exact reviewed 40-character commit SHA; remove it immediately after that candidate is handled.
+
+An approved production release must also configure its exact production origin in all three allowlists and add the same three public browser values to Netlify's Production context. Those runtime values remain only while production is active. The commit-bound release variable and one-time build hook are temporary authorization mechanisms and must be removed immediately after the approved candidate is built. Follow the exact order in `docs/PRODUCTION-RELEASE.md`.
+
 Follow `docs/PRODUCTION-RELEASE.md` before any production release.

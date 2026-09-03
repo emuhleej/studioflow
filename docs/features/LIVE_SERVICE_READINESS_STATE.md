@@ -2,7 +2,7 @@
 
 ## Status
 
-ACTIVE — MILESTONES 10A–10E COMPLETE
+COMPLETE — MILESTONES 10A–10F
 
 ## Purpose
 
@@ -49,7 +49,9 @@ The hosted Supabase project contains the six committed production-core migration
 
 ## Integration Status
 
-The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, the local callback allowlist, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, real owner, and anonymous media-boundary behavior have been verified. The private B2 bucket, restricted application key, server-side encryption, CORS, lifecycle rules, Supabase secrets, and eight Edge Functions are configured. Single-part upload, private preview/download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup creation/download/decryption, non-destructive restore ordering, and exact cleanup are verified. The public repository is connected, and isolated database-security plus application CI passed. Netlify preview configuration remains pending and requires separate approval.
+The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, exact local and Deploy Preview redirects, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, real owner, and anonymous media-boundary behavior have been verified. The private B2 bucket, restricted application key, server-side encryption, exact-origin CORS, lifecycle rules, Supabase secrets, and eight Edge Functions are configured. Single-part upload, private preview/download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup creation/download/decryption, non-destructive restore ordering, and exact cleanup are verified. The public repository is connected, and isolated database-security plus application CI passed.
+
+Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, deployment `6a98ade0b248ff000843f8f0`, containing the startup owner-authorization fix from `20c7f44` and the fail-closed production-build guard from `5a56947`. Creator HQ, direct `/library` and `/media` routes and refreshes, a clean browser console, and all four supported viewport sizes are verified. Netlify's three browser variables exist only in Deploy Previews, production browser values are empty, and provider-level Auto Publishing is locked. A fresh owner sign-out/sign-in plus three reloads preserved owner access. A tiny preview-origin private-media lifecycle completed with exact database cleanup.
 
 ## Complete
 
@@ -84,6 +86,14 @@ The hosted Supabase project is connected and its migration history matches the s
 - Public repository `emuhleej/studioflow` created without a license or generated starter files and connected as `origin`.
 - First GitHub Actions application job passed; isolated Supabase/pgTAP database-security job passed in 2 minutes 49 seconds.
 - Follow-up secret scan completed against a valid commit range with no leaks detected.
+- Owner authorization now distinguishes retryable verification errors from definitive non-owner denial and ignores stale results from superseded sessions.
+- `npm run verify` passed with 69 unit/component tests and the production build; all 32 Playwright scenarios passed.
+- Private Netlify deployment `6a98ade0b248ff000843f8f0` serves guarded commit `294acc8` with protected access and preview-only browser configuration.
+- Existing-owner access to Creator HQ, direct `/library` and `/media` navigation and refresh, a clean console, and responsive layouts at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844 are verified.
+- Netlify Auto Publishing is locked while the repository ignore rule and fail-closed production command remain defense in depth.
+- A fresh GitHub sign-out/sign-in returned to the exact private preview as the owner; three subsequent reloads remained owner-authorized without a false denial.
+- A 522-byte PNG completed direct private upload, 16 × 16 preview, matching-size and matching-SHA-256 download, trash, restore, and permanent deletion. The media-delete function returned HTTP 200 after its awaited B2 deletion path, all queried hosted tables returned to zero temporary records, and the browser logged no warnings or errors.
+- Documentation-only closeout head `faef374` completed its Netlify preview and all seven PR checks without failure: six successful and one neutral. PR #5 remains unmerged pending a separate repository action.
 
 ## Partially Implemented
 
@@ -91,7 +101,7 @@ The hosted Supabase project is connected and its migration history matches the s
 
 ## Not Started
 
-- Netlify preview configuration and review.
+- A separately approved production release, custom domain, and AI-provider execution.
 
 ## Broken / Needs Verification
 
@@ -99,6 +109,7 @@ The hosted Supabase project is connected and its migration history matches the s
 - The security advisor's remaining `app_owners` notice is informational and expected: RLS is enabled with no browser policy so the allowlist remains deny-all to API clients.
 - The leaked-password advisor cannot be enabled on the free plan, so email/password authentication is disabled instead. GitHub OAuth remains the only enabled provider.
 - Performance advice now contains 22 informational unindexed-foreign-key and unused-index suggestions only. Review these separately before production release; they do not weaken the verified owner boundary.
+- Netlify published one initial production-context shell at `main` commit `6c18ece` during site creation despite the repository ignore rule. It remains edge-protected and has no production browser variables. Provider-level Auto Publishing is now locked.
 
 ## Locked Decisions
 
@@ -114,19 +125,20 @@ The hosted Supabase project is connected and its migration history matches the s
 
 - B2 credentials or backup keys could leak if placed in browser-prefixed variables or committed files.
 - Real-time signed-URL expiry and full-capacity quota stress remain optional pre-production exercises. Provider cancellation and exact deletion/cleanup are complete.
+- The repository production-ignore rule is defense in depth, not proof that Netlify cannot publish; the verified provider-level Auto Publishing lock must remain enabled.
 
 ## Remaining Verification
 
-- Review a Netlify branch preview before any production decision.
+- None within Milestone 10F. The documentation-only closeout and protected preview recheck passed. The separate repository gate now awaits owner approval to correct and merge PR #5. Production promotion remains separately prohibited.
 
 ## Exact Next Implementation Task
 
-Prepare a Netlify branch preview for owner review only after separate approval. Do not promote to production, enable automatic production deployment, add AI providers, or change paid-service settings.
+Obtain separate owner approval to correct the stale PR #5 description and merge the fully checked branch, then verify the merge without triggering production. Do not promote production, start AI-1, add AI providers, or change paid-service settings under that approval.
 
 ## Remaining Implementation Order
 
-1. Prepare a Netlify branch preview only after separate approval.
-2. Review the preview at desktop, iPad, and phone sizes.
-3. Stop for a separate production-deployment decision.
+1. Correct and merge PR #5 only with separate owner approval.
+2. Verify the merged revision without unlocking or publishing production.
+3. Stop for a separate production-release or AI-1 decision; neither begins automatically.
 
 Update this file after every meaningful live-service checkpoint.

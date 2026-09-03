@@ -14,6 +14,7 @@
 # Deploy Previews use their own context and continue to build normally.
 [context.production]
   ignore = "exit 0"
+  command = "node scripts/netlify-production-guard.mjs && npm run build"
 
 [[headers]]
   for = "/*"

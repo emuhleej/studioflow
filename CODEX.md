@@ -149,7 +149,7 @@ Also run:
 - `npm run supabase:test` for migrations, constraints, functions that depend on schema behavior, RLS, or owner-access changes.
 - Focused tests first when diagnosing failures; run the broader relevant suite before declaring completion.
 
-Database tests require the approved local Supabase stack and Docker Desktop. If a required test cannot run because a prerequisite is unavailable, do not claim it passed. Report exactly what passed, what failed, and what remains environmentally blocked.
+Database tests require an isolated Supabase stack and must never run their mutating fixtures against the hosted owner project. On the current desktop, use the GitHub Actions database-security job rather than installing Docker; `npm run supabase:test` remains available for an approved capable host. If a required test cannot run in either environment, do not claim it passed. Report exactly what passed, what failed, and what remains environmentally blocked.
 
 Critical behaviors requiring regression coverage include:
 

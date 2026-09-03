@@ -82,7 +82,9 @@ StudioFlow/
 │  └─ b2-lifecycle-rules.json   B2 lifecycle policy source configuration
 ├─ scripts/
 │  ├─ capture-previews.mjs      Local visual-preview capture helper
-│  └─ decrypt-backup.mjs        AES-GCM backup decryption helper
+│  ├─ decrypt-backup.mjs        AES-GCM backup decryption helper
+│  ├─ netlify-production-guard.mjs  Fail-closed production release gate
+│  └─ netlify-production-guard.check.mjs  Production-gate regression tests
 ├─ src/
 │  ├─ components/               Reusable shell, auth, status, media, and UI primitives
 │  ├─ data/demo.ts              Fictional public demo workspace
@@ -396,6 +398,7 @@ npm run dev
 TypeScript project build/type-check
   -> ESLint
   -> Vitest unit and component tests in jsdom
+  -> Node production-release guard tests
   -> production TypeScript build
   -> Vite production bundle in dist/
 ```
@@ -429,9 +432,11 @@ GitHub Actions contains three independent jobs:
 
 CI validates code; it does not deploy production.
 
+Netlify Deploy Previews use the standard build command. Production context has two repository-level defenses: the `ignore` command asks Netlify to skip ordinary production builds, and the production build command exits unsuccessfully unless the separately managed `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` value is a full 40-character SHA matching Netlify's current `COMMIT_REF`. Netlify's provider-level auto-publish lock remains the authoritative promotion gate; the repository checks are defense in depth.
+
 ### Netlify build
 
-Netlify uses Node 24, runs `npm run build`, and publishes `dist/`. The catch-all redirect returns `index.html` for React Router paths. Security headers are defined in `netlify.toml`.
+Netlify uses Node 24 and publishes `dist/`. Deploy Previews run `npm run build`; production runs the commit-bound release guard first and reaches `npm run build` only for the one exact authorized commit. The catch-all redirect returns `index.html` for React Router paths. Security headers are defined in `netlify.toml`.
 
 Repository configuration or CI must not automatically promote a build to production. Preview and production release permissions are governed by `docs/PRODUCTION-RELEASE.md`.
 

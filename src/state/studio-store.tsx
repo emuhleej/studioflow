@@ -27,6 +27,7 @@ import type {
 import { rollbackAppendedRecord, rollbackUpdatedRecord, saveWithRetry } from "./cloud-save";
 import { StudioContext, type EpisodeDraft, type Notice, type StudioContextValue } from "./studio-context";
 import { useUploadManager } from "./use-upload-manager";
+import { isOwnerWorkspaceLoading, useOwnerAuthorization } from "./use-owner-authorization";
 import {
   createBaseRecord,
   demoMode,
@@ -52,49 +53,71 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [episodeDrafts, setEpisodeDrafts] = useState<Record<string, EpisodeDraft>>(() => loadEpisodeDrafts());
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(!demoMode);
-  const [dataLoading, setDataLoading] = useState(!demoMode);
-  const [ownerAuthorized, setOwnerAuthorized] = useState<boolean | null>(demoMode ? true : null);
+  const [settledWorkspaceSessionKey, setSettledWorkspaceSessionKey] = useState<string | null>(demoMode ? "demo" : null);
   const [notice, setNotice] = useState<Notice>(null);
 
   const user = session?.user ?? null;
 
   useEffect(() => {
     if (demoMode || !supabase) return;
-    supabase.auth.getSession().then(({ data: authData }) => {
-      setSession(authData.session);
+    let disposed = false;
+    let authEventReceived = false;
+    const applySession = (nextSession: Session | null) => {
+      if (disposed) return;
+      setSession((current) => current?.access_token === nextSession?.access_token ? current : nextSession);
       setAuthLoading(false);
-    });
+    };
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setAuthLoading(false);
+      authEventReceived = true;
+      applySession(nextSession);
     });
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (demoMode || !supabase) return;
-    let cancelled = false;
-    void (async () => {
-      if (!user) {
-        if (!cancelled) setOwnerAuthorized(null);
+    void supabase.auth.getSession().then(({ data: authData, error }) => {
+      if (disposed || authEventReceived) return;
+      if (error) {
+        setNotice({ tone: "error", message: `Sign-in session could not load: ${error.message}` });
+        applySession(null);
         return;
       }
-      if (!cancelled) setDataLoading(true);
-      try {
-        const { data: allowed, error } = await supabase.rpc("current_user_is_app_owner");
-        if (error) throw error;
-        if (cancelled) return;
-        setOwnerAuthorized(Boolean(allowed));
-        if (!allowed) setDataLoading(false);
-      } catch (error) {
-        if (cancelled) return;
-        setOwnerAuthorized(false);
-        setDataLoading(false);
-        setNotice({ tone: "error", message: `Owner verification failed: ${error instanceof Error ? error.message : "Unknown error"}` });
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [user]);
+      applySession(authData.session);
+    });
+    return () => {
+      disposed = true;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const verifyOwner = useCallback(async () => {
+    if (!supabase) return { data: null, error: { message: "Supabase is not configured." } };
+    const response = await supabase.rpc("current_user_is_app_owner");
+    return { data: response.data, error: response.error, status: response.status };
+  }, []);
+
+  const stabilizeSession = useCallback(async () => {
+    if (!supabase) return false;
+    const { data: authData, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return Boolean(authData.session?.access_token);
+  }, []);
+
+  const { state: ownerAuthorization, retry: retryOwnerVerification } = useOwnerAuthorization({
+    enabled: !demoMode && Boolean(user),
+    sessionKey: demoMode ? null : session?.access_token ?? null,
+    verify: verifyOwner,
+    stabilizeSession,
+  });
+  const ownerAuthorized = demoMode || ownerAuthorization.status === "allowed"
+    ? true
+    : ownerAuthorization.status === "denied"
+      ? false
+      : null;
+  const ownerVerificationError = ownerAuthorization.status === "error" ? ownerAuthorization.message : null;
+  const activeSessionKey = demoMode ? null : session?.access_token ?? null;
+  const dataLoading = isOwnerWorkspaceLoading(
+    demoMode,
+    ownerAuthorization,
+    activeSessionKey,
+    settledWorkspaceSessionKey,
+  );
 
   useEffect(() => {
     if (demoMode) saveDemo(data);
@@ -109,22 +132,21 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     void (async () => {
       if (!user) {
-        if (!cancelled) setDataLoading(false);
         return;
       }
       if (ownerAuthorized !== true) return;
-      if (!cancelled) setDataLoading(true);
+      if (!activeSessionKey) return;
       try {
         const workspace = await loadRemoteWorkspace(user);
         if (!cancelled) setData(workspace);
       } catch (error) {
         if (!cancelled) setNotice({ tone: "error", message: `Studio data could not load: ${error instanceof Error ? error.message : "Unknown error"}` });
       } finally {
-        if (!cancelled) setDataLoading(false);
+        if (!cancelled) setSettledWorkspaceSessionKey(activeSessionKey);
       }
     })();
     return () => { cancelled = true; };
-  }, [ownerAuthorized, setData, user]);
+  }, [activeSessionKey, ownerAuthorized, setData, user]);
 
   const sync = useCallback((key: WorkspaceArrayKey, record: BaseRecord, rollback: () => void) => {
     if (demoMode) return;
@@ -279,12 +301,14 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       session,
       user,
       ownerAuthorized,
+      ownerVerificationError,
       authLoading,
       dataLoading,
       notice,
       clearNotice: () => setNotice(null),
       login: signInWithGitHub,
       logout: signOut,
+      retryOwnerVerification,
       uploadTasks,
       startUpload,
       pauseUpload,
@@ -568,7 +592,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         setNotice({ tone: "success", message: "StudioFlow metadata was restored from the export." });
       },
     }),
-    [appendRecord, authLoading, cancelUpload, clearEpisodeDraft, data, dataLoading, dismissUpload, episodeDrafts, getData, linkGenerationAsset, mutateRecord, notice, ownerAuthorized, patchEpisodeDraft, pauseUpload, resumeUpload, retryUpload, session, setData, startUpload, unlinkGenerationAsset, uploadTasks, user],
+    [appendRecord, authLoading, cancelUpload, clearEpisodeDraft, data, dataLoading, dismissUpload, episodeDrafts, getData, linkGenerationAsset, mutateRecord, notice, ownerAuthorized, ownerVerificationError, patchEpisodeDraft, pauseUpload, resumeUpload, retryOwnerVerification, retryUpload, session, setData, startUpload, unlinkGenerationAsset, uploadTasks, user],
   );
 
   return <StudioContext.Provider value={value}>{children}</StudioContext.Provider>;
