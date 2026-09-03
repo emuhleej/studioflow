@@ -11,9 +11,9 @@ This document is StudioFlow's current project dashboard. It records the state a 
 | Status | Active development |
 | Production | Stable |
 | Current major feature | Project Studio |
-| Active implementation unit | Milestone 10F closeout — publish documentation and recheck PR #5 |
+| Active implementation unit | Repository gate — PR #5 awaits separate owner approval to correct and merge |
 | Latest completed checkpoint | Milestone 10F — guarded private-preview and live-service verification |
-| Next checkpoint to open | Publish and recheck the documentation-only closeout, then stop for the PR #5 merge decision |
+| Next checkpoint to open | PR #5 merge decision; production release and AI-1 remain separate later decisions |
 
 “Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
 
@@ -82,9 +82,9 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 - Milestones 10A–10B applied all six repository migrations to the hosted Supabase project. Verification found 19 of 19 public tables using RLS, 18 hardened owner policies, no anonymous public-table grants, and migration history matching the source filenames.
 - Hosted-schema TypeScript types were regenerated, and `npm run verify` passed: type-check, lint, all 63 unit/component tests, and the production build.
 - Supabase security and performance advisors ran successfully with no errors and no performance warnings. The expected GitHub-only authentication caveat and informational findings are recorded in `docs/features/LIVE_SERVICE_READINESS_STATE.md`.
-- The isolated pgTAP database-security job passed in GitHub Actions in 2 minutes 49 seconds. All seven checks on PR #5 head `294acc8` concluded without failure: six successful and one neutral. Local verification passed type-check, lint, 69 unit/component tests, the production build, and all 32 Playwright scenarios. The first normal follow-up secret scan detected no leaks.
+- The isolated pgTAP database-security job passed in GitHub Actions in 2 minutes 49 seconds. All seven checks on documentation-only closeout head `faef374` concluded without failure: six successful and one neutral. Local verification passed type-check, lint, 69 unit/component tests, the production build, and all 32 Playwright scenarios. The first normal follow-up secret scan detected no leaks.
 - Local Git checkpoints now include the initial production core and Milestones 7–9 (`8f2413c`). The repository is published at `emuhleej/studioflow` and tracks `origin/main`.
-- Guarded private Netlify Deploy Preview deployment `6a98ade0b248ff000843f8f0` serves commit `294acc8`, which contains the auth fix, production guard, and proposed provider-neutral AI plan. Owner access, a fresh OAuth cycle, three reloads, Creator HQ, `/library`, `/media`, a clean console, route refreshes, all four supported viewport sizes, and the exact tiny-media cleanup cycle are verified.
+- Guarded private Netlify Deploy Preview deployment `6a98ade0b248ff000843f8f0` at application revision `294acc8` contains the auth fix, production guard, and proposed provider-neutral AI plan. Owner access, a fresh OAuth cycle, three reloads, Creator HQ, `/library`, `/media`, a clean console, route refreshes, all four supported viewport sizes, and the exact tiny-media cleanup cycle are verified. Documentation-only closeout deployment `6a98b784104acf0008957b1c` at `faef374` completed; the canonical preview still opened Creator HQ as the owner with no browser warnings or errors.
 - The authorization-race regression suite increased the verified application total to 69 unit/component tests; `npm run verify` and all 32 Playwright scenarios pass.
 - Netlify published an initial production-context build of `main` at `6c18ece` during site creation. It remains edge-protected, has no production browser values, and is not an approved release. Site-level Auto Publishing is locked.
 - GitHub OAuth, exact local and preview redirects, the singleton owner, private owner access, eight Edge Functions, server-only secrets, and the live B2 integration are configured. No custom domain or approved production release exists.
@@ -106,7 +106,7 @@ Open the **PR #5 repository gate** only after re-reading:
 9. `docs/SETUP.md`
 10. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-The exact next task is to commit and push the documentation-only Milestone 10F closeout, then recheck PR #5 and its protected preview. Stop before correcting the PR description or merging unless the owner separately approves those actions. Do not promote production, start AI-1, add AI providers, buy a domain, or change paid-service settings.
+The exact next task is to obtain separate owner approval to correct the stale PR #5 description and merge the fully checked branch, then verify the merge without triggering production. Do not promote production, start AI-1, add AI providers, buy a domain, or change paid-service settings under that approval.
 
 ## Active documentation
 

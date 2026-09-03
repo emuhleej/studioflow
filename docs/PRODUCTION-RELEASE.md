@@ -23,7 +23,7 @@ The original repository ignore rule did not prevent Netlify from publishing the 
 - A fresh GitHub sign-out/sign-in returned to the exact preview as the owner; three subsequent reloads preserved owner authorization.
 - A 522-byte PNG completed private upload, 16 × 16 preview, matching-hash download, trash, restore, and permanent deletion. The delete function returned HTTP 200 after its awaited B2 deletion path, every queried temporary hosted record returned to zero, and the browser remained free of warnings and errors.
 - Netlify Auto Publishing is locked.
-- PR #5 head `294acc8` had six successful checks and one neutral check and remains unmerged pending a separate owner action.
+- Documentation-only closeout deployment `6a98b784104acf0008957b1c` at commit `faef374` completed, the canonical preview still opened the owner workspace with no browser warnings or errors, and all seven PR checks concluded without failure: six successful and one neutral. PR #5 remains unmerged pending a separate owner action.
 
 Milestone 10F preview verification is complete. PR #5 still requires a separately approved description correction and merge after its documentation-only closeout head is green. Neither that merge nor Milestone 10F authorizes a production release.
 

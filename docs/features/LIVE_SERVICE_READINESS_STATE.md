@@ -93,7 +93,7 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 - Netlify Auto Publishing is locked while the repository ignore rule and fail-closed production command remain defense in depth.
 - A fresh GitHub sign-out/sign-in returned to the exact private preview as the owner; three subsequent reloads remained owner-authorized without a false denial.
 - A 522-byte PNG completed direct private upload, 16 × 16 preview, matching-size and matching-SHA-256 download, trash, restore, and permanent deletion. The media-delete function returned HTTP 200 after its awaited B2 deletion path, all queried hosted tables returned to zero temporary records, and the browser logged no warnings or errors.
-- PR #5 head `294acc8` had six successful checks and one neutral check and remains unmerged pending a separate repository action.
+- Documentation-only closeout head `faef374` completed its Netlify preview and all seven PR checks without failure: six successful and one neutral. PR #5 remains unmerged pending a separate repository action.
 
 ## Partially Implemented
 
@@ -129,16 +129,16 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 
 ## Remaining Verification
 
-- None within Milestone 10F. The separate repository gate requires rechecking the pull-request checks and protected preview revision after the documentation-only closeout commit and before merge. Production promotion remains separately prohibited.
+- None within Milestone 10F. The documentation-only closeout and protected preview recheck passed. The separate repository gate now awaits owner approval to correct and merge PR #5. Production promotion remains separately prohibited.
 
 ## Exact Next Implementation Task
 
-Commit and push the documentation-only Milestone 10F closeout, then recheck PR #5 and its protected preview. Stop before correcting the PR description or merging unless the owner separately approves those actions. Do not promote production, start AI-1, add AI providers, or change paid-service settings.
+Obtain separate owner approval to correct the stale PR #5 description and merge the fully checked branch, then verify the merge without triggering production. Do not promote production, start AI-1, add AI providers, or change paid-service settings under that approval.
 
 ## Remaining Implementation Order
 
-1. Push the documentation-only 10F closeout and recheck PR #5 plus its protected preview.
-2. Correct and merge PR #5 only with separate owner approval.
+1. Correct and merge PR #5 only with separate owner approval.
+2. Verify the merged revision without unlocking or publishing production.
 3. Stop for a separate production-release or AI-1 decision; neither begins automatically.
 
 Update this file after every meaningful live-service checkpoint.
