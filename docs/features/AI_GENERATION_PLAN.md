@@ -2,7 +2,7 @@
 
 ## Status
 
-PROPOSED — MILESTONE 10F COMPLETE; AWAITING EXPLICIT OWNER APPROVAL TO START AI-1
+IMPLEMENTED THROUGH AI-2 — ACCOUNT-FREE FOUNDATION AND MOCKED RUNWAY CONNECTOR COMPLETE; AI-3 NOT APPROVED
 
 ## Purpose
 
@@ -236,6 +236,8 @@ These are StudioFlow limits, separate from the provider's prepaid balance. The o
 
 ### AI-1 — Neutral foundation, no account and no spending
 
+**Status: complete.** The additive managed-generation schema, normalized provider contract, deterministic fake provider, reservations, atomic claims, lifecycle/recovery rules, export/import/backup compatibility, account-free interface, and regression coverage are implemented. Real provider execution remains disabled.
+
 - Add additive migrations, owner RLS, compatibility defaults, and generated types.
 - Add normalized requests, capability declarations, frozen price estimates, persisted budget/storage reservations, prepared-intent identity, atomic submission claims, a one-active-job constraint, lifecycle transition rules, and generation-linked cost entries.
 - Implement a deterministic fake provider.
@@ -248,6 +250,8 @@ These are StudioFlow limits, separate from the provider's prepaid balance. The o
 Stop after the fake provider proves the simulated orchestration lifecycle, including interruption recovery and backup/restore compatibility. Do not create an API key or paid request.
 
 ### AI-2 — Runway connector and recovery, no paid request
+
+**Status: complete.** The bounded generated-output and internal-service authentication exceptions are recorded. The Runway-shaped adapter, signed-reference validation, generation-ID-only bounded ingest, internal reconciliation, foreground refresh, cancellation, `submission_unknown`, and duplicate-prevention paths are implemented and tested with mocks only. The generation functions are source-only and undeployed; no Runway credential exists.
 
 - Obtain approval for and record the bounded generated-output ingest and scheduled-service-authentication exceptions in `CODEX.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/SECURITY.md`.
 - Implement the Runway adapter behind mocked HTTP responses.
@@ -318,4 +322,4 @@ Live acceptance requires one separately approved low-cost image and one separate
 
 ## Exact Next Implementation Task
 
-If the owner explicitly starts AI work, implement **AI-1 only** with the fake provider and `generation_enabled=false`. Do not create a Runway account, configure a provider key, or submit a paid generation.
+AI-1 and AI-2 are complete. The exact next task is to obtain explicit owner approval for **AI-3 Gate 1 only**: creating the Runway Developer Portal account/organization and purchasing the minimum prepaid balance. Do not create an account, API key, server secret, scheduler, provider request, charge, function deployment, preview, or production release before its separately named gate is approved.

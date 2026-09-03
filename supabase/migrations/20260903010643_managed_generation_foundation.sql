@@ -186,7 +186,7 @@ language plpgsql
 set search_path = public
 as $$
 begin
-  if (select auth.role()) <> 'authenticated' then
+  if coalesce((select auth.role()), '') <> 'authenticated' then
     return new;
   end if;
 
