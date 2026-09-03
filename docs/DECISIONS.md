@@ -539,31 +539,64 @@ Provider jobs are asynchronous, temporary result URLs must be copied into owned 
 - Treating cancellation as proof of refund.
 - Reusing the ordinary 2 GB upload limit for generated-output Edge streaming.
 
+## DEC-019 — Production configuration fails closed and public health stays minimal
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-03
+- **Area:** Configuration, privacy, and monitoring
+
+### Decision
+
+All browser environment values pass through one Zod validation boundary. Development may fall back to the fictional demo after a generic warning. Production requires demo mode to be disabled plus a valid Supabase URL and anon key; otherwise startup fails closed.
+
+The public `/health` route reports only `status`, an ISO timestamp, and the application version. It is an application-shell indicator, not a private-service readiness probe. Client error tracking retains at most 50 sanitized reports in memory and delegates only a bounded message and context label to the existing authenticated error recorder.
+
+### Rationale
+
+A production build must not silently appear healthy while serving the fictional workspace because private configuration is missing. At the same time, a public diagnostic route must not disclose service configuration, owner state, storage details, or sensitive error context.
+
+### Consequences
+
+- Source files use `src/lib/env.ts` instead of independently reading the three StudioFlow browser variables.
+- Configuration diagnostics never print environment values.
+- `/health` can be checked without loading `StudioProvider`, authentication, or private records.
+- A successful health page proves only that the client shell loaded and rendered.
+- Service-specific readiness checks require a separately designed authenticated interface.
+
+### Rejected alternatives
+
+- Falling back to demo mode in production.
+- Logging invalid environment values for convenience.
+- Exposing Supabase, B2, OAuth, owner, or AI-provider details on a public route.
+- Creating a second remote error-reporting service for this checkpoint.
+
 ## Frequently re-proposed ideas that remain rejected
 
 Future agents should not reopen these suggestions without new constraints or explicit owner direction:
 
-| Suggestion | Existing decision |
-| --- | --- |
-| “Turn it into a SaaS now.” | DEC-001 |
-| “Put a sample of the real creative library in the public repo.” | DEC-002 |
-| “The route guard is enough security.” | DEC-003 |
-| “Use localStorage for the real workspace.” | DEC-004 |
-| “Add another global store and sync it later.” | DEC-005 |
-| “Store video in PostgreSQL or proxy it through the app.” | DEC-006 |
-| “Use Cloudflare because the account already exists.” | DEC-007 |
-| “Make history editable; it is easier.” | DEC-008 |
-| “Reset the database instead of migrating old data.” | DEC-009 |
-| “Delete old media automatically when storage fills.” | DEC-010 |
-| “We can fix mobile after desktop is finished.” | DEC-011 |
-| “Add an AI provider, editor, posting, or analytics while touching nearby code.” | DEC-012 |
-| “Deploy automatically after tests pass.” | DEC-013 |
-| “Add MIT by default.” | DEC-014 |
-| “Leave failed cloud saves visible and let the next refresh fix them.” | DEC-015 |
-| “Keep generation result arrays and asset links independently editable.” | DEC-016 |
-| “Install Docker here anyway or skip database tests.” | DEC-017 |
-| “Call the provider from the browser or display its temporary result URL.” | DEC-018 |
-| “Retry an unknown submission automatically; it probably did not charge.” | DEC-018 |
+| Suggestion                                                                      | Existing decision |
+| ------------------------------------------------------------------------------- | ----------------- |
+| “Turn it into a SaaS now.”                                                      | DEC-001           |
+| “Put a sample of the real creative library in the public repo.”                 | DEC-002           |
+| “The route guard is enough security.”                                           | DEC-003           |
+| “Use localStorage for the real workspace.”                                      | DEC-004           |
+| “Add another global store and sync it later.”                                   | DEC-005           |
+| “Store video in PostgreSQL or proxy it through the app.”                        | DEC-006           |
+| “Use Cloudflare because the account already exists.”                            | DEC-007           |
+| “Make history editable; it is easier.”                                          | DEC-008           |
+| “Reset the database instead of migrating old data.”                             | DEC-009           |
+| “Delete old media automatically when storage fills.”                            | DEC-010           |
+| “We can fix mobile after desktop is finished.”                                  | DEC-011           |
+| “Add an AI provider, editor, posting, or analytics while touching nearby code.” | DEC-012           |
+| “Deploy automatically after tests pass.”                                        | DEC-013           |
+| “Add MIT by default.”                                                           | DEC-014           |
+| “Leave failed cloud saves visible and let the next refresh fix them.”           | DEC-015           |
+| “Keep generation result arrays and asset links independently editable.”         | DEC-016           |
+| “Install Docker here anyway or skip database tests.”                            | DEC-017           |
+| “Call the provider from the browser or display its temporary result URL.”       | DEC-018           |
+| “Retry an unknown submission automatically; it probably did not charge.”        | DEC-018           |
+| “Let production use demo mode when its private configuration is missing.”       | DEC-019           |
+| “Put private service readiness details on the public health page.”              | DEC-019           |
 
 ## When to update this document
 

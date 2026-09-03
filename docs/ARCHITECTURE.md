@@ -36,27 +36,27 @@ flowchart LR
 
 ## Technology stack
 
-| Layer | Technology | Responsibility |
-| --- | --- | --- |
-| Language | TypeScript | Shared browser, domain, configuration, and Edge Function implementation language |
-| UI | React | Component rendering and interaction |
-| Development/build | Vite | Local development server, module processing, and production bundle |
-| Routing | React Router | Client-side route tree and nested application shell |
-| Remote query infrastructure | TanStack Query | Query client and future/cache-aware server-state coordination |
-| Validation | Zod | Validation at import and server-function input boundaries |
-| Styling | Tailwind CSS Vite integration plus `src/styles.css` | Design tokens, responsive layout, shared component styles, and utility classes |
-| Icons | Lucide React | Consistent interface iconography |
-| Authentication | Supabase Auth with GitHub OAuth | Owner identity and authenticated sessions |
-| Metadata database | Supabase PostgreSQL | Owner-scoped production records, relationships, constraints, history, and audit data |
-| Authorization | PostgreSQL RLS plus `app_owners` | Anonymous and non-owner denial at the data layer |
-| Server operations | Supabase Edge Functions | Owner verification, B2 signing, upload lifecycle, deletion, preview URLs, and backup |
-| Media storage | Backblaze B2 through its S3-compatible API | Private images, audio, video, and encrypted metadata backups |
-| Browser persistence | localStorage and IndexedDB through `idb` | Fictional demo metadata, episode drafts, and local demo blobs |
-| Unit/component tests | Vitest, Testing Library, jsdom | Domain and React behavior |
-| Browser tests | Playwright | End-to-end workflows and responsive viewport checks |
-| Database tests | pgTAP through the Supabase CLI | Constraints, immutability, owner access, and RLS denial |
-| Static hosting | Netlify | Production build output and SPA routing |
-| CI | GitHub Actions | Application verification, database security tests, and secret scanning |
+| Layer                       | Technology                                          | Responsibility                                                                       |
+| --------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Language                    | TypeScript                                          | Shared browser, domain, configuration, and Edge Function implementation language     |
+| UI                          | React                                               | Component rendering and interaction                                                  |
+| Development/build           | Vite                                                | Local development server, module processing, and production bundle                   |
+| Routing                     | React Router                                        | Client-side route tree and nested application shell                                  |
+| Remote query infrastructure | TanStack Query                                      | Query client and future/cache-aware server-state coordination                        |
+| Validation                  | Zod                                                 | Validation at import and server-function input boundaries                            |
+| Styling                     | Tailwind CSS Vite integration plus `src/styles.css` | Design tokens, responsive layout, shared component styles, and utility classes       |
+| Icons                       | Lucide React                                        | Consistent interface iconography                                                     |
+| Authentication              | Supabase Auth with GitHub OAuth                     | Owner identity and authenticated sessions                                            |
+| Metadata database           | Supabase PostgreSQL                                 | Owner-scoped production records, relationships, constraints, history, and audit data |
+| Authorization               | PostgreSQL RLS plus `app_owners`                    | Anonymous and non-owner denial at the data layer                                     |
+| Server operations           | Supabase Edge Functions                             | Owner verification, B2 signing, upload lifecycle, deletion, preview URLs, and backup |
+| Media storage               | Backblaze B2 through its S3-compatible API          | Private images, audio, video, and encrypted metadata backups                         |
+| Browser persistence         | localStorage and IndexedDB through `idb`            | Fictional demo metadata, episode drafts, and local demo blobs                        |
+| Unit/component tests        | Vitest, Testing Library, jsdom                      | Domain and React behavior                                                            |
+| Browser tests               | Playwright                                          | End-to-end workflows and responsive viewport checks                                  |
+| Database tests              | pgTAP through the Supabase CLI                      | Constraints, immutability, owner access, and RLS denial                              |
+| Static hosting              | Netlify                                             | Production build output and SPA routing                                              |
+| CI                          | GitHub Actions                                      | Application verification, database security tests, and secret scanning               |
 
 TanStack Query is initialized at the application root, but the current workspace loading and mutation path is coordinated by `StudioProvider` and `remote-repository.ts`. Adding query hooks does not authorize duplicating that persistence logic; any migration of server-state ownership must be intentional and repository-wide.
 
@@ -69,8 +69,11 @@ StudioFlow/
 │  ├─ workflows/ci.yml          Application, database, and secret-scan CI
 │  ├─ dependabot.yml            Dependency update configuration
 │  └─ PULL_REQUEST_TEMPLATE.md  Pull-request verification checklist
+├─ .husky/
+│  └─ pre-commit                Staged-file lint and format gate
 ├─ docs/
 │  ├─ ARCHITECTURE.md           This technical map
+│  ├─ API.md                    Implemented metadata and media HTTP contracts
 │  ├─ PROJECT_STATE.md          Evolving project dashboard
 │  ├─ features/                 Frequently updated active-feature implementation state
 │  ├─ BUILD-PLAN.md             Milestone and learning structure
@@ -87,9 +90,14 @@ StudioFlow/
 │  └─ netlify-production-guard.check.mjs  Production-gate regression tests
 ├─ src/
 │  ├─ components/               Reusable shell, auth, status, media, and UI primitives
+│  │  ├─ ErrorBoundary.tsx      Top-level render-failure containment and safe reporting
+│  │  └─ ui/                    Typed toast, loading-spinner, and skeleton primitives
 │  ├─ data/demo.ts              Fictional public demo workspace
 │  ├─ lib/                      Persistence adapters, domain helpers, generated DB types, and utilities
-│  ├─ pages/                    Route-level product screens
+│  │  ├─ env.ts                 Validated browser environment boundary
+│  │  ├─ error-tracking.ts      Bounded, sanitized client error tracker
+│  │  └─ hooks/useToast.ts      Typed local toast state and convenience actions
+│  ├─ pages/                    Route-level product screens, including the public health page
 │  ├─ state/                    Workspace context, orchestration, persistence, uploads, and recovery
 │  │  ├─ studio-store.tsx       Global application command composition
 │  │  ├─ studio-context.ts      Public context contract
@@ -100,6 +108,7 @@ StudioFlow/
 │  ├─ test/setup.ts             Vitest browser-test setup
 │  ├─ App.tsx                   Route definitions
 │  ├─ App.test.tsx              Application component coverage
+│  ├─ health.ts                 Typed application-shell health result
 │  ├─ main.tsx                  React bootstrap and top-level providers
 │  ├─ styles.css                Design tokens and shared styles
 │  └─ types.ts                  Canonical client domain model
@@ -111,6 +120,9 @@ StudioFlow/
 │  └─ seed.sql                  Fictional local database seed
 ├─ tests/e2e/                   Playwright browser workflows
 ├─ CODEX.md                     Permanent agent instructions
+├─ .prettierrc                  Repository formatting policy
+├─ .prettierignore              Generated-file formatting exclusions
+├─ .gitattributes               Cross-platform LF text normalization
 ├─ README.md                    Product and repository entry point
 ├─ package.json                 Dependency and command manifest
 ├─ package-lock.json            Locked npm dependency graph
@@ -132,32 +144,42 @@ StrictMode
 └─ ErrorBoundary
    └─ QueryClientProvider
       └─ BrowserRouter
-         └─ StudioProvider
-            └─ App
+         └─ App
+            ├─ /health -> HealthCheckPage
+            └─ protected routes -> StudioProvider -> AuthGate -> AppShell
 ```
 
-- `ErrorBoundary` catches render failures.
+- `ErrorBoundary` catches render failures, shows a recoverable fallback, records a privacy-bounded error, and writes diagnostic details to the development console only.
 - the query client defines shared remote-query defaults.
 - `BrowserRouter` supplies client routing.
-- `StudioProvider` supplies authentication state, workspace records, notices, and application commands.
-- the global `unhandledrejection` listener routes uncaught promise failures through the client error recorder.
+- `StudioProvider` supplies authentication state, workspace records, notices, and application commands only for protected product routes.
+- the global `unhandledrejection` listener routes uncaught promise failures through the bounded error tracker.
 
 ### Routing and shell
 
-`src/App.tsx` places all product routes behind `AuthGate` and inside `AppShell`.
+`src/App.tsx` places all product routes behind `AuthGate` and inside `AppShell`. The public `/health` route intentionally stays outside `StudioProvider`, `AuthGate`, and the product shell.
 
-| Route | Page responsibility |
-| --- | --- |
-| `/` | Creator HQ dashboard |
-| `/projects` | Project collection |
-| `/projects/:projectId` | Project overview and series |
-| `/series/:seriesId` | Series episodes and production context |
+| Route                  | Page responsibility                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `/`                    | Creator HQ dashboard                                                                 |
+| `/projects`            | Project collection                                                                   |
+| `/projects/:projectId` | Project overview and series                                                          |
+| `/series/:seriesId`    | Series episodes and production context                                               |
 | `/episodes/:episodeId` | Episode brief, script, scenes, shots, media, provenance, time, cost, and publication |
-| `/library` | Character, location, prop, and style production memory |
-| `/media` | Asset library and lifecycle controls |
-| `/settings` | Workspace status, export, and restore controls |
+| `/library`             | Character, location, prop, and style production memory                               |
+| `/media`               | Asset library and lifecycle controls                                                 |
+| `/settings`            | Workspace status, export, and restore controls                                       |
+| `/health`              | Public application-shell status, timestamp, and version only                         |
 
 Unknown paths redirect to `/`.
+
+### Environment, health, and client monitoring
+
+- `src/lib/env.ts` is the single browser-environment boundary. It validates the Supabase URL, anon key, and demo-mode flag with Zod.
+- Development falls back to fictional demo mode after a generic warning when configuration is missing or invalid. Configuration values are never written to the warning.
+- Production fails closed unless demo mode is explicitly disabled and both Supabase browser values are valid.
+- `src/health.ts` returns only `status`, an ISO timestamp, and the package version. `/health` is a client-shell indicator; it does not test Supabase, B2, OAuth, AI providers, or private owner access.
+- `src/lib/error-tracking.ts` keeps at most 50 sanitized reports in memory. It strips non-primitive context, bounds message and stack lengths, and forwards only the existing privacy-bounded record to `recordClientError()`.
 
 ### Application state and commands
 
@@ -171,6 +193,12 @@ Unknown paths redirect to `/`.
 - `studio-store.tsx` composes authentication, notices, record commands, mode-aware persistence, import/export, and these focused modules.
 
 Pages consume the store through `useStudio()`. Domain calculations that do not require React belong in `src/lib/domain.ts`; record shapes belong in `src/types.ts`.
+
+### Shared interface primitives
+
+- `src/lib/hooks/useToast.ts` owns typed in-memory notification state for success, error, information, and warning messages. It does not create another application store or persistence path.
+- `src/components/ui/Toast.tsx` renders accessible, dismissible notifications and applies the default three-second lifetime supplied by the hook.
+- `src/components/ui/Skeleton.tsx` and `src/components/ui/LoadingSpinner.tsx` provide Tailwind-based loading states. The spinner carries an accessible status label; decorative skeletons remain hidden from assistive technology.
 
 ## Domain and persistence model
 
@@ -194,7 +222,7 @@ Explicit `asset_links` rows are the canonical relationship between a generation 
 
 ### Demo-mode persistence
 
-Demo mode is active when `VITE_DEMO_MODE` is true or Supabase browser configuration is absent.
+Demo mode is active in development when `VITE_DEMO_MODE` is true or validated Supabase browser configuration is absent. Production rejects demo mode and invalid private-workspace configuration during startup.
 
 ```mermaid
 flowchart LR
@@ -215,7 +243,7 @@ Demo mode must remain functional without external accounts or environment variab
 
 ### Private-workspace persistence
 
-Private mode requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, with demo mode disabled.
+Private mode requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, with demo mode disabled.
 
 1. `supabase.ts` creates the browser client and performs GitHub OAuth.
 2. `StudioProvider` observes the Supabase session.
@@ -305,7 +333,8 @@ Generated provider results are the narrow exception to the ordinary direct brows
 
 - `metadata-backup` reads owner-scoped records, including generation inputs, lifecycle events, budget settings, and linked costs, creates an import-compatible version 2 workspace package, encrypts it with AES-256-GCM, and writes the encrypted object to private B2 storage.
 - `scripts/decrypt-backup.mjs` is the local decryption tool. The key remains outside the repository.
-- `recordClientError()` records a bounded error message, context, route, and user agent for authenticated users. It must not include scripts, prompts, form values, signed URLs, or media content.
+- `errorTracker` retains the latest 50 sanitized reports only in the current browser memory and delegates remote recording to `recordClientError()`.
+- `recordClientError()` records a bounded error message, context label, route, and user agent for authenticated users. It must not include scripts, prompts, form values, signed URLs, or media content.
 
 ## Data flow by operation
 
@@ -375,6 +404,7 @@ These files are authored and reviewed as source:
 
 - `package-lock.json` is generated by npm and committed to make dependency resolution reproducible. Change it through npm operations rather than hand-editing dependency graph entries.
 - `src/lib/database.types.ts` is generated from the verified Supabase schema and committed for compile-time database safety. Regenerate it with `npm run supabase:types`; do not maintain it as a competing hand-authored schema.
+- `src/lib/database.types.ts` is excluded from Prettier so regeneration, rather than an unrelated formatting pass, remains authoritative.
 
 ### Generated and ignored
 
@@ -399,6 +429,7 @@ Real media, exports, encrypted backups, decrypted backups, provider credentials,
 ```text
 npm install
   -> package-lock.json selects exact dependencies
+  -> the prepare script registers the project-local Husky hook
 
 npm run dev
   -> Vite development server on port 4173
@@ -419,6 +450,8 @@ TypeScript project build/type-check
 ```
 
 `npm run test:e2e` starts or reuses the Vite server and runs Playwright against desktop, iPad landscape, iPad portrait, and 390 x 844 phone projects.
+
+`npm run format` applies the repository Prettier policy, while `npm run format:check` verifies it without writing files. The pre-commit hook runs lint-staged: staged TypeScript receives ESLint fixes and Prettier formatting; staged JSON and Markdown receive Prettier formatting. Generated database types are excluded.
 
 ### Database verification
 

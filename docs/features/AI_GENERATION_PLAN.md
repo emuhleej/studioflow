@@ -26,12 +26,12 @@ Reasons:
 
 Initial model defaults:
 
-| Use | Initial model | Current API price on 2026-09-02 |
-| --- | --- | --- |
-| Draft still | `gen4_image_turbo` | 2 credits, approximately $0.02 per image |
-| Final still | `gen4_image` | 5 credits at 720p or 8 credits at 1080p |
-| Draft motion | `gen4_turbo` | 5 credits, approximately $0.05 per second |
-| Optional premium motion | `gen4.5` | 12 credits, approximately $0.12 per second |
+| Use                     | Initial model      | Current API price on 2026-09-02            |
+| ----------------------- | ------------------ | ------------------------------------------ |
+| Draft still             | `gen4_image_turbo` | 2 credits, approximately $0.02 per image   |
+| Final still             | `gen4_image`       | 5 credits at 720p or 8 credits at 1080p    |
+| Draft motion            | `gen4_turbo`       | 5 credits, approximately $0.05 per second  |
+| Optional premium motion | `gen4.5`           | 12 credits, approximately $0.12 per second |
 
 Runway sells credits at $0.01 each and currently requires a minimum $10 initial credit purchase. Prices and model availability must be rechecked immediately before implementation or purchase. See [Runway pricing](https://docs.dev.runwayml.com/guides/pricing/), [Runway models](https://docs.dev.runwayml.com/guides/models/), and [Runway API setup](https://docs.dev.runwayml.com/guides/setup/).
 

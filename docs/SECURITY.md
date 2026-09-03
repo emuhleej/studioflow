@@ -16,7 +16,9 @@
 - Generation result links additionally require media from the same project. Database triggers synchronize explicit result links with backward-compatible generation result arrays and reject duplicate or cross-project references.
 - Managed generation claims atomically enforce the server-owned enable switch, singleton owner, one-active-job rule, maximum request/daily/monthly budgets, and output-storage reservation. Browser clients cannot enable real generation or execute the claim functions directly.
 - Script and prompt versions are append-only at the database trigger level.
-- Client error records contain a short message, context label, route, and user agent—not scripts, prompts, form values, or media URLs.
+- Browser environment values are centrally validated. Development may fall back to the fictional demo after a generic warning, but production fails closed when demo mode is enabled or the Supabase URL/anon key is missing or invalid. Validation logs never include the values.
+- The public `/health` page exposes only `status`, an ISO timestamp, and the application version. It does not disclose configuration or probe Supabase, B2, OAuth, owner data, or AI providers.
+- Client error tracking retains at most 50 sanitized reports in browser memory. Authenticated remote records contain only a bounded message, context label, route, and user agent—not scripts, prompts, form values, arbitrary objects, or media URLs.
 - Secrets, real exports, and real media are ignored by Git and scanned in CI.
 
 ## Threat assumptions
@@ -47,7 +49,7 @@ The first approved GitHub identity is registered directly in `app_owners`; the s
 
 ## Verification
 
-Hosted verification proves the signed-out login boundary, simulated non-owner read/write denial, the configured owner's access to Creator HQ, and anonymous HTTP 401 denial at the media-signing boundary. The startup-race regression suite verifies retryable errors, explicit denial, successful retry, session changes, and stale-result protection; `npm run verify` passes with 69 unit/component tests. `supabase/tests/database` additionally covers the function grants and owner policies; the full isolated pgTAP suite passed in GitHub Actions and must run again whenever migrations or policies change.
+Hosted verification proves the signed-out login boundary, simulated non-owner read/write denial, the configured owner's access to Creator HQ, and anonymous HTTP 401 denial at the media-signing boundary. The startup-race regression suite verifies retryable errors, explicit denial, successful retry, session changes, and stale-result protection. The current local Phase 3 verification passes 102 unit/component tests, including environment, health, error-tracking, and route coverage; the focused `/health` Playwright check passes all four supported viewports. `supabase/tests/database` additionally covers the function grants and owner policies; the full isolated pgTAP suite passed in GitHub Actions and must run again whenever migrations or policies change.
 
 The private B2 bucket, restricted application key, exact local and approved Deploy Preview CORS origins, lifecycle cleanup, and exact removal of all generated rehearsal objects were verified without placing credentials in the repository. The protected Deploy Preview passed a fresh GitHub sign-out/sign-in and three reloads without reproducing the false non-owner state. A 522-byte PNG uploaded directly to private B2, previewed at 16 × 16, downloaded with an identical byte count and SHA-256 hash, moved to trash, restored, and permanently deleted. The delete function returned success only after its awaited B2 deletion path, all queried temporary workflow tables returned to zero, and the browser logged no warnings or errors.
 

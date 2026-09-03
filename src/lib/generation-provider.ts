@@ -2,9 +2,9 @@ import type {
   GenerationMediaKind,
   GenerationPricingSnapshot,
   GenerationRequestSettings,
-} from "../types";
+} from '../types';
 
-export type ProviderJobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
+export type ProviderJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 
 export interface ProviderCapabilities {
   providerId: string;
@@ -13,7 +13,7 @@ export interface ProviderCapabilities {
   models: Array<{
     id: string;
     mediaKind: GenerationMediaKind;
-    aspectRatios: GenerationRequestSettings["aspectRatio"][];
+    aspectRatios: GenerationRequestSettings['aspectRatio'][];
     durations: number[];
     supportsReferences: boolean;
     supportsCancellation: boolean;
@@ -27,7 +27,7 @@ export interface NormalizedGenerationRequest {
   mediaKind: GenerationMediaKind;
   promptVersionId: string;
   prompt: string;
-  references: Array<{ assetId: string; role: "reference_image" | "start_image" }>;
+  references: Array<{ assetId: string; role: 'reference_image' | 'start_image' }>;
   settings: GenerationRequestSettings;
   model: string;
 }
@@ -46,20 +46,22 @@ export interface ProviderJob {
 }
 
 export interface ProviderJobState extends ProviderJob {
-  failureCode?: string;
-  failureMessage?: string;
-  output?: {
-    filename: string;
-    mimeType: "image/png" | "video/mp4";
-    bytes: number;
-  };
+  failureCode?: string | undefined;
+  failureMessage?: string | undefined;
+  output?:
+    | {
+        filename: string;
+        mimeType: 'image/png' | 'video/mp4';
+        bytes: number;
+      }
+    | undefined;
 }
 
 export interface NormalizedGenerationResult {
   status: ProviderJobStatus;
-  failureCode?: string;
-  failureMessage?: string;
-  output?: ProviderJobState["output"];
+  failureCode?: string | undefined;
+  failureMessage?: string | undefined;
+  output?: ProviderJobState['output'] | undefined;
 }
 
 export interface GenerationProvider {
@@ -71,30 +73,32 @@ export interface GenerationProvider {
   normalizeResult(job: ProviderJobState): NormalizedGenerationResult;
 }
 
-export const FAKE_PROVIDER_ID = "studioflow-fake";
+export const FAKE_PROVIDER_ID = 'studioflow-fake';
 
-export function createFakeGenerationProvider(clock: () => string = () => new Date().toISOString()): GenerationProvider {
+export function createFakeGenerationProvider(
+  clock: () => string = () => new Date().toISOString()
+): GenerationProvider {
   const cancelledJobs = new Set<string>();
   const mediaByJob = new Map<string, GenerationMediaKind>();
 
   return {
     capabilities: () => ({
       providerId: FAKE_PROVIDER_ID,
-      label: "StudioFlow simulator",
-      mediaKinds: ["image", "video"],
+      label: 'StudioFlow simulator',
+      mediaKinds: ['image', 'video'],
       models: [
         {
-          id: "fake-image-v1",
-          mediaKind: "image",
-          aspectRatios: ["9:16", "16:9", "1:1"],
+          id: 'fake-image-v1',
+          mediaKind: 'image',
+          aspectRatios: ['9:16', '16:9', '1:1'],
           durations: [],
           supportsReferences: true,
           supportsCancellation: true,
         },
         {
-          id: "fake-video-v1",
-          mediaKind: "video",
-          aspectRatios: ["9:16", "16:9", "1:1"],
+          id: 'fake-video-v1',
+          mediaKind: 'video',
+          aspectRatios: ['9:16', '16:9', '1:1'],
           durations: [5, 10],
           supportsReferences: true,
           supportsCancellation: true,
@@ -105,12 +109,12 @@ export function createFakeGenerationProvider(clock: () => string = () => new Dat
     estimate: (request) => ({
       maximumCostMicros: 0,
       providerCredits: 0,
-      estimatedOutputBytes: request.mediaKind === "image" ? 2_000_000 : 20_000_000,
+      estimatedOutputBytes: request.mediaKind === 'image' ? 2_000_000 : 20_000_000,
       pricingSnapshot: {
         provider: FAKE_PROVIDER_ID,
         model: request.model,
-        currency: "USD",
-        unit: request.mediaKind === "image" ? "request" : "second",
+        currency: 'USD',
+        unit: request.mediaKind === 'image' ? 'request' : 'second',
         unitCostMicros: 0,
         creditsPerUnit: 0,
         capturedAt: clock(),
@@ -119,20 +123,23 @@ export function createFakeGenerationProvider(clock: () => string = () => new Dat
     create: async (request) => {
       const providerJobId = `fake-${request.mediaKind}-${request.generationId}`;
       mediaByJob.set(providerJobId, request.mediaKind);
-      return { providerJobId, status: "queued", createdAt: clock() };
+      return { providerJobId, status: 'queued', createdAt: clock() };
     },
     retrieve: async (providerJobId) => {
-      const mediaKind = mediaByJob.get(providerJobId) ?? (providerJobId.startsWith("fake-video-") ? "video" : "image");
+      const mediaKind =
+        mediaByJob.get(providerJobId) ??
+        (providerJobId.startsWith('fake-video-') ? 'video' : 'image');
       if (cancelledJobs.has(providerJobId)) {
-        return { providerJobId, status: "cancelled", createdAt: clock() };
+        return { providerJobId, status: 'cancelled', createdAt: clock() };
       }
       return {
         providerJobId,
-        status: "succeeded",
+        status: 'succeeded',
         createdAt: clock(),
-        output: mediaKind === "image"
-          ? { filename: "studioflow-simulated-image.png", mimeType: "image/png", bytes: 2_048 }
-          : { filename: "studioflow-simulated-video.mp4", mimeType: "video/mp4", bytes: 8_192 },
+        output:
+          mediaKind === 'image'
+            ? { filename: 'studioflow-simulated-image.png', mimeType: 'image/png', bytes: 2_048 }
+            : { filename: 'studioflow-simulated-video.mp4', mimeType: 'video/mp4', bytes: 8_192 },
       };
     },
     cancel: async (providerJobId) => {

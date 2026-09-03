@@ -81,9 +81,11 @@ Copy `.env.example` to `.env.local` and fill only the public browser values:
 
 ```dotenv
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
 VITE_DEMO_MODE=false
 ```
+
+StudioFlow validates these browser values in `src/lib/env.ts`. Development without valid private-workspace configuration falls back to the fictional demo and logs only a generic warning. Production fails closed if demo mode is enabled or either Supabase browser value is missing or invalid; it never silently serves the fictional demo as the production workspace.
 
 The Supabase server secret and all B2 values must never use a `VITE_` prefix.
 
@@ -101,7 +103,7 @@ The source tree contains `generation-start`, `generation-cancel`, `generation-in
 
 Connect the GitHub repository to Netlify, configure the same three public browser values, and leave production publishing unapproved. Branch previews may be reviewed first. Confirm the deploy context does not enable paid add-ons or automatic overages.
 
-The configured StudioFlow site is `studioflowhq`. Its Supabase URL, publishable key, and `VITE_DEMO_MODE=false` exist only in the Deploy Previews context; the production context has no StudioFlow browser values. Each approved preview origin must be added exactly to all three allowlists: Supabase Auth redirects, the Edge Function `APP_ORIGINS` secret, and B2 CORS. Do not use a broad wildcard.
+The configured StudioFlow site is `studioflowhq`. Its Supabase URL, anon key, and `VITE_DEMO_MODE=false` exist only in the Deploy Previews context; the production context has no StudioFlow browser values. Each approved preview origin must be added exactly to all three allowlists: Supabase Auth redirects, the Edge Function `APP_ORIGINS` secret, and B2 CORS. Do not use a broad wildcard.
 
 Keep all production protections enabled: the repository `[context.production] ignore = "exit 0"` rule, the fail-closed production command in `scripts/netlify-production-guard.mjs`, and Netlify's provider-level production auto-publish lock. The original ignore rule did not prevent an initial protected `main` build during site creation, so it is not sufficient by itself. That initial build has no production browser values and is not an approved release. Do not create `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` unless a separate production release has authorized one exact reviewed 40-character commit SHA; remove it immediately after that candidate is handled.
 

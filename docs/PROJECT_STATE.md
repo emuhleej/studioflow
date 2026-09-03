@@ -6,14 +6,14 @@ This document is StudioFlow's current project dashboard. It records the state a 
 
 ## Current project status
 
-| Field | Current state |
-| --- | --- |
-| Status | Active development |
-| Production | Stable |
-| Current major feature | AI Image and Video Generation |
-| Active implementation unit | None — AI-1 and AI-2 are complete; the feature is paused before AI-3 |
-| Latest completed checkpoint | Account-free AI foundation and mocked Runway connector on draft PR #6; production remains locked |
-| Next checkpoint to open | AI-3 Gate 1 only, after explicit owner approval for a Runway account and minimum prepaid balance |
+| Field                       | Current state                                                                                |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Status                      | Active development                                                                           |
+| Production                  | Stable                                                                                       |
+| Current major feature       | AI Image and Video Generation                                                                |
+| Active implementation unit  | None — Quick Wins Phases 1–3 are complete locally; AI generation remains paused before AI-3  |
+| Latest completed checkpoint | Phase 3 environment validation, public shell health page, and privacy-bounded error tracking |
+| Next checkpoint to open     | AI-3 Gate 1 only after explicit owner approval for a Runway account and prepaid balance      |
 
 “Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
 
@@ -41,8 +41,14 @@ This document is StudioFlow's current project dashboard. It records the state a 
 - Private metadata writes retry once and safely roll back a failed optimistic change without overwriting newer work.
 - Race-safe owner authorization with a distinct retryable verification-error state, stale-request protection, and definitive denial only after an explicit non-owner result.
 - Private Netlify Deploy Preview with preview-only browser variables, protected access, SPA routing, and responsive owner-workspace verification.
+- Top-level render-error containment, typed four-tone notifications, and accessible shared loading primitives with focused tests.
+- Project-local Prettier, Husky, and lint-staged enforcement; stricter TypeScript compilation; and an implementation-aligned API reference.
+- Centralized Zod environment validation with a safe development demo fallback and fail-closed production behavior.
+- Minimal public `/health` shell indicator and a bounded, sanitized in-memory error tracker that reuses the authenticated client-error recorder.
 
 ## Current active work
+
+The bounded **Quick Wins and Critical Fixes Phases 1–3** are complete in the local working tree. Phase 3 centralizes environment validation, prevents invalid or demo-mode production startup, adds a minimal public shell health page, and routes render and unhandled-promise failures through a sanitized 50-report in-memory tracker backed by the existing authenticated client-error recorder. The `/health` page does not open the private workspace or probe Supabase, B2, authentication, or AI providers. No database, provider, hosted environment, or deployment configuration changed.
 
 The current major feature is **AI Image and Video Generation**. AI-1 and AI-2 are complete on `codex/ai-1-2-foundation` and draft PR #6. The account-free simulator is integrated with the fictional episode workspace, while the provider connector and recovery/ingest functions remain source-only and mock-tested.
 
@@ -83,6 +89,10 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 
 ## Current build and deployment state
 
+- Quick Wins Phase 1 passes TypeScript, lint, all 94 unit/component tests across 23 files, all six production-release guard tests, and the production build. The build retains its existing informational warning for a JavaScript chunk larger than 500 kB. A full Playwright run reported all 36 scenarios successful but did not exit cleanly during runner cleanup; the single-worker confirmation was interrupted by the owner and remains a later verification item.
+- Quick Wins Phase 2 passes the stricter TypeScript build, ESLint, Prettier's complete repository check, all 94 unit/component tests across 23 files, all six production-release guard tests, and the production build. The production dependency audit reports zero vulnerabilities. The full development audit reports seven high-severity advisories confined to the existing Netlify CLI dependency tree; no automatic dependency rewrite was applied.
+- Quick Wins Phase 3 passes TypeScript, ESLint, Prettier's complete repository check, all 102 unit/component tests across 26 files, all six production-release guard tests, and the production build. The focused public-health Playwright check passes and exits cleanly at desktop, iPad landscape, iPad portrait, and 390 × 844 phone viewports. The build retains its informational large-chunk warning.
+
 - Latest Milestone 9 verification: TypeScript, lint, the production build, all 63 unit/component tests in the stable single-worker run, and all 13 focused domain tests passed. The default parallel unit run hit one five-second timeout on this slow Windows/OneDrive host; no assertion failed.
 - Playwright completed all 28 existing desktop, iPad, and phone scenarios plus all four new shot-planning accessibility scenarios. Browser inspection additionally verified the complete fictional rehearsal, reload persistence, dialog bounds, 44-pixel touch targets, and no page-level horizontal overflow at 1440 × 900, 1194 × 834, 834 × 1194, and 390 × 844.
 - Milestones 10A–10B applied all six repository migrations to the hosted Supabase project. Verification found 19 of 19 public tables using RLS, 18 hardened owner policies, no anonymous public-table grants, and migration history matching the source filenames.
@@ -105,20 +115,23 @@ Before opening the next separately approved gate, re-read:
 
 1. `CODEX.md`
 2. This `docs/PROJECT_STATE.md`
-3. `docs/features/LIVE_SERVICE_READINESS_STATE.md`
-4. `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` for the completed Milestone 9 boundary
-5. `README.md`
-6. `docs/ARCHITECTURE.md`
-7. `docs/SECURITY.md`
-8. `docs/BUILD-PLAN.md`
-9. `docs/SETUP.md`
-10. The authentication, Supabase repository, migrations, database tests, and route-guard files
+3. `docs/features/QUICK_WINS_STATE.md`
+4. `docs/features/LIVE_SERVICE_READINESS_STATE.md`
+5. `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` for the completed Milestone 9 boundary
+6. `README.md`
+7. `docs/ARCHITECTURE.md`
+8. `docs/SECURITY.md`
+9. `docs/BUILD-PLAN.md`
+10. `docs/SETUP.md`
+11. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-The exact next task is to obtain explicit owner approval for **AI-3 Gate 1 only**: create the Runway Developer Portal account/organization and purchase the minimum prepaid balance. Do not create an API key, configure a server secret, deploy generation functions, submit a provider request, incur a generation charge, merge PR #6, or release production without the separately named approval.
+Quick Wins is complete. The exact next product task is to return to `docs/features/AI_GENERATION_STATE.md` and wait for explicit approval of **AI-3 Gate 1**: create the Runway account and approve the prepaid balance. Do not create an AI key, configure a server secret, deploy generation functions, submit a paid request, merge, or release production without the separately named approval.
 
 ## Active documentation
 
 - `CODEX.md` — permanent Codex behavior, engineering, safety, testing, and release rules.
+- `docs/features/QUICK_WINS_STATE.md` — completed and locally verified Phases 1–3 maintenance checkpoint.
+- `docs/API.md` — owner-authenticated PostgREST and private-media Edge Function interface reference.
 - `docs/features/LIVE_SERVICE_READINESS_STATE.md` — completed 10A–10F live-service integration and the separate repository/release boundaries.
 - `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` — completed fictional Milestone 9 rehearsal and remaining owner-private/physical-device trials.
 - `docs/features/GENERATION_HISTORY_STATE.md` — completed manual provenance scope, hosted verification, and the boundary to future managed generation.

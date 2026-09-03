@@ -4,7 +4,9 @@ StudioFlow is a private production operating system for recurring AI-video serie
 
 The repository is public so the engineering journey can be shared. Production records and media are not public and must never be committed.
 
-> Status: AI-1 and AI-2 are complete on draft PR #6. StudioFlow now has an account-free image/video simulator, provider-neutral managed-generation records, hard cost/storage safeguards, recoverable job state, and a Runway-shaped connector tested only with mocks. The additive schema is live with real generation disabled. Local verification passes 87 unit/component tests, six production-lock checks, and the production build; GitHub passes all 36 browser scenarios, secret scanning, and all 80 database assertions. No AI account, key, request, charge, generation-function deployment, merge, preview deployment, or production release was performed.
+> Status: AI-1 and AI-2 are complete on draft PR #6. StudioFlow now has an account-free image/video simulator, provider-neutral managed-generation records, hard cost/storage safeguards, recoverable job state, and a Runway-shaped connector tested only with mocks. The additive schema is live with real generation disabled. Local verification passes 102 unit/component tests, six production-lock checks, and the production build; GitHub passes all 36 browser scenarios, secret scanning, and all 80 database assertions. No AI account, key, request, charge, generation-function deployment, merge, preview deployment, or production release was performed.
+
+The local Quick Wins Phases 1–3 are complete: source-controlled private-mode configuration uses `VITE_SUPABASE_ANON_KEY`; shared error-boundary, toast, skeleton, and loading-spinner components are covered by focused tests; project-local formatting, commit-time checks, stricter TypeScript, and API documentation are in place; and environment validation, a minimal public health page, and bounded error monitoring are verified. No hosted configuration or deployment changed.
 
 Netlify published one initial `main` build while the site was being created despite the repository production-ignore rule. That URL remains behind Netlify access control and has no production browser variables, but it is not an approved StudioFlow production release. Do not remove its protection or publish another production build without separate approval.
 
@@ -27,6 +29,9 @@ Netlify published one initial `main` build while the site was being created desp
 - Backblaze B2 Edge Functions for signed upload, multipart resume/cancel/complete, private preview, permanent deletion, and AES-256-GCM metadata backup.
 - 8 GB warning, 9 GB upload block, 2 GB file maximum, and lifecycle-rule configuration.
 - Live private B2 verification covering single upload, preview, download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup/decryption/restore, and exact test-data cleanup.
+- Recoverable top-level render-error handling, typed success/error/info/warning notifications, and accessible shared loading states.
+- Project-local formatting and staged-file quality gates, stricter TypeScript compilation, and an implementation-aligned API reference.
+- Centralized browser-environment validation, fail-closed production startup, a public `/health` shell indicator, and sanitized in-memory error monitoring.
 
 ## Architecture
 
@@ -52,10 +57,13 @@ npm run dev
 
 Open `http://localhost:4173`. With no local `.env`, StudioFlow uses fictional browser-only data. Uploaded demo files remain in that browser's IndexedDB.
 
+Open `http://localhost:4173/health` to view the public application-shell health result. It does not probe private services or owner data.
+
 ## Verification
 
 ```powershell
 npm run verify
+npm run format:check
 npx playwright install chromium
 npm run test:e2e
 ```
@@ -84,6 +92,8 @@ Important operational documents:
 - [Milestone 9 workflow trial](docs/features/REAL_WORKFLOW_TRIAL_STATE.md)
 - [AI image and video checkpoint](docs/features/AI_GENERATION_STATE.md)
 - [AI image and video plan](docs/features/AI_GENERATION_PLAN.md)
+- [Quick Wins and critical fixes checkpoint](docs/features/QUICK_WINS_STATE.md)
+- [API reference](docs/API.md)
 
 ## Repository policy
 

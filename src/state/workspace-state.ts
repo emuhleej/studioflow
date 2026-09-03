@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
-import type { WorkspaceData } from "../types";
+import { useCallback, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { WorkspaceData } from '../types';
 
 export function useWorkspaceState(initializer: () => WorkspaceData): {
   data: WorkspaceData;
@@ -11,7 +11,7 @@ export function useWorkspaceState(initializer: () => WorkspaceData): {
   const dataRef = useRef(data);
 
   const setData = useCallback<Dispatch<SetStateAction<WorkspaceData>>>((update) => {
-    const next = typeof update === "function" ? update(dataRef.current) : update;
+    const next = typeof update === 'function' ? update(dataRef.current) : update;
     dataRef.current = next;
     setReactData(next);
   }, []);

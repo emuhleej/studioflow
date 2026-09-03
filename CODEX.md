@@ -53,16 +53,16 @@ Before any meaningful change:
 5. Read the files directly involved in the task and their existing tests.
 6. Read the additional documents required by the change:
 
-| Change area | Required documents |
-| --- | --- |
-| Active feature implementation | The matching `docs/features/*_STATE.md` file |
-| Architecture, storage, data flow | `docs/ARCHITECTURE.md` |
-| Authentication, RLS, secrets, private data | `docs/SECURITY.md` and `SECURITY.md` |
-| Supabase or B2 setup | `docs/SETUP.md` |
-| Database schema or policies | Current migrations, generated database types, and `supabase/tests/database/` |
-| Backup, export, or restore | `docs/BACKUP-RESTORE.md` |
-| Milestones or scope | `docs/BUILD-PLAN.md` |
-| Preview or production release | `docs/PRODUCTION-RELEASE.md` |
+| Change area                                | Required documents                                                           |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| Active feature implementation              | The matching `docs/features/*_STATE.md` file                                 |
+| Architecture, storage, data flow           | `docs/ARCHITECTURE.md`                                                       |
+| Authentication, RLS, secrets, private data | `docs/SECURITY.md` and `SECURITY.md`                                         |
+| Supabase or B2 setup                       | `docs/SETUP.md`                                                              |
+| Database schema or policies                | Current migrations, generated database types, and `supabase/tests/database/` |
+| Backup, export, or restore                 | `docs/BACKUP-RESTORE.md`                                                     |
+| Milestones or scope                        | `docs/BUILD-PLAN.md`                                                         |
+| Preview or production release              | `docs/PRODUCTION-RELEASE.md`                                                 |
 
 Do not infer the current repository state from an old conversation, plan, or generated output. Verify it from the working tree.
 

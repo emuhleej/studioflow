@@ -7,7 +7,7 @@ No approved StudioFlow production release exists. Repository setup produced one 
 - The Netlify project is `studioflowhq` and remains private.
 - `[context.production] ignore = "exit 0"` in `netlify.toml` is intended to skip ordinary `main` builds.
 - If Netlify bypasses the ignore check, the production-context command runs `scripts/netlify-production-guard.mjs` and fails closed unless the separately managed `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` value is a full 40-character SHA exactly matching Netlify's current `COMMIT_REF`.
-- The Supabase browser URL, publishable key, and `VITE_DEMO_MODE=false` are configured only for the Deploy Previews context.
+- The Supabase browser URL, anon key, and `VITE_DEMO_MODE=false` are configured only for the Deploy Previews context.
 - Netlify provider-level Auto Publishing is locked and must remain locked.
 - Do not remove the production guard, add production-context values, or change project visibility without separate owner approval.
 
@@ -42,7 +42,7 @@ A production deploy requires a separate explicit approval after the milestone pr
 1. Confirm Netlify auto publishing is locked and leave it locked.
 2. Record the exact reviewed 40-character commit SHA in the release approval.
 3. Add the exact production origin to the Supabase Auth redirect allowlist, Edge Function `APP_ORIGINS`, and B2 CORS. Wildcards are prohibited.
-4. Add the Supabase URL, Supabase publishable key, and `VITE_DEMO_MODE=false` only to Netlify's Production deploy context. These are required runtime configuration and remain while that production release is active; remove them only when rolling back to the protected shell or decommissioning production.
+4. Add the Supabase URL, Supabase anon key, and `VITE_DEMO_MODE=false` only to Netlify's Production deploy context. These are required runtime configuration and remain while that production release is active; remove them only when rolling back to the protected shell or decommissioning production.
 5. Add `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` only to Netlify's Production deploy context, with the exact approved SHA. This is a one-commit build authorization, not ongoing runtime configuration.
 6. As part of the same approved release, create and invoke a one-time Netlify build hook for the production branch. Netlify documents that build hooks bypass the ordinary ignore command; the fail-closed production command must report that the approved SHA matches `COMMIT_REF`.
 7. Delete the one-time build hook and remove `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` immediately after the candidate build completes. Verify auto publishing remains locked and confirm a retry or later commit fails closed again.

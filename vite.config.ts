@@ -1,6 +1,6 @@
-import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -13,15 +13,15 @@ export default defineConfig({
     strictPort: true,
   },
   test: {
-    environment: "jsdom",
-    setupFiles: ["./src/test/setup.ts"],
-    exclude: ["tests/e2e/**", "node_modules/**", "dist/**"],
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
     css: true,
     env: {
-      VITE_DEMO_MODE: "true",
+      VITE_DEMO_MODE: 'true',
     },
     coverage: {
-      reporter: ["text", "html"],
+      reporter: ['text', 'html'],
     },
   },
 });
