@@ -1,10 +1,10 @@
-import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { demoWorkspace } from "../data/demo";
-import { useWorkspaceState } from "./workspace-state";
+import { act, renderHook } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { demoWorkspace } from '../data/demo';
+import { useWorkspaceState } from './workspace-state';
 
-describe("useWorkspaceState", () => {
-  it("keeps synchronous commands on the latest workspace value", () => {
+describe('useWorkspaceState', () => {
+  it('keeps synchronous commands on the latest workspace value', () => {
     const { result } = renderHook(() => useWorkspaceState(() => structuredClone(demoWorkspace)));
 
     act(() => {

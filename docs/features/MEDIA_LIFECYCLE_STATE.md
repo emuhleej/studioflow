@@ -85,21 +85,21 @@ It supports a fictional browser-local demo and an owner-only Supabase/B2 workspa
 
 ## Integration Status
 
-| Integration | State |
-| --- | --- |
-| Demo metadata and IndexedDB blobs | Implemented and tested |
-| Validation and quota rules | Implemented and unit-tested |
-| Upload-task lifecycle | Implemented and unit/component-tested |
-| Multipart completed-part recovery | Live pause at 2%, resume, and completion verified with a 55 MB test file |
-| Private preview URL lifecycle | Implemented with loading, retry, pre-expiry refresh, and playback recovery |
-| Purpose-specific download access | Implemented with attachment disposition |
-| Editable notes and technical metadata | Implemented |
-| Multi-context asset links | Implemented in client, repository adapter, migration, backup, and UI |
-| Trash and restore | Live provider-backed exercise passed |
-| Confirmed permanent deletion | Implemented with client and database reference cleanup |
-| Approved Deploy Preview lifecycle | 522-byte PNG upload, preview, matching-hash download, trash, restore, permanent deletion, and exact hosted-record cleanup passed |
-| Owner RLS and lifecycle database rules | Applied, live owner/non-owner behavior verified, and isolated pgTAP passed in GitHub Actions |
-| B2 lifecycle configuration | Applied and read back: one-day hidden-version cleanup and three-day abandoned-multipart cleanup |
+| Integration                            | State                                                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Demo metadata and IndexedDB blobs      | Implemented and tested                                                                                                           |
+| Validation and quota rules             | Implemented and unit-tested                                                                                                      |
+| Upload-task lifecycle                  | Implemented and unit/component-tested                                                                                            |
+| Multipart completed-part recovery      | Live pause at 2%, resume, and completion verified with a 55 MB test file                                                         |
+| Private preview URL lifecycle          | Implemented with loading, retry, pre-expiry refresh, and playback recovery                                                       |
+| Purpose-specific download access       | Implemented with attachment disposition                                                                                          |
+| Editable notes and technical metadata  | Implemented                                                                                                                      |
+| Multi-context asset links              | Implemented in client, repository adapter, migration, backup, and UI                                                             |
+| Trash and restore                      | Live provider-backed exercise passed                                                                                             |
+| Confirmed permanent deletion           | Implemented with client and database reference cleanup                                                                           |
+| Approved Deploy Preview lifecycle      | 522-byte PNG upload, preview, matching-hash download, trash, restore, permanent deletion, and exact hosted-record cleanup passed |
+| Owner RLS and lifecycle database rules | Applied, live owner/non-owner behavior verified, and isolated pgTAP passed in GitHub Actions                                     |
+| B2 lifecycle configuration             | Applied and read back: one-day hidden-version cleanup and three-day abandoned-multipart cleanup                                  |
 
 ## Complete
 

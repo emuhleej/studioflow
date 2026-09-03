@@ -57,3 +57,11 @@ verify_jwt = false
 verify_jwt = false
 [functions.metadata-backup]
 verify_jwt = false
+[functions.generation-start]
+verify_jwt = false
+[functions.generation-cancel]
+verify_jwt = false
+[functions.generation-ingest]
+verify_jwt = false
+[functions.generation-reconcile]
+verify_jwt = false

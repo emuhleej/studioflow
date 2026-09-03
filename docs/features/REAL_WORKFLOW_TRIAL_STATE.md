@@ -46,18 +46,18 @@ Prove that one coherent episode can move through StudioFlow's production core wi
 
 ## Integration Status
 
-| Integration | State |
-| --- | --- |
-| Brief through publication workflow | Completed with fictional local data |
-| Script and prompt immutability | Completed and reload-verified |
-| 60–90 second scene/shot template | Completed at 75 seconds |
-| Generation provenance and review | Completed without provider calls |
-| Generation-result media in episode Media tab | Repaired and regression-tested |
-| Time, cost, and publication records | Completed and reload-verified |
-| Desktop and iPad layouts | Browser-verified |
-| 390 × 844 phone layout | Browser-verified |
-| Live private provider workflow | Provider-backed foundation and tiny Deploy Preview media cycle verified; full owner-private episode pending |
-| Physical-device review | Pending owner devices |
+| Integration                                  | State                                                                                                       |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Brief through publication workflow           | Completed with fictional local data                                                                         |
+| Script and prompt immutability               | Completed and reload-verified                                                                               |
+| 60–90 second scene/shot template             | Completed at 75 seconds                                                                                     |
+| Generation provenance and review             | Completed without provider calls                                                                            |
+| Generation-result media in episode Media tab | Repaired and regression-tested                                                                              |
+| Time, cost, and publication records          | Completed and reload-verified                                                                               |
+| Desktop and iPad layouts                     | Browser-verified                                                                                            |
+| 390 × 844 phone layout                       | Browser-verified                                                                                            |
+| Live private provider workflow               | Provider-backed foundation and tiny Deploy Preview media cycle verified; full owner-private episode pending |
+| Physical-device review                       | Pending owner devices                                                                                       |
 
 ## Complete
 

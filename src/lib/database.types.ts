@@ -91,6 +91,7 @@ export type Database = {
           project_id: string
           review_status: Database["public"]["Enums"]["asset_review_status"]
           source: string
+          source_generation_id: string | null
           storage_key: string
           updated_at: string
           width: number | null
@@ -112,6 +113,7 @@ export type Database = {
           project_id: string
           review_status?: Database["public"]["Enums"]["asset_review_status"]
           source?: string
+          source_generation_id?: string | null
           storage_key: string
           updated_at?: string
           width?: number | null
@@ -133,6 +135,7 @@ export type Database = {
           project_id?: string
           review_status?: Database["public"]["Enums"]["asset_review_status"]
           source?: string
+          source_generation_id?: string | null
           storage_key?: string
           updated_at?: string
           width?: number | null
@@ -150,6 +153,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_source_generation_id_fkey"
+            columns: ["source_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generation_records"
             referencedColumns: ["id"]
           },
         ]
@@ -235,6 +245,7 @@ export type Database = {
           occurred_on: string
           owner_id: string
           provider: string
+          source_generation_id: string | null
           updated_at: string
         }
         Insert: {
@@ -249,6 +260,7 @@ export type Database = {
           occurred_on?: string
           owner_id: string
           provider?: string
+          source_generation_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -263,6 +275,7 @@ export type Database = {
           occurred_on?: string
           owner_id?: string
           provider?: string
+          source_generation_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -271,6 +284,13 @@ export type Database = {
             columns: ["episode_id"]
             isOneToOne: false
             referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_entries_source_generation_id_fkey"
+            columns: ["source_generation_id"]
+            isOneToOne: false
+            referencedRelation: "generation_records"
             referencedColumns: ["id"]
           },
         ]
@@ -420,59 +440,295 @@ export type Database = {
         }
         Relationships: []
       }
-      generation_records: {
+      generation_budget_settings: {
         Row: {
           archived_at: string | null
+          created_at: string
+          daily_limit_micros: number
+          deleted_at: string | null
+          generated_output_limit_bytes: number
+          generation_enabled: boolean
+          id: string
+          max_image_request_micros: number
+          max_video_request_micros: number
+          monthly_limit_micros: number
+          owner_id: string
+          reference_image_limit_bytes: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          daily_limit_micros?: number
+          deleted_at?: string | null
+          generated_output_limit_bytes?: number
+          generation_enabled?: boolean
+          id?: string
+          max_image_request_micros?: number
+          max_video_request_micros?: number
+          monthly_limit_micros?: number
+          owner_id: string
+          reference_image_limit_bytes?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          daily_limit_micros?: number
+          deleted_at?: string | null
+          generated_output_limit_bytes?: number
+          generation_enabled?: boolean
+          id?: string
+          max_image_request_micros?: number
+          max_video_request_micros?: number
+          monthly_limit_micros?: number
+          owner_id?: string
+          reference_image_limit_bytes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      generation_events: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          deleted_at: string | null
+          detail: Json
+          event_type: string
+          from_status: string | null
+          generation_id: string
+          id: string
+          message: string
+          owner_id: string
+          to_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          detail?: Json
+          event_type: string
+          from_status?: string | null
+          generation_id: string
+          id?: string
+          message?: string
+          owner_id: string
+          to_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          detail?: Json
+          event_type?: string
+          from_status?: string | null
+          generation_id?: string
+          id?: string
+          message?: string
+          owner_id?: string
+          to_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_events_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generation_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generation_input_assets: {
+        Row: {
+          archived_at: string | null
+          asset_id: string
+          created_at: string
+          deleted_at: string | null
+          generation_id: string
+          id: string
+          owner_id: string
+          position: number
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          asset_id: string
+          created_at?: string
+          deleted_at?: string | null
+          generation_id: string
+          id?: string
+          owner_id: string
+          position?: number
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          asset_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          generation_id?: string
+          id?: string
+          owner_id?: string
+          position?: number
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_input_assets_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generation_input_assets_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generation_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generation_records: {
+        Row: {
+          api_version: string | null
+          archived_at: string | null
           asset_ids: string[]
+          calculated_cost_micros: number | null
+          client_request_id: string | null
+          completed_at: string | null
           cost_cents: number
           created_at: string
           deleted_at: string | null
           duration_seconds: number | null
           episode_id: string
+          estimated_cost_micros: number
+          estimated_output_bytes: number
+          execution_mode: string
+          failure_code: string | null
+          failure_message: string | null
           id: string
+          ingest_attempts: number
+          media_kind: string | null
           model: string
+          model_version: string | null
+          next_poll_at: string | null
           notes: string
+          operational_status: string
           outcome: Database["public"]["Enums"]["asset_review_status"]
           owner_id: string
+          poll_attempts: number
+          pricing_snapshot: Json
           prompt_version_id: string | null
           provider: string
+          provider_credit_units: number | null
+          provider_job_id: string | null
+          provider_reported_cost_micros: number | null
+          provider_submission_started_at: string | null
+          request_settings: Json
+          reserved_max_cost_micros: number
+          reserved_output_bytes: number
           shot_id: string | null
+          started_at: string | null
+          submission_claim_expires_at: string | null
+          submission_claim_id: string | null
+          submitted_at: string | null
           updated_at: string
         }
         Insert: {
+          api_version?: string | null
           archived_at?: string | null
           asset_ids?: string[]
+          calculated_cost_micros?: number | null
+          client_request_id?: string | null
+          completed_at?: string | null
           cost_cents?: number
           created_at?: string
           deleted_at?: string | null
           duration_seconds?: number | null
           episode_id: string
+          estimated_cost_micros?: number
+          estimated_output_bytes?: number
+          execution_mode?: string
+          failure_code?: string | null
+          failure_message?: string | null
           id?: string
+          ingest_attempts?: number
+          media_kind?: string | null
           model: string
+          model_version?: string | null
+          next_poll_at?: string | null
           notes?: string
+          operational_status?: string
           outcome?: Database["public"]["Enums"]["asset_review_status"]
           owner_id: string
+          poll_attempts?: number
+          pricing_snapshot?: Json
           prompt_version_id?: string | null
           provider: string
+          provider_credit_units?: number | null
+          provider_job_id?: string | null
+          provider_reported_cost_micros?: number | null
+          provider_submission_started_at?: string | null
+          request_settings?: Json
+          reserved_max_cost_micros?: number
+          reserved_output_bytes?: number
           shot_id?: string | null
+          started_at?: string | null
+          submission_claim_expires_at?: string | null
+          submission_claim_id?: string | null
+          submitted_at?: string | null
           updated_at?: string
         }
         Update: {
+          api_version?: string | null
           archived_at?: string | null
           asset_ids?: string[]
+          calculated_cost_micros?: number | null
+          client_request_id?: string | null
+          completed_at?: string | null
           cost_cents?: number
           created_at?: string
           deleted_at?: string | null
           duration_seconds?: number | null
           episode_id?: string
+          estimated_cost_micros?: number
+          estimated_output_bytes?: number
+          execution_mode?: string
+          failure_code?: string | null
+          failure_message?: string | null
           id?: string
+          ingest_attempts?: number
+          media_kind?: string | null
           model?: string
+          model_version?: string | null
+          next_poll_at?: string | null
           notes?: string
+          operational_status?: string
           outcome?: Database["public"]["Enums"]["asset_review_status"]
           owner_id?: string
+          poll_attempts?: number
+          pricing_snapshot?: Json
           prompt_version_id?: string | null
           provider?: string
+          provider_credit_units?: number | null
+          provider_job_id?: string | null
+          provider_reported_cost_micros?: number | null
+          provider_submission_started_at?: string | null
+          request_settings?: Json
+          reserved_max_cost_micros?: number
+          reserved_output_bytes?: number
           shot_id?: string | null
+          started_at?: string | null
+          submission_claim_expires_at?: string | null
+          submission_claim_id?: string | null
+          submitted_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -987,11 +1243,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_generation_submission: {
+        Args: {
+          requested_claim_id: string
+          target_generation_id: string
+          target_owner_id: string
+        }
+        Returns: boolean
+      }
+      complete_generation_ingest: {
+        Args: {
+          output_bytes: number
+          output_filename: string
+          output_mime_type: string
+          output_storage_key: string
+          target_generation_id: string
+          target_owner_id: string
+        }
+        Returns: string
+      }
       current_user_is_app_owner: { Args: never; Returns: boolean }
       delete_asset_metadata: {
         Args: { target_asset_id: string; target_owner_id: string }
         Returns: undefined
       }
+      finalize_generation_without_output: {
+        Args: {
+          settled_cost_micros: number
+          target_failure_code: string
+          target_failure_message: string
+          target_generation_id: string
+          target_owner_id: string
+          target_status: string
+        }
+        Returns: boolean
+      }
+      mark_generation_submission_started: {
+        Args: {
+          requested_claim_id: string
+          target_generation_id: string
+          target_owner_id: string
+        }
+        Returns: boolean
+      }
+      recover_stale_generation_claims: { Args: never; Returns: number }
     }
     Enums: {
       asset_kind: "image" | "audio" | "video"
