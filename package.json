@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:production-guard": "node --test scripts/netlify-production-guard.check.mjs",
     "test:watch": "vitest",
@@ -19,7 +21,8 @@
     "supabase:stop": "supabase stop",
     "supabase:test": "supabase test db",
     "supabase:types": "supabase gen types typescript --local > src/lib/database.types.ts",
-    "backup:decrypt": "node scripts/decrypt-backup.mjs"
+    "backup:decrypt": "node scripts/decrypt-backup.mjs",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
@@ -48,8 +51,11 @@
     "eslint-plugin-react-refresh": "^0.5.5",
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.11.0",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
+    "lint-staged": "^15.5.2",
     "netlify-cli": "^27.4.2",
+    "prettier": "^3.9.6",
     "supabase": "^2.116.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
@@ -61,5 +67,14 @@
     "esbuild@0.28.1": true,
     "netlify-cli@27.4.2": true,
     "sharp@0.34.5": true
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }

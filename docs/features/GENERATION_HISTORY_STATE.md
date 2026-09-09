@@ -73,17 +73,17 @@ Prompt and generation history preserves how each attempted result was made. It k
 
 ## Integration Status
 
-| Integration | State |
-| --- | --- |
-| Episode-wide and shot-specific prompt versions | Implemented and tested |
-| Independent purpose/version chains | Implemented and tested |
-| Immutable database prompt history | Implemented; isolated pgTAP passed in GitHub Actions |
-| Manual generation provenance | Implemented and tested |
-| Result-media attachment and removal | Implemented and tested |
-| Selected/rejected/unreviewed decisions | Implemented and tested |
-| Backward-compatible result synchronization | Implemented; isolated pgTAP and hosted restore rehearsal passed |
-| Hosted owner persistence and restore | Verified with temporary fictional records; test data removed |
-| Desktop, iPad, and phone workflow | Implemented and tested |
+| Integration                                    | State                                                           |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| Episode-wide and shot-specific prompt versions | Implemented and tested                                          |
+| Independent purpose/version chains             | Implemented and tested                                          |
+| Immutable database prompt history              | Implemented; isolated pgTAP passed in GitHub Actions            |
+| Manual generation provenance                   | Implemented and tested                                          |
+| Result-media attachment and removal            | Implemented and tested                                          |
+| Selected/rejected/unreviewed decisions         | Implemented and tested                                          |
+| Backward-compatible result synchronization     | Implemented; isolated pgTAP and hosted restore rehearsal passed |
+| Hosted owner persistence and restore           | Verified with temporary fictional records; test data removed    |
+| Desktop, iPad, and phone workflow              | Implemented and tested                                          |
 
 ## Complete
 

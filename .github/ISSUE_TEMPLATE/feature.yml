@@ -1,6 +1,6 @@
 name: Feature slice
 description: Propose one bounded production or learning improvement.
-title: "[Feature]: "
+title: '[Feature]: '
 labels: [enhancement]
 body:
   - type: textarea

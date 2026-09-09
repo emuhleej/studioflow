@@ -2,7 +2,7 @@
 
 ## What is backed up
 
-The `metadata-backup` Edge Function reads every owner-scoped production record, including asset links, packages an import-compatible `workspace` plus upload-session infrastructure metadata, encrypts it with AES-256-GCM, and writes it to the private B2 bucket. Media objects remain in place and are referenced by their storage keys.
+The `metadata-backup` Edge Function reads every owner-scoped production record, including asset links, managed generation inputs, append-only lifecycle events, generation budget settings, and generation-linked costs, packages an import-compatible version 2 `workspace` plus upload-session infrastructure metadata, encrypts it with AES-256-GCM, and writes it to the private B2 bucket. Media objects remain in place and are referenced by their storage keys. Provider credentials, signed reference URLs, and temporary provider output URLs are never part of the backup model.
 
 The encrypted envelope is:
 
@@ -31,7 +31,7 @@ The key is never stored with the backup.
 1. Create a fresh Supabase test project and apply the migration.
 2. Configure a disposable owner with the same UUID represented in the export, or use the Settings import in the authenticated workspace; Settings normalizes each imported `ownerId` to the currently signed-in owner.
 3. Import `studioflow-workspace.json` through Settings.
-4. Verify project, series, episode, script, prompt, media metadata, asset-link, time, cost, and publication counts.
+4. Verify project, series, episode, script, prompt, generation, generation-input, generation-event, generation-budget, media metadata, asset-link, time, cost, and publication counts.
 5. Generate a private preview URL for one test media object and confirm it loads.
 6. Confirm a signed-out and a non-owner request cannot read metadata or obtain a media URL.
 7. Record the rehearsal date and delete the disposable project.
@@ -40,6 +40,6 @@ Never overwrite the production database as the first restore attempt.
 
 ## Verified rehearsal
 
-On 2026-09-02, StudioFlow created an encrypted backup from a fictional one-project workspace with two generated media records. The encrypted object was downloaded from the private bucket, decrypted locally, validated as an import-compatible version 1 workspace, and restored with the same non-destructive upsert ordering used by Settings. Project, asset, and upload-session counts matched after restore. The generated database records, B2 objects, decrypted file, encrypted local copy, and temporary credential transport were then permanently removed; the dedicated bucket returned to zero file versions.
+On 2026-09-02, StudioFlow created an encrypted backup from a fictional one-project workspace with two generated media records. The encrypted object was downloaded from the private bucket, decrypted locally, validated as an import-compatible version 1 workspace, and restored with the same non-destructive upsert ordering used by Settings. Project, asset, and upload-session counts matched after restore. The generated database records, B2 objects, decrypted file, encrypted local copy, and temporary credential transport were then permanently removed; the dedicated bucket returned to zero file versions. This remains the last live rehearsal. AI-1 adds version 2 generation collections and deterministic import/normalization coverage; a new live encrypted version 2 backup/restore rehearsal must be recorded before AI-3 or production release.
 
 Weekly scheduling remains disabled until the owner stores an independent copy of `BACKUP_ENCRYPTION_KEY` in a password manager. The server-side Supabase secret is enough to create backups but is not a substitute for an owner-held disaster-recovery copy.

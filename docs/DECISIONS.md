@@ -496,29 +496,107 @@ The current computer is at the practical edge of Docker Desktop's supported Wind
 - Running mutating test fixtures against the hosted owner project.
 - Maintaining a second local database implementation for this machine.
 
+## DEC-018 — Managed AI generation is provider-neutral, server-owned, bounded, and disabled by default
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-02
+- **Area:** AI orchestration, privacy, cost control, and recovery
+
+### Decision
+
+StudioFlow represents managed image/video work with provider-neutral requests, capabilities, frozen price estimates, persisted cost/output reservations, append-only events, and explicit lifecycle states. Provider adapters translate those records only in server code. The browser never receives an AI credential, signed private-reference URL, or temporary provider-output URL and cannot directly claim paid work.
+
+`generation_enabled` remains false through AI-2. A real provider account, prepaid balance, API key, server-secret change, first paid request, function/scheduler deployment, and production release remain separate approval gates.
+
+Two narrow infrastructure exceptions are approved:
+
+1. An internal-only generated-output function may accept one generation ID, reload the stored provider job itself, keep its temporary result URL in memory, require an exact approved HTTPS hostname/direct `200`/valid type and length, and stream no more than the persisted 250 MB-or-lower output reservation into private B2. This exception applies only to generated output; ordinary large uploads remain direct browser-to-B2 transfers.
+2. Closed-browser reconciliation may use a separate server-only scheduler credential. The reconciler accepts no caller-supplied owner, generation, provider-job, URL, or storage identifiers; it selects due rows for the singleton owner and applies the same database transition and reservation rules.
+
+Runway is the first mocked adapter because one developer API can cover the planned image and image-to-video flow. It is not embedded in the UI/domain model and is not live-verified in AI-2.
+
+### Rationale
+
+Provider jobs are asynchronous, temporary result URLs must be copied into owned storage, and a browser may close after a chargeable request begins. Server ownership prevents credential exposure and client-side budget bypass. Persisted claims and reservations make uncertainty visible instead of silently retrying a request that may already have been charged. Exact-host, no-redirect, length-bounded streaming limits the unavoidable server transfer without creating a general URL-fetch proxy.
+
+### Consequences
+
+- One prepared client request ID, one active managed job, one generated asset, one canonical asset link, and one generation-linked cost entry are enforced by database constraints or atomic functions.
+- Lost submission responses and uncertain cancellation charges enter `submission_unknown` with reservations held until the owner records an outcome.
+- Successful ingest atomically replaces reservations with actual asset/cost records; failed ingest retries storage without purchasing another generation.
+- Provider output URLs and provider-only signed references never enter PostgreSQL, exports, backups, logs, screenshots, or browser responses.
+- AI-1/AI-2 tests use the deterministic fake provider and mocked Runway HTTP only. They create no provider account, key, request, or charge.
+- DEC-006 remains authoritative for ordinary uploads; this entry records its generated-output-only exception.
+- DEC-012 remains authoritative for the production-core release; this entry opens only the separately approved managed-AI implementation track.
+
+### Rejected alternatives
+
+- Calling an AI provider directly from the browser.
+- Storing provider-specific request bodies as the client/domain contract.
+- Displaying or persisting temporary provider output URLs.
+- Accepting a URL or storage key from a scheduler or ingest caller.
+- Automatically retrying a request after an ambiguous submission response.
+- Treating cancellation as proof of refund.
+- Reusing the ordinary 2 GB upload limit for generated-output Edge streaming.
+
+## DEC-019 — Production configuration fails closed and public health stays minimal
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-03
+- **Area:** Configuration, privacy, and monitoring
+
+### Decision
+
+All browser environment values pass through one Zod validation boundary. Development may fall back to the fictional demo after a generic warning. Production requires demo mode to be disabled plus a valid Supabase URL and anon key; otherwise startup fails closed.
+
+The public `/health` route reports only `status`, an ISO timestamp, and the application version. It is an application-shell indicator, not a private-service readiness probe. Client error tracking retains at most 50 sanitized reports in memory and delegates only a bounded message and context label to the existing authenticated error recorder.
+
+### Rationale
+
+A production build must not silently appear healthy while serving the fictional workspace because private configuration is missing. At the same time, a public diagnostic route must not disclose service configuration, owner state, storage details, or sensitive error context.
+
+### Consequences
+
+- Source files use `src/lib/env.ts` instead of independently reading the three StudioFlow browser variables.
+- Configuration diagnostics never print environment values.
+- `/health` can be checked without loading `StudioProvider`, authentication, or private records.
+- A successful health page proves only that the client shell loaded and rendered.
+- Service-specific readiness checks require a separately designed authenticated interface.
+
+### Rejected alternatives
+
+- Falling back to demo mode in production.
+- Logging invalid environment values for convenience.
+- Exposing Supabase, B2, OAuth, owner, or AI-provider details on a public route.
+- Creating a second remote error-reporting service for this checkpoint.
+
 ## Frequently re-proposed ideas that remain rejected
 
 Future agents should not reopen these suggestions without new constraints or explicit owner direction:
 
-| Suggestion | Existing decision |
-| --- | --- |
-| “Turn it into a SaaS now.” | DEC-001 |
-| “Put a sample of the real creative library in the public repo.” | DEC-002 |
-| “The route guard is enough security.” | DEC-003 |
-| “Use localStorage for the real workspace.” | DEC-004 |
-| “Add another global store and sync it later.” | DEC-005 |
-| “Store video in PostgreSQL or proxy it through the app.” | DEC-006 |
-| “Use Cloudflare because the account already exists.” | DEC-007 |
-| “Make history editable; it is easier.” | DEC-008 |
-| “Reset the database instead of migrating old data.” | DEC-009 |
-| “Delete old media automatically when storage fills.” | DEC-010 |
-| “We can fix mobile after desktop is finished.” | DEC-011 |
-| “Add an AI provider, editor, posting, or analytics while touching nearby code.” | DEC-012 |
-| “Deploy automatically after tests pass.” | DEC-013 |
-| “Add MIT by default.” | DEC-014 |
-| “Leave failed cloud saves visible and let the next refresh fix them.” | DEC-015 |
-| “Keep generation result arrays and asset links independently editable.” | DEC-016 |
-| “Install Docker here anyway or skip database tests.” | DEC-017 |
+| Suggestion                                                                      | Existing decision |
+| ------------------------------------------------------------------------------- | ----------------- |
+| “Turn it into a SaaS now.”                                                      | DEC-001           |
+| “Put a sample of the real creative library in the public repo.”                 | DEC-002           |
+| “The route guard is enough security.”                                           | DEC-003           |
+| “Use localStorage for the real workspace.”                                      | DEC-004           |
+| “Add another global store and sync it later.”                                   | DEC-005           |
+| “Store video in PostgreSQL or proxy it through the app.”                        | DEC-006           |
+| “Use Cloudflare because the account already exists.”                            | DEC-007           |
+| “Make history editable; it is easier.”                                          | DEC-008           |
+| “Reset the database instead of migrating old data.”                             | DEC-009           |
+| “Delete old media automatically when storage fills.”                            | DEC-010           |
+| “We can fix mobile after desktop is finished.”                                  | DEC-011           |
+| “Add an AI provider, editor, posting, or analytics while touching nearby code.” | DEC-012           |
+| “Deploy automatically after tests pass.”                                        | DEC-013           |
+| “Add MIT by default.”                                                           | DEC-014           |
+| “Leave failed cloud saves visible and let the next refresh fix them.”           | DEC-015           |
+| “Keep generation result arrays and asset links independently editable.”         | DEC-016           |
+| “Install Docker here anyway or skip database tests.”                            | DEC-017           |
+| “Call the provider from the browser or display its temporary result URL.”       | DEC-018           |
+| “Retry an unknown submission automatically; it probably did not charge.”        | DEC-018           |
+| “Let production use demo mode when its private configuration is missing.”       | DEC-019           |
+| “Put private service readiness details on the public health page.”              | DEC-019           |
 
 ## When to update this document
 
