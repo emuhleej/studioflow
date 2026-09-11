@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:production-guard": "node --test scripts/netlify-production-guard.check.mjs",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-playwright.mjs",
     "capture:previews": "node scripts/capture-previews.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run test:production-guard && npm run build",
     "supabase:start": "supabase start",

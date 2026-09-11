@@ -45,13 +45,15 @@ Connect StudioFlow's already-built production core to owner-controlled services 
 
 ## Data / Persistence
 
-The hosted Supabase project contains the six committed production-core migrations. It has one private authentication identity and one singleton owner-allowlist row. Nineteen public tables have row-level security enabled. Browser production metadata remains Supabase-owned; media and encrypted backup bytes remain in the private Backblaze B2 bucket. All fictional live-verification records and objects were removed after the rehearsal, so the owner workspace and dedicated bucket contain no test data. The fictional demo continues to use browser-local storage only.
+The hosted Supabase project contains eight source-controlled migrations, including the inactive on-demand reconciliation schedule. It has one private authentication identity and one singleton owner-allowlist row. All 22 public tables have row-level security enabled. Browser production metadata remains Supabase-owned; media and encrypted backup bytes remain in the private Backblaze B2 bucket. Earlier Milestone 10 rehearsal objects were removed exactly. AI-3 Gate 3 intentionally retains one fictional private project/episode, reference image, completed generated still, provenance, and cost record as the first real workflow evidence. The fictional demo continues to use browser-local storage only.
 
 ## Integration Status
 
-The hosted Supabase project is connected and its migration history matches the six reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth, exact local and Deploy Preview redirects, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, real owner, and anonymous media-boundary behavior have been verified. The private B2 bucket, restricted application key, server-side encryption, exact-origin CORS, lifecycle rules, Supabase secrets, and eight Edge Functions are configured. Single-part upload, private preview/download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup creation/download/decryption, non-destructive restore ordering, and exact cleanup are verified. The public repository is connected, and isolated database-security plus application CI passed.
+The hosted Supabase project is connected and its migration history matches the seven reviewed repository migrations. Generated TypeScript types reflect the live schema. GitHub OAuth uses PKCE; exact local and Deploy Preview redirects, the singleton owner row, and private-mode browser configuration are complete. Signed-out, simulated non-owner, real owner, and anonymous media-boundary behavior have been verified. The private B2 bucket, restricted application key, server-side encryption, exact-origin CORS, lifecycle rules, Supabase secrets, eight media/backup functions, and four generation functions are configured. Single-part upload, private preview/download, trash/restore, multipart pause/resume, provider cancellation, encrypted backup creation/download/decryption, non-destructive restore ordering, exact cleanup, and one live generated-image ingest are verified. The public repository is connected, and isolated database-security plus application CI passed.
 
 Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, deployment `6a98ade0b248ff000843f8f0`, containing the startup owner-authorization fix from `20c7f44` and the fail-closed production-build guard from `5a56947`. Creator HQ, direct `/library` and `/media` routes and refreshes, a clean browser console, and all four supported viewport sizes are verified. Netlify's three browser variables exist only in Deploy Previews, production browser values are empty, and provider-level Auto Publishing is locked. A fresh owner sign-out/sign-in plus three reloads preserved owner access. A tiny preview-origin private-media lifecycle completed with exact database cleanup.
+
+The separately approved AI-3 Gate 3 used those generation functions for exactly one Gen-4 Image Turbo request. A fictional private reference was fetched through the server-only signed path, the completed result was recovered without a permanent scheduler, and the output was copied into private B2 after a narrow Deno/B2 compatibility repair. StudioFlow created exactly one generated asset, canonical link, and two-cent cost entry; both review decisions are selected. The Runway portal moved from 500 to 498 promotional credits, matching the stored calculation. `generation_enabled` is false, no managed job is active, and no Netlify or production deployment occurred.
 
 ## Complete
 
@@ -94,6 +96,11 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 - A fresh GitHub sign-out/sign-in returned to the exact private preview as the owner; three subsequent reloads remained owner-authorized without a false denial.
 - A 522-byte PNG completed direct private upload, 16 × 16 preview, matching-size and matching-SHA-256 download, trash, restore, and permanent deletion. The media-delete function returned HTTP 200 after its awaited B2 deletion path, all queried hosted tables returned to zero temporary records, and the browser logged no warnings or errors.
 - Documentation-only closeout head `faef374` completed its Netlify preview and all seven PR checks without failure: six successful and one neutral. Final PR head `3d850db` was merged into `main` as `0914fd9`. Netlify canceled the merge-triggered production attempt while Auto Publishing remained locked, and the published shell remained at `6c18ece`.
+- The separately approved AI-3 deployment gate configured the three required server-only secret names exactly once and deployed all four generation functions. Unauthenticated requests returned HTTP 401, `generation_enabled` was false before and after deployment, no cron facility or generation scheduler is active, and no provider or Netlify request was made. `generation-ingest` was later redeployed with the Gate 3 Deno/B2 compatibility repair. Local verification passes formatting, TypeScript, ESLint, 105 unit/component tests, six production-lock tests, the production build, and all 40 Playwright scenarios with a clean runner exit.
+- AI-3 Gate 3 submitted exactly one approved Runway still, privately ingested it into B2, recorded one asset/link/cost, manually reconciled two promotional credits, selected the asset and generation, released all reservations, and returned the generation switch to false with zero active jobs. Retried ingest reused the same provider result and did not create another request.
+- GitHub OAuth now uses PKCE. A transient implicit-callback log exposure was contained by revoking the prior grant/session and signing out the stale browser state before a fresh safe authorization restored owner access.
+- The eighth hosted migration enables `pg_cron`/`pg_net`, creates an inactive-while-idle once-per-minute reconciliation job, denies browser schedule control, and atomically couples job activation to a successful managed-generation claim. Under separate approval, the internal credential and Vault entries were synchronized, the updated start/reconcile functions were deployed, unauthenticated calls returned HTTP 401, and an empty cron run succeeded before pausing itself. Generation stayed disabled and no Runway or Netlify request occurred.
+- Under a later separate approval, only `generation-ingest` was deployed as active hosted version 10. Deployed source inspection confirmed the bounded transfer orchestrator and B2 adapter are bundled and complete-output `arrayBuffer()` materialization is absent. An unauthenticated POST returned HTTP 401; generation remained disabled; zero active or uncertain jobs existed; and the scheduler remained inactive. No provider request, B2 object write, credit use, Netlify deployment, or production release occurred. Actual hosted B2 multipart execution remains pending.
 
 ## Partially Implemented
 
@@ -101,7 +108,7 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 
 ## Not Started
 
-- A separately approved production release, custom domain, and AI-provider execution.
+- A separately approved production release, custom domain, and AI-4 video execution.
 
 ## Broken / Needs Verification
 
@@ -110,6 +117,7 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 - The leaked-password advisor cannot be enabled on the free plan, so email/password authentication is disabled instead. GitHub OAuth remains the only enabled provider.
 - Performance advice now contains 22 informational unindexed-foreign-key and unused-index suggestions only. Review these separately before production release; they do not weaken the verified owner boundary.
 - Netlify published one initial production-context shell at `main` commit `6c18ece` during site creation despite the repository ignore rule. It remains edge-protected and has no production browser variables. Provider-level Auto Publishing is now locked.
+- The prior implicit-flow OAuth callback path is retired. Its transient diagnostic exposure was contained through grant/session revocation and stale local sign-out; a fresh PKCE authorization is verified.
 
 ## Locked Decisions
 
@@ -119,7 +127,7 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 - Mutating pgTAP fixtures never run against the hosted owner project.
 - OAuth credentials and the owner UUID remain private provider/database configuration, never repository data.
 - Production deployment remains a separate explicit approval.
-- AI providers and social automation remain outside this feature.
+- Paid AI gates and social automation remain outside Milestone 10F and require their own feature checkpoints.
 
 ## Known Risks
 
@@ -133,11 +141,13 @@ Milestone 10F has a guarded private Netlify Deploy Preview at commit `294acc8`, 
 
 ## Exact Next Implementation Task
 
-Stop. Obtain the owner's explicit selection of exactly one next gate—the production-release procedure or AI-1—before beginning further implementation. Do not promote production, add AI providers, or change paid-service settings without the matching approval.
+The on-demand schedule is configured, live-verified, and inactive while idle. The memory-safe source, hosted ingest bundle/authentication boundary, AI-4 provider/budget preflight, and local five-second preparation/confirmation path are complete; hosted B2 multipart execution remains pending. Follow `AI_GENERATION_STATE.md`: perform the action-time read-only provider/balance and hosted-guard checks, present the exact 25-credit/$0.25 request for separate approval, and stop before enablement or submission.
 
 ## Remaining Implementation Order
 
 1. Milestone 10F and its repository gate are complete.
-2. Stop for a separate production-release or AI-1 decision; neither begins automatically.
+2. AI-1 and AI-2 plus PR #6 are complete.
+3. AI-3 Gate 3 is complete with exactly one two-credit still.
+4. Scheduler verification, memory-safe transfer source, and hosted ingest bundle/authentication verification are complete; hosted B2 multipart execution, AI-4 video, and production release remain separate approvals.
 
 Update this file after every meaningful live-service checkpoint.

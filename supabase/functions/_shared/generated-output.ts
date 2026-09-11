@@ -47,10 +47,20 @@ export async function openBoundedGeneratedOutput(
     allowedHosts: ReadonlySet<string>;
     maximumBytes: number;
     fetcher?: typeof fetch;
+    signal?: AbortSignal;
   }
 ): Promise<BoundedGeneratedOutput> {
   const url = validateExactHttpsUrl(value, options.allowedHosts);
-  const response = await (options.fetcher ?? fetch)(url, { method: 'GET', redirect: 'manual' });
+  let response: Response;
+  try {
+    response = await (options.fetcher ?? fetch)(url, {
+      method: 'GET',
+      redirect: 'manual',
+      ...(options.signal ? { signal: options.signal } : {}),
+    });
+  } catch {
+    throw new Error('Provider output could not be opened.');
+  }
   if (response.status !== 200)
     throw new Error('Provider output must return a direct HTTP 200 response.');
   const contentType = (response.headers.get('content-type') ?? '')

@@ -29,6 +29,21 @@ function adapter(fetcher: typeof fetch) {
 }
 
 describe('mocked Runway adapter', () => {
+  it('uses the same exact first-image maximum shown by the preflight', () => {
+    expect(adapter(vi.fn() as unknown as typeof fetch).estimate(baseRequest)).toMatchObject({
+      maximumCostMicros: 20_000,
+      providerCredits: 2,
+      pricingSnapshot: {
+        provider: 'runway',
+        model: 'gen4_image_turbo',
+        currency: 'USD',
+        unit: 'request',
+        unitCostMicros: 20_000,
+        creditsPerUnit: 2,
+      },
+    });
+  });
+
   it('maps a normalized image request to the versioned API without returning signed references', async () => {
     const fetcher = vi.fn(
       async () =>

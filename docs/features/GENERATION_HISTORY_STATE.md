@@ -132,11 +132,11 @@ Prompt and generation history preserves how each attempted result was made. It k
 ## Remaining Verification
 
 - None within Milestone 7. All six migrations are applied to hosted Supabase, generated types are current, the isolated pgTAP suite passed in GitHub Actions, and the live fictional restore rehearsal was cleaned up exactly.
-- The first real AI-provider job and its paid-cost reconciliation belong to the separately approved AI plan, not this completed feature.
+- The first real AI-provider still and paid-cost reconciliation are complete under the separate AI plan; no Milestone 7 verification remains.
 
 ## Exact Next Implementation Task
 
-No Milestone 7 implementation remains. If the owner explicitly starts AI work, follow `AI_GENERATION_PLAN.md` and implement AI-1 only with the fake provider and `generation_enabled=false`; do not create a provider account, configure a provider key, submit a paid request, or deploy production.
+No Milestone 7 implementation remains. AI-3 Gate 3 added one separately approved live still while preserving this feature's manual-history behavior and canonical result links. Scheduled reconciliation, memory-safe video transfer, hosted ingest bundle/authentication verification, the AI-4 read-only preflight, and the local five-second preparation/confirmation path are complete. Follow `AI_GENERATION_STATE.md`: perform action-time safety checks and obtain separate approval before the first live video; hosted B2 multipart execution, the provider request, and production release remain separate gates.
 
 ## Remaining Implementation Order
 

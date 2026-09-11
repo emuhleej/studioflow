@@ -33,8 +33,14 @@ import {
 } from '../components/ui';
 import { getEpisodeAssets, getEpisodeTotals } from '../lib/domain';
 import { formatCurrency, formatDuration, formatShortDate, titleCase } from '../lib/format';
+import { compileShotPrompt } from '../lib/shot-prompt';
 import { episodeStatuses, useStudio } from '../state/studio-store';
 import type { BeatType, CostCategory, Platform, Shot } from '../types';
+
+interface PendingShotGeneration {
+  id: string;
+  promptVersionId: string;
+}
 
 type Tab = 'overview' | 'script' | 'shots' | 'media' | 'prompts' | 'costs' | 'publish';
 const tabs: Array<{ id: Tab; label: string }> = [
@@ -53,6 +59,7 @@ export function EpisodePage() {
   const { data } = studio;
   const episode = data.episodes.find((item) => item.id === episodeId);
   const [tab, setTab] = useState<Tab>('overview');
+  const [pendingGeneration, setPendingGeneration] = useState<PendingShotGeneration | null>(null);
   if (!episode)
     return (
       <section className="panel">
@@ -73,6 +80,12 @@ export function EpisodePage() {
   const shotProgress = episode.targetDurationSeconds
     ? Math.min(100, (totals.durationSeconds / episode.targetDurationSeconds) * 100)
     : 0;
+  const prepareShotGeneration = (shotId: string) => {
+    const content = compileShotPrompt(data, episode.id, shotId);
+    const prompt = studio.addPromptVersion(episode.id, 'image', content, shotId);
+    setPendingGeneration({ id: crypto.randomUUID(), promptVersionId: prompt.id });
+    setTab('prompts');
+  };
 
   return (
     <div>
@@ -128,12 +141,23 @@ export function EpisodePage() {
         <OverviewTab key={`overview-${episode.id}`} episodeId={episode.id} />
       ) : null}
       {tab === 'script' ? <ScriptTab key={`script-${episode.id}`} episodeId={episode.id} /> : null}
-      {tab === 'shots' ? <ShotsTab key={`shots-${episode.id}`} episodeId={episode.id} /> : null}
+      {tab === 'shots' ? (
+        <ShotsTab
+          key={`shots-${episode.id}`}
+          episodeId={episode.id}
+          onPrepareGeneration={prepareShotGeneration}
+        />
+      ) : null}
       {tab === 'media' ? (
         <EpisodeMediaTab key={`media-${episode.id}`} episodeId={episode.id} />
       ) : null}
       {tab === 'prompts' ? (
-        <PromptsTab key={`prompts-${episode.id}`} episodeId={episode.id} />
+        <PromptsTab
+          key={`prompts-${episode.id}`}
+          episodeId={episode.id}
+          launchRequest={pendingGeneration}
+          onLaunchHandled={() => setPendingGeneration(null)}
+        />
       ) : null}
       {tab === 'costs' ? <CostsTab key={`costs-${episode.id}`} episodeId={episode.id} /> : null}
       {tab === 'publish' ? (
@@ -327,7 +351,13 @@ function ScriptTab({ episodeId }: { episodeId: string }) {
   );
 }
 
-function ShotsTab({ episodeId }: { episodeId: string }) {
+function ShotsTab({
+  episodeId,
+  onPrepareGeneration,
+}: {
+  episodeId: string;
+  onPrepareGeneration: (shotId: string) => void;
+}) {
   const {
     data,
     addScene,
@@ -341,6 +371,13 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
   const scenes = data.scenes
     .filter((scene) => scene.episodeId === episodeId)
     .sort((a, b) => a.position - b.position);
+  const episode = data.episodes.find((item) => item.id === episodeId);
+  const series = data.series.find((item) => item.id === episode?.seriesId);
+  const projectEntities = data.entities.filter(
+    (entity) => entity.projectId === series?.projectId && !entity.archivedAt && !entity.deletedAt
+  );
+  const characters = projectEntities.filter((entity) => entity.kind === 'character');
+  const locations = projectEntities.filter((entity) => entity.kind === 'location');
   const [shotEdit, setShotEdit] = useState<Shot | null>(null);
   const [beat, setBeat] = useState<BeatType>('custom');
   const addNewScene = () => addScene(episodeId, beat);
@@ -403,6 +440,23 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                         {titleCase(scene.beat)} ·{' '}
                         {shots.reduce((sum, shot) => sum + shot.durationSeconds, 0)} seconds
                       </div>
+                      {locations.length ? (
+                        <select
+                          className="select mt-2 !min-h-11 !w-full sm:!w-auto"
+                          aria-label={`${scene.title} location`}
+                          value={scene.locationId ?? ''}
+                          onChange={(event) =>
+                            updateScene(scene.id, { locationId: event.target.value || undefined })
+                          }
+                        >
+                          <option value="">No location assigned</option>
+                          {locations.map((location) => (
+                            <option key={location.id} value={location.id}>
+                              {location.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex gap-1.5">
@@ -432,10 +486,10 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                       const canMoveShotUp = shotIndex > 0;
                       const canMoveShotDown = shotIndex < shots.length - 1;
                       return (
-                        <div key={shot.id} className="list-row text-left">
+                        <div key={shot.id} className="list-row flex-wrap text-left">
                           <button
                             type="button"
-                            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--violet)]"
+                            className="flex min-h-11 min-w-0 basis-full items-center gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--violet)] sm:basis-auto sm:flex-1"
                             aria-label={`Edit shot ${sceneIndex + 1}.${shotIndex + 1}: ${shot.title}`}
                             onClick={() => setShotEdit(structuredClone(shot))}
                           >
@@ -449,7 +503,13 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                               </div>
                             </div>
                           </button>
-                          <div className="flex items-center gap-2">
+                          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                            <IconButton
+                              label={`Prepare generation for ${shot.title}`}
+                              onClick={() => onPrepareGeneration(shot.id)}
+                            >
+                              <Sparkles size={15} />
+                            </IconButton>
                             <IconButton
                               label={`Move ${shot.title} shot up`}
                               disabled={!canMoveShotUp}
@@ -567,6 +627,39 @@ function ShotsTab({ episodeId }: { episodeId: string }) {
                 onChange={(event) => setShotEdit({ ...shotEdit, prompt: event.target.value })}
               />
             </Field>
+            {characters.length ? (
+              <fieldset>
+                <legend className="mb-2 text-xs font-semibold text-[var(--muted)]">
+                  Characters in this shot
+                </legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {characters.map((character) => (
+                    <label
+                      key={character.id}
+                      className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--line)] px-3 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={shotEdit.characterIds.includes(character.id)}
+                        onChange={() =>
+                          setShotEdit({
+                            ...shotEdit,
+                            characterIds: shotEdit.characterIds.includes(character.id)
+                              ? shotEdit.characterIds.filter((id) => id !== character.id)
+                              : [...shotEdit.characterIds, character.id],
+                          })
+                        }
+                      />
+                      {character.name}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : null}
+            <p className="quiet text-xs leading-5">
+              Generation combines this shot with its assigned characters and location, named props,
+              and the project’s style memory in a new immutable prompt version.
+            </p>
             <div className="flex justify-end gap-2">
               <Button type="button" onClick={() => setShotEdit(null)}>
                 Cancel
@@ -619,11 +712,23 @@ function EpisodeMediaTab({ episodeId }: { episodeId: string }) {
   );
 }
 
-function PromptsTab({ episodeId }: { episodeId: string }) {
+function PromptsTab({
+  episodeId,
+  launchRequest,
+  onLaunchHandled,
+}: {
+  episodeId: string;
+  launchRequest: PendingShotGeneration | null;
+  onLaunchHandled: () => void;
+}) {
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
       <PromptHistoryPanel episodeId={episodeId} />
-      <GenerationHistoryPanel episodeId={episodeId} />
+      <GenerationHistoryPanel
+        episodeId={episodeId}
+        launchRequest={launchRequest}
+        onLaunchHandled={onLaunchHandled}
+      />
     </div>
   );
 }

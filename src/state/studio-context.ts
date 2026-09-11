@@ -129,6 +129,7 @@ export interface StudioContextValue {
   ) => PromptVersion;
   addGeneration: (input: GenerationInput) => GenerationRecord;
   simulateGeneration: (input: PrepareManagedGenerationInput) => Promise<string>;
+  startRunwayGeneration: (input: PrepareManagedGenerationInput) => Promise<string>;
   cancelManagedGeneration: (generationId: string) => Promise<void>;
   resolveUnknownSubmission: (
     generationId: string,
@@ -143,6 +144,8 @@ export interface StudioContextValue {
   archiveProject: (projectId: string) => void;
   resetDemo: () => void;
   exportWorkspace: () => void;
+  createEncryptedBackup: () => Promise<void>;
+  rehearseRestore: () => Promise<void>;
   importWorkspace: (file: File) => Promise<void>;
 }
 

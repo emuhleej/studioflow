@@ -2,7 +2,7 @@
 
 ## Status
 
-IMPLEMENTED THROUGH AI-2 — ACCOUNT-FREE FOUNDATION AND MOCKED RUNWAY CONNECTOR COMPLETE; AI-3 NOT APPROVED
+AI-1 THROUGH AI-5 COMPLETE — RELEASE-CANDIDATE REVIEW NEXT
 
 ## Purpose
 
@@ -26,24 +26,24 @@ Reasons:
 
 Initial model defaults:
 
-| Use                     | Initial model      | Current API price on 2026-09-02            |
+| Use                     | Initial model      | Current API price on 2026-09-10            |
 | ----------------------- | ------------------ | ------------------------------------------ |
 | Draft still             | `gen4_image_turbo` | 2 credits, approximately $0.02 per image   |
 | Final still             | `gen4_image`       | 5 credits at 720p or 8 credits at 1080p    |
 | Draft motion            | `gen4_turbo`       | 5 credits, approximately $0.05 per second  |
 | Optional premium motion | `gen4.5`           | 12 credits, approximately $0.12 per second |
 
-Runway sells credits at $0.01 each and currently requires a minimum $10 initial credit purchase. Prices and model availability must be rechecked immediately before implementation or purchase. See [Runway pricing](https://docs.dev.runwayml.com/guides/pricing/), [Runway models](https://docs.dev.runwayml.com/guides/models/), and [Runway API setup](https://docs.dev.runwayml.com/guides/setup/).
+Runway prices API credits at $0.01 each. Gate 3 used 2 of the original 500 promotional credits, leaving 498; the owner made no purchase. Prices and model availability must be rechecked immediately before every additional live request. See [Runway pricing](https://docs.dev.runwayml.com/guides/pricing/), [Runway models](https://docs.dev.runwayml.com/guides/models/), and [Runway API setup](https://docs.dev.runwayml.com/guides/setup/).
 
 Do not build the first video adapter around OpenAI Sora. Official OpenAI documentation marks the current video API deprecated and scheduled to shut down on September 24, 2026. OpenAI GPT Image 2 may be added later as an optional image adapter; it is not needed for the first implementation. See [OpenAI video API](https://developers.openai.com/api/reference/typescript/resources/videos/methods/create) and [GPT Image 2](https://developers.openai.com/api/docs/models/gpt-image-2).
 
 ## Account Needed
 
-No new AI-provider account is needed for AI-1 or for the mocked connector work in AI-2; both continue using StudioFlow's already configured GitHub, Supabase, and B2 infrastructure. AI-3 has three separate action-time approval gates; approval of one does not authorize the next:
+No new AI-provider account is needed for AI-1 or for the mocked connector work in AI-2; both continue using StudioFlow's already configured GitHub, Supabase, and B2 infrastructure. AI-3's three separate action-time approval gates are complete; they did not authorize later scheduling, video, or provider requests:
 
-1. Approve creating a Runway Developer Portal account and organization and purchasing the minimum prepaid credit balance.
-2. Separately approve creating one StudioFlow API key and adding it to Supabase server secrets.
-3. Separately approve the exact first paid image request after StudioFlow displays its maximum charge.
+1. **Complete:** Runway Developer API access and 500 promotional credits were confirmed without a purchase.
+2. **Complete:** one StudioFlow-scoped key was created and stored only as the Supabase Edge Function secret `RUNWAYML_API_SECRET`.
+3. **Complete:** the exact first two-credit/$0.02 still-image request was approved after StudioFlow displayed its maximum charge.
 
 The key is shown only once. Enter it directly into the Supabase Edge Function secret manager as `RUNWAYML_API_SECRET`. It must never appear in the browser bundle, Netlify variables, PostgreSQL rows, exports, logs, screenshots, chat, or Git.
 
@@ -57,7 +57,7 @@ The Runway Codex plugin is not required for StudioFlow's server integration.
 - Approved-image-to-video generation with short initial clips.
 - Exact prompt version and reference-asset provenance.
 - Provider job lifecycle, foreground refresh, closed-browser recovery, cancellation, and failure history.
-- Bounded, streamed server-side ingest of successful generated outputs into private B2 under the explicit exception below.
+- Bounded server-side ingest of successful generated outputs into private B2 under the explicit exception below. Source uses one bounded payload through 8 MiB or sequential 8 MiB B2 multipart parts for larger results. The hosted bundle/authentication boundary is verified; actual B2 multipart execution remains part of the separately approved first-video action when applicable.
 - Selected, rejected, and unreviewed decisions using the existing media/generation systems.
 - Maximum-cost confirmation before every paid request.
 - Per-request, daily, and monthly hard spending limits.
@@ -150,18 +150,19 @@ AI-1 must update export validation, import normalization, encrypted backup, and 
 
 The current architecture correctly requires ordinary user uploads to transfer directly between the browser and B2; Supabase and Netlify do not proxy those bytes. Runway returns temporary result URLs that must be copied into owned storage and must not be exposed directly to the product, so AI generation needs one narrow architectural exception.
 
-Before AI-2 begins, obtain approval for and record this exception in `CODEX.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/SECURITY.md`:
+This exception was approved before AI-2 and is recorded in `CODEX.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/SECURITY.md`:
 
 - It applies only to generated provider outputs, never ordinary uploads.
-- A separate short-lived Supabase Edge invocation streams the response into B2 and never buffers the entire asset.
+- A separate short-lived Supabase Edge invocation transfers the response into B2. Results through 8 MiB use one bounded payload; larger results use sequential 8 MiB multipart parts with no complete-video materialization or parallel uploads.
 - It validates HTTPS, a direct HTTP 200 response, MIME type, `Content-Type`, `Content-Length`, elapsed time, and a conservative generated-output size limit before and during transfer.
 - It fails safely when an output cannot fit inside the bounded ingest envelope; it never promises support for the ordinary 2 GB upload maximum.
 - It never routes media bytes through Netlify.
 - Provider output URLs are never returned to the browser, saved in PostgreSQL, exported, or logged.
 - The ingest endpoint accepts only an internally authenticated generation ID, not a caller-supplied URL. It loads the stored provider job ID, retrieves and normalizes the current result through the adapter, and keeps the temporary URL in memory only.
-- Redirects are disabled. The adapter permits only its documented exact HTTPS output hosts, rejects embedded credentials, IP literals, localhost, and private or link-local targets, and enforces response-header plus streaming byte limits before B2 completion.
+- Redirects are disabled. The adapter permits only its documented exact HTTPS output hosts, rejects embedded credentials, IP literals, localhost, and private or link-local targets, and enforces response-header plus bounded byte limits before B2 completion.
+- The transfer has a 100-second deadline, requires an exact byte count, attempts multipart abort after ordinary failures, reuses only an exact existing object, refuses conflicts, and verifies generation metadata, type, and length before database completion.
 
-The current hosted Supabase Edge limits are 256 MB of memory, a 150-second free-plan wall-clock window, and a 150-second request idle timeout. Recheck those limits before implementation and size the generated-output envelope conservatively. See [Supabase Edge Function limits](https://supabase.com/docs/guides/functions/limits).
+The hosted Supabase Edge limits were rechecked before the 2026-09-10 source implementation: 256 MB of memory, a 150-second free-plan wall-clock window, and a two-second CPU limit. Recheck them again before hosted verification and keep the first video within its existing 200 MB reservation. See [Supabase Edge Function limits](https://supabase.com/docs/guides/functions/limits).
 
 ## Scheduled Recovery Authorization
 
@@ -194,7 +195,7 @@ AI-2 tests this contract with mocked HTTP. AI-3 must use one deliberately chosen
 6. The successful claimant makes one provider-submission attempt and saves the returned job ID. It never automatically repeats an ambiguous creation request.
 7. The browser reads status from Supabase; it never calls Runway directly.
 8. Visible work refreshes every 10–15 seconds while eligible. A roughly one-minute internal-service-authenticated recovery function, implemented before the first paid test, selects and reconciles due unfinished work when the browser is closed.
-9. A successful provider result enters `saving`; an internal-only bounded ingest invocation accepts the generation ID, retrieves the result through the provider adapter, validates its allowed origin without redirects, and streams it directly into private B2.
+9. A successful provider result enters `saving`; an internal-only bounded ingest invocation accepts the generation ID, retrieves the result through the provider adapter, and validates its allowed origin without redirects. It uses one bounded payload through 8 MiB or sequential 8 MiB B2 multipart parts above that threshold, with exact-length enforcement, a 100-second deadline, and best-effort cleanup.
 10. StudioFlow verifies the B2 object, atomically replaces reserved output bytes with the asset's actual counted bytes, creates and links the asset, calculates cost from the frozen submission-time pricing rule, writes one generation-linked cost entry, settles `reserved_max_cost_micros`, and only then marks the managed generation `completed`. If actual bytes exceed the reservation, saving must first claim the additional headroom or fail safely without marking completion.
 
 Runway tasks are asynchronous and the provider recommends polling no faster than every five seconds, with jitter and exponential backoff. See [Runway task polling](https://docs.dev.runwayml.com/api-details/sdks/).
@@ -251,7 +252,7 @@ Stop after the fake provider proves the simulated orchestration lifecycle, inclu
 
 ### AI-2 — Runway connector and recovery, no paid request
 
-**Status: complete.** The bounded generated-output and internal-service authentication exceptions are recorded. The Runway-shaped adapter, signed-reference validation, generation-ID-only bounded ingest, internal reconciliation, foreground refresh, cancellation, `submission_unknown`, and duplicate-prevention paths are implemented and tested with mocks only. The generation functions are source-only and undeployed; no Runway credential exists.
+**Status: complete.** The bounded generated-output and internal-service authentication exceptions are recorded. The Runway-shaped adapter, signed-reference validation, generation-ID-only bounded ingest, internal reconciliation, foreground refresh, cancellation, `submission_unknown`, and duplicate-prevention paths are implemented and tested with mocks only. AI-2 itself ended with source-only functions and used no Runway credential or request; their later deployment is recorded under the separately approved AI-3 gate.
 
 - Obtain approval for and record the bounded generated-output ingest and scheduled-service-authentication exceptions in `CODEX.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, and `docs/SECURITY.md`.
 - Implement the Runway adapter behind mocked HTTP responses.
@@ -264,33 +265,53 @@ Stop after the mocked Runway-shaped integration passes without an API key or pai
 ### AI-3 — First owner-only image generation
 
 - Review current provider pricing, privacy, retention, and billing controls.
-- Gate 1: obtain explicit approval to create the Runway account and purchase the minimum prepaid balance, then stop if that approval covers no later action.
-- Gate 2: obtain separate explicit approval to create the API key and change the Supabase server-secret configuration; store the key only as a Supabase server secret.
-- Add one-image prompt/reference selection and exact price confirmation.
-- Gate 3: obtain separate explicit approval for the displayed maximum charge, then submit exactly one lowest-cost draft image.
-- Use one deliberately chosen fictional reference image and verify that the provider can fetch its provider-only short-lived URL; never expose that URL to the browser or logs.
-- Copy it into private B2 before showing it, record provenance and calculated cost, create one linked cost entry, and record the review decision.
-- Reconcile the calculated charge against the Runway portal when provider reporting is unavailable.
+- Gate 1: **complete** — Runway Developer API access and 500 promotional credits were confirmed without a purchase.
+- Gate 2: **complete** — one StudioFlow-scoped API key was created and stored only as the Supabase Edge Function secret `RUNWAYML_API_SECRET`.
+- **Complete:** add one-image prompt/reference selection and exact price confirmation through the $0.00 mocked path. The confirmation uses the same shared 2-credit/$0.02 Gen-4 Image Turbo price definition as the server adapter and resets whenever the selected input changes.
+- **Complete:** under separate deployment/configuration approval, add the exact provider-output-host allowlist and independent internal-job credential, deploy all four custom-authenticated generation functions, verify HTTP 401 denial without credentials, and reconfirm `generation_enabled=false` without contacting Runway.
+- Gate 3: **complete** — current price/input/output documentation was rechecked, the owner approved the displayed two-credit/$0.02 maximum and temporary enablement, and exactly one Gen-4 Image Turbo request was submitted.
+- **Complete:** one deliberately fictional private reference was fetched through the server-only signed path; neither that URL nor the temporary provider result URL entered the browser, database, documentation, or repository.
+- **Complete:** the result was copied into private B2, previewed through StudioFlow, linked to the completed generation, recorded with one two-cent cost entry, and marked selected at both asset and generation levels.
+- **Complete:** the Runway portal moved from 500 to 498 promotional credits, matching the frozen calculation. `generation_enabled` was switched off immediately after acceptance; no scheduler or second provider request ran.
+- **Complete:** live ingest retries exposed two Deno/AWS compatibility defects. The B2 client now avoids optional flowing-stream checksums, and the already size-bounded still is converted to bytes before upload. Retries reused the completed provider result and did not purchase another image.
 
 Stop after one result is owner-only in StudioFlow and B2, linked, reviewed, and its calculated cost is recorded and manually reconciled. The provider necessarily received the selected prompt and references for processing.
 
+### Scheduled reconciliation gate — Complete
+
+- **Complete:** apply `pg_cron`/`pg_net`, the inactive once-per-minute job, the service-only lifecycle control, and the atomic claim-plus-activation wrapper.
+- **Complete:** regenerate hosted TypeScript types and verify that authenticated clients cannot control the schedule while `generation_enabled=false` and zero managed jobs are active.
+- **Complete:** under separate approval, rotate and synchronize the internal credential between the Edge Function environment and Supabase Vault, deploy the updated start/reconcile functions, reconfirm unauthenticated HTTP 401 denial, and verify one empty scheduled invocation pauses itself without contacting Runway.
+
+### Memory-safe generated-video transfer gate — Source and hosted bundle/auth complete
+
+- **Complete:** approved the five-second-only design with the existing 200 MB reservation, sequential 8 MiB parts, no parallelism, exact-object reuse, conflict refusal, and no persisted provider URL or multipart identifier.
+- **Complete:** added the provider-neutral transfer orchestrator, Edge-only B2 adapter, provider-fetch cancellation, and ingest integration without changing the database or browser.
+- **Complete:** focused transfer/security coverage passes 18 tests; full local verification passes TypeScript, ESLint, all 118 unit/component tests, six production-lock tests, and the production build.
+- **Complete for bundle/authentication:** deployed only the updated ingest bundle as active hosted version 10, verified the bounded transfer sources are bundled, confirmed complete-output `arrayBuffer()` materialization is absent, and reconfirmed unauthenticated HTTP 401 denial with generation disabled, zero active or uncertain jobs, and an inactive scheduler. No hosted storage write, provider request, credit use, Netlify deployment, or production release occurred. Actual B2 multipart execution remains pending.
+
 ### AI-4 — First owner-only image-to-video generation
 
-- Require an approved starting still for the initial workflow.
-- Add supported duration and aspect-ratio controls with a displayed maximum charge.
-- Start with the shortest supported Gen-4 Turbo clip.
+- **Complete locally:** require exactly one selected private starting still for the initial workflow.
+- **Complete locally:** add a separate video preparation action locked to five seconds and 9:16/`720:1280`, with a displayed 25-credit/$0.25 maximum and a required confirmation that resets when an input changes.
+- Start with the already approved five-second Gen-4 Turbo clip. Current Runway documentation supports flexible 2–10 second duration, but changing the first-video envelope is a separate decision.
 - Transfer the completed video into private B2 and capture duration/dimensions.
-- Perform one separately approved lowest-cost live video test.
+- Perform one separately approved five-second live video test capped at 25 credits/$0.25.
 
-Stop after one video is owner-only in StudioFlow and B2, linked, playable, and its calculated cost is recorded and manually reconciled.
+The read-only AI-4 preflight completed on 2026-09-10. Current official pricing remains 5 credits per second, so one five-second request has an exact maximum of 25 credits/$0.25. Use one approved private start image, one output, `gen4_turbo`, and 9:16 mapped to `720:1280`. The input image ratio must remain within 0.5–2.358. Runway task outputs are temporary for 24–48 hours and must be copied immediately to private B2 rather than exposed to the browser. The hosted $0.30 request cap, $2.00 daily cap, $10.00 monthly cap, 250 MB generated-output limit, and existing 200 MB estimate/reservation fit the proposed request; monthly settled generation cost was $0.02 with no active reservations at preflight. The prior 498-credit promotional balance was not re-read and remains an action-time check. No provider request or external mutation occurred during preflight.
+
+The local preparation/confirmation gate is complete. The browser now offers separate private image and five-second video actions, uses one generic owner-authenticated command, locks the video request to the reviewed model/format/duration/output count, requires exactly one private `start_image`, and blocks submission until the 25-credit/$0.25 maximum is confirmed. Unit/component coverage and the free fake-video rehearsal pass at desktop, iPad landscape/portrait, and 390 × 844 phone sizes. No hosted function, B2 object, Runway request, credit, or deployment changed.
+
+**Status: complete.** One action-time-confirmed `gen4_turbo` request produced one five-second private MP4. StudioFlow ingested 497,698 bytes through the bounded single-payload path, verified authenticated 720×1280 playback at 5.04 seconds, saved the media metadata, created one canonical result link and one $0.25 cost entry, released reservations, disabled generation, and paused the scheduler. No retry occurred. The result was below 8 MiB, so hosted multipart execution remains a later opportunistic check rather than a reason to buy another generation.
 
 ### AI-5 — Production-memory integration and hardening
 
-- Launch generation directly from a shot.
-- Compile character, location, prop, style, and shot fragments into an immutable prompt version.
-- Display complete inputs, lifecycle, model, result, and cost beside each attempt.
-- Confirm the one-to-one generation-linked cost entries appear exactly once in Creator HQ totals.
-- Complete accessibility, quota, privacy, and responsive verification plus the final export/backup/restore rehearsal.
+- **Complete locally:** launch generation directly from a shot.
+- **Complete locally:** compile series, episode, scene, shot, assigned-character, assigned/named-location, named-prop, and project-style memory into a new immutable prompt version.
+- **Complete locally:** display complete inputs, lifecycle, model, result, request shape, and settled cost beside each managed attempt.
+- **Complete:** confirm one-to-one generation-linked cost entries appear exactly once in Creator HQ totals; the first live video added one $0.25 row and moved the episode total from $0.02 to $0.27.
+- **Complete:** final encrypted schema-version-2 backup/non-destructive restore rehearsal; the owner-only server path preserved all existing records and left generation disabled.
+- Complete the release-candidate accessibility, quota, privacy, and responsive review.
 - Keep production deployment behind its separate release gate.
 
 ## Verification Required
@@ -318,8 +339,8 @@ Automated coverage must prove:
 - no managed completion without a private linked B2 asset, while legacy/manual recorded rows remain valid without one
 - cost confirmation, refresh persistence, review decisions, keyboard access, 44px touch targets, and no layout overflow at all supported sizes
 
-Live acceptance requires one separately approved low-cost image and one separately approved shortest video. Both must end owner-only in StudioFlow and private B2 with exact prompt, reference, resolved model name, lifecycle, pricing snapshot, and calculated cost provenance. Provider-reported cost remains nullable and may require manual portal reconciliation. No provider credential or temporary provider URL may appear in the browser or repository.
+Live image and five-second video acceptance are complete. Every live result ended owner-only in StudioFlow and private B2 with exact prompt, reference, resolved model name, lifecycle, pricing snapshot, and calculated cost provenance. Provider-reported cost remains nullable and may require manual portal reconciliation. No provider credential or temporary provider URL may appear in the browser or repository.
 
 ## Exact Next Implementation Task
 
-AI-1 and AI-2 are complete. The exact next task is to obtain explicit owner approval for **AI-3 Gate 1 only**: creating the Runway Developer Portal account/organization and purchasing the minimum prepaid balance. Do not create an account, API key, server secret, scheduler, provider request, charge, function deployment, preview, or production release before its separately named gate is approved.
+AI-1 through AI-5 are complete, including the one approved five-second private video and the encrypted version 2 backup/non-destructive restore rehearsal. Generation is disabled with no reservation and an inactive scheduler. The exact next task is one release-candidate commit and private preview review. Do not publish production or submit another provider request.

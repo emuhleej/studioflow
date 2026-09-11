@@ -71,9 +71,12 @@ npx supabase functions deploy media-upload-resume
 npx supabase functions deploy media-url
 npx supabase functions deploy media-delete
 npx supabase functions deploy metadata-backup
+npx supabase functions deploy metadata-restore
 ```
 
 Configure a weekly Supabase scheduled invocation of `metadata-backup` with `x-backup-secret`. Do not put that header value in a public workflow.
+
+`metadata-restore` is browser-invoked only by the authenticated singleton owner. It reads the latest completed encrypted backup directly from the configured private B2 bucket and uses the same `BACKUP_ENCRYPTION_KEY`; it needs no additional secret and accepts no workspace records or storage key from the caller.
 
 ## 4. Local real-mode configuration
 
@@ -91,13 +94,23 @@ The Supabase server secret and all B2 values must never use a `VITE_` prefix.
 
 ## Managed AI configuration boundary
 
-AI-1 and AI-2 require no AI-provider account or API key. Their fake-provider lifecycle and Runway-shaped adapter tests are account-free, and `generation_enabled` remains false. Do not create or add any of the following until the separate AI-3 approval gates in `docs/features/AI_GENERATION_PLAN.md`:
+AI-1 and AI-2 require no AI-provider account or API key. Their fake-provider lifecycle and Runway-shaped adapter tests are account-free. AI-3 and AI-4 are complete: the hosted project has one StudioFlow-scoped Runway credential stored only as the Supabase Edge Function secret `RUNWAYML_API_SECRET`; one approved still consumed two promotional credits and one separately confirmed five-second video consumed 25 promotional credits. The secret value must never be copied into a local file, browser variable, Netlify variable, database row, export, log, screenshot, documentation, or chat. `generation_enabled` is false between separately approved requests.
 
-- `RUNWAYML_API_SECRET` — Runway server credential; never a browser or Netlify variable.
-- `RUNWAY_OUTPUT_HOSTS` — comma-separated exact output hostnames verified at the live-test gate; never use wildcards or inferred parent domains.
-- `GENERATION_JOB_SECRET` — independent random internal-service credential for scheduled reconciliation/ingest; never reuse the backup secret or accept it from browser code.
+The hosted generation functions use these server-only values:
 
-The source tree contains `generation-start`, `generation-cancel`, `generation-ingest`, and `generation-reconcile` for mocked AI-2 verification. AI-2 does not deploy or schedule these functions. Future deployment requires its own approval, server-secret configuration, an exact-host review, and verification that the global switch is still false before the separately approved paid test.
+- `RUNWAYML_API_SECRET` — configured in hosted Supabase on 2026-09-10; Runway server credential, never a browser or Netlify variable.
+- `RUNWAY_OUTPUT_HOSTS` — configured on 2026-09-10 from Runway's current official output example; comma-separated exact output hostnames only, with no wildcards or inferred parent domains.
+- `GENERATION_JOB_SECRET` — configured on 2026-09-10 as an independent random internal-service credential for reconciliation/ingest; never reuse the backup secret or accept it from browser code.
+
+`generation-start`, `generation-cancel`, `generation-ingest`, and `generation-reconcile` are active in hosted Supabase with the custom authentication recorded in `supabase/config.toml`. They deny unauthenticated requests. The first still-image gate verified prompt/reference submission, temporary reconciliation, private B2 ingest, cost settlement, and review.
+
+The repository contains a replacement for complete-video buffering: one bounded payload through 8 MiB or sequential 8 MiB B2 multipart parts for larger generated results. `generation-ingest` version 10 completed the first live 497,698-byte video through the single-payload branch. Multipart remains pending because the output did not exceed 8 MiB. Routine setup must keep `generation_enabled=false` and must not submit another Runway request, deploy Netlify, or release production without the matching separate approval.
+
+The hosted database contains an inactive-while-idle `studioflow-generation-reconcile` cron job. Its repository migration uses `pg_cron`, `pg_net`, and encrypted Vault entries named `studioflow_project_url` and `studioflow_generation_job_secret`. Under separate approval, the internal Edge secret was rotated, its matching Vault value and the project URL were synchronized without entering project files or output, and the updated `generation-start` and `generation-reconcile` functions were deployed. An empty live invocation succeeded and returned the job to inactive while `generation_enabled=false`; no Runway request occurred. Never place either Vault value in source, a local environment file, logs, screenshots, or chat.
+
+AI-4 completed on 2026-09-10: one action-time-confirmed `gen4_turbo` request produced a private 720×1280 MP4 with 5.04-second playback and exactly one $0.25 cost entry. StudioFlow disabled generation immediately after acceptance and the scheduler paused after completion. Before any later request, recheck provider pricing, balance, input/output rules, and hosted guards, then obtain a new exact approval; never generate solely to force multipart coverage.
+
+Supabase browser authentication uses PKCE. Never inspect or capture an OAuth callback URL before the client has exchanged the code and returned to a clean StudioFlow URL.
 
 ## 5. Netlify preview
 

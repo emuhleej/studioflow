@@ -386,6 +386,30 @@ POST /functions/v1/media-delete
 { "deleted": true }
 ```
 
+## Metadata backup and restore rehearsal
+
+Both calls require the authenticated owner headers. The browser never receives the backup encryption key, B2 credentials, encrypted object path, or decrypted workspace.
+
+```http
+POST /functions/v1/metadata-backup
+```
+
+```json
+{}
+```
+
+This creates one AES-256-GCM schema-version-2 backup in the owner's private B2 prefix.
+
+```http
+POST /functions/v1/metadata-restore
+```
+
+```json
+{}
+```
+
+The restore function accepts no caller-supplied records or storage key. It selects and decrypts the latest completed owner backup, checks existing IDs, inserts only missing rows, never deletes or overwrites records, and forces generation off. Its response contains only schema, count, mode, and disabled-generation confirmation—not private record contents or object paths.
+
 ## Errors
 
 PostgREST errors follow Supabase's standard error format. StudioFlow Edge Functions return an appropriate `400`, `401`, `403`, or `404` status with a bounded message:

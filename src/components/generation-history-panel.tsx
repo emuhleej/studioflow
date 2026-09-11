@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   Ban,
   Check,
@@ -23,6 +23,7 @@ import {
   type GenerationInput,
 } from '../lib/generation-history';
 import { getEpisodePromptHistory } from '../lib/prompt-history';
+import { RUNWAY_FIRST_IMAGE_PREFLIGHT, RUNWAY_FIRST_VIDEO_PREFLIGHT } from '../lib/runway-pricing';
 import { useStudio } from '../state/studio-store';
 import type {
   Asset,
@@ -32,12 +33,26 @@ import type {
 } from '../types';
 import { Button, EmptyState, Field, Modal, SubmitButton } from './ui';
 
-export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
+interface ShotGenerationLaunch {
+  id: string;
+  promptVersionId: string;
+}
+
+export function GenerationHistoryPanel({
+  episodeId,
+  launchRequest,
+  onLaunchHandled,
+}: {
+  episodeId: string;
+  launchRequest?: ShotGenerationLaunch | null | undefined;
+  onLaunchHandled?: (() => void) | undefined;
+}) {
   const {
     data,
     isDemo,
     addGeneration,
     simulateGeneration,
+    startRunwayGeneration,
     cancelManagedGeneration,
     resolveUnknownSubmission,
     linkGenerationAsset,
@@ -58,9 +73,12 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
   const [resultAssetId, setResultAssetId] = useState('');
   const [resultError, setResultError] = useState('');
   const [simulationKind, setSimulationKind] = useState<GenerationMediaKind>('image');
-  const [simulationOpen, setSimulationOpen] = useState(false);
-  const [simulationPromptId, setSimulationPromptId] = useState('');
+  const [simulationOpen, setSimulationOpen] = useState(Boolean(launchRequest));
+  const [simulationPromptId, setSimulationPromptId] = useState(
+    launchRequest?.promptVersionId ?? ''
+  );
   const [simulationReferenceId, setSimulationReferenceId] = useState('');
+  const [simulationPriceConfirmed, setSimulationPriceConfirmed] = useState(false);
   const [simulationBusy, setSimulationBusy] = useState(false);
   const [simulationError, setSimulationError] = useState('');
 
@@ -128,6 +146,21 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
       : simulationReferences.some((asset) => asset.id === simulationReferenceId)
         ? simulationReferenceId
         : (simulationReferences[0]?.id ?? '');
+  const activePreflight =
+    simulationKind === 'video' ? RUNWAY_FIRST_VIDEO_PREFLIGHT : RUNWAY_FIRST_IMAGE_PREFLIGHT;
+  const outputLabel =
+    simulationKind === 'video'
+      ? `${RUNWAY_FIRST_VIDEO_PREFLIGHT.outputCount} five-second video`
+      : `${RUNWAY_FIRST_IMAGE_PREFLIGHT.outputCount} image`;
+  const liveModalTitle =
+    simulationKind === 'video'
+      ? 'Generate one private five-second video'
+      : 'Generate one private image';
+
+  useEffect(() => {
+    if (!launchRequest) return;
+    onLaunchHandled?.();
+  }, [launchRequest, onLaunchHandled]);
 
   const reset = () => {
     setProvider('');
@@ -232,22 +265,40 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
       return;
     }
     if (simulationKind === 'video' && !effectiveSimulationReferenceId) {
-      setSimulationError('Choose a starting image for the video simulation.');
+      setSimulationError(
+        isDemo
+          ? 'Choose a starting image for the video simulation.'
+          : 'Choose the private starting image for this live video gate.'
+      );
+      return;
+    }
+    if (!isDemo && !effectiveSimulationReferenceId) {
+      setSimulationError('Choose the private reference image for this live gate.');
+      return;
+    }
+    if (!simulationPriceConfirmed) {
+      setSimulationError('Review and confirm the maximum Runway price before continuing.');
       return;
     }
     setSimulationBusy(true);
     setSimulationError('');
     try {
-      await simulateGeneration({
+      const startGeneration = isDemo ? simulateGeneration : startRunwayGeneration;
+      await startGeneration({
         episodeId,
         shotId: prompt.shotId,
         promptVersionId: prompt.id,
         mediaKind: simulationKind,
-        model: simulationKind === 'image' ? 'fake-image-v1' : 'fake-video-v1',
+        model: isDemo
+          ? simulationKind === 'image'
+            ? 'fake-image-v1'
+            : 'fake-video-v1'
+          : activePreflight.model,
         settings: {
           aspectRatio: '9:16',
           qualityTier: 'draft',
-          durationSeconds: simulationKind === 'video' ? 5 : undefined,
+          durationSeconds:
+            simulationKind === 'video' ? RUNWAY_FIRST_VIDEO_PREFLIGHT.durationSeconds : undefined,
           outputCount: 1,
         },
         references: effectiveSimulationReferenceId
@@ -260,7 +311,12 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
           : [],
       });
       setSimulationOpen(false);
-      setMessage('Free simulation started. No AI provider or paid service was contacted.');
+      setSimulationPriceConfirmed(false);
+      setMessage(
+        isDemo
+          ? 'Free simulation started. No AI provider or paid service was contacted.'
+          : `One private Runway ${simulationKind} request started. StudioFlow is tracking it.`
+      );
     } catch (caught) {
       setSimulationError(
         caught instanceof Error ? caught.message : 'The simulation could not start.'
@@ -275,24 +331,29 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
       <div className="rounded-xl border border-[color-mix(in_srgb,var(--violet)_36%,var(--line))] bg-[color-mix(in_srgb,var(--violet)_8%,transparent)] p-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <div className="eyebrow">AI orchestration preview</div>
-            <h2 className="section-title mt-1">Account-free simulation</h2>
+            <div className="eyebrow">AI orchestration</div>
+            <h2 className="section-title mt-1">
+              {isDemo ? 'Account-free simulation' : 'Private image + video gates'}
+            </h2>
           </div>
           <span className="badge">
-            <Ban size={13} />
-            Real generation off
+            {isDemo ? <Ban size={13} /> : <Sparkles size={13} />}
+            {isDemo ? 'Real generation off' : 'One-request live gates'}
           </span>
         </div>
         <p className="muted mt-2 text-xs leading-5">
-          Exercises StudioFlow’s queue, recovery, result-linking, and cost safeguards. It creates a
-          labeled placeholder at $0.00 and sends nothing outside StudioFlow.
+          {isDemo
+            ? 'Exercises StudioFlow’s queue, recovery, result-linking, and cost safeguards. It creates a labeled placeholder at $0.00 and sends nothing outside StudioFlow.'
+            : 'Prepares one owner-approved Runway image or five-second video from a locked prompt and one private image. The credential and temporary provider URLs stay on the server.'}
         </p>
         {isDemo ? (
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap gap-2">
             <Button
               variant="primary"
               onClick={() => {
                 setSimulationError('');
+                setSimulationKind('image');
+                setSimulationPriceConfirmed(false);
                 setSimulationOpen(true);
               }}
             >
@@ -301,10 +362,32 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
             </Button>
           </div>
         ) : (
-          <p className="quiet mt-3 text-xs">
-            Simulation controls stay in the fictional demo. Real-provider execution remains
-            server-disabled.
-          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              onClick={() => {
+                setSimulationError('');
+                setSimulationKind('image');
+                setSimulationPriceConfirmed(false);
+                setSimulationOpen(true);
+              }}
+            >
+              <Sparkles size={15} />
+              Prepare one private image
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setSimulationError('');
+                setSimulationKind('video');
+                setSimulationPriceConfirmed(false);
+                setSimulationOpen(true);
+              }}
+            >
+              <FileVideo size={15} />
+              Prepare five-second private video
+            </Button>
+          </div>
         )}
       </div>
 
@@ -339,6 +422,18 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
               ? promptsById.get(generation.promptVersionId)
               : undefined;
             const results = getGenerationResultAssets(data, generation.id);
+            const inputs = data.generationInputs
+              .filter((input) => input.generationId === generation.id)
+              .sort((left, right) => left.position - right.position)
+              .map((input) => ({
+                ...input,
+                asset: data.assets.find((asset) => asset.id === input.assetId),
+              }));
+            const lifecycle = data.generationEvents.filter(
+              (event) => event.generationId === generation.id
+            );
+            const requestSettings =
+              'aspectRatio' in generation.requestSettings ? generation.requestSettings : null;
             return (
               <article className="rounded-xl border border-[var(--line)] p-3" key={generation.id}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -378,6 +473,53 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
                   {generation.notes || 'No notes.'}
                 </p>
                 {generation.executionMode === 'managed' ? (
+                  <details className="mt-3 rounded-xl border border-[var(--line)] bg-black/10 p-3">
+                    <summary className="min-h-11 cursor-pointer text-xs font-semibold">
+                      Complete attempt details
+                    </summary>
+                    <dl className="grid gap-2 text-xs sm:grid-cols-2">
+                      <div>
+                        <dt className="quiet">Request</dt>
+                        <dd className="mt-1">
+                          {titleCase(generation.mediaKind ?? 'unknown')} ·{' '}
+                          {requestSettings?.aspectRatio ?? 'No ratio'} ·{' '}
+                          {requestSettings?.outputCount ?? 1} output
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="quiet">Cost</dt>
+                        <dd className="mt-1">
+                          Estimated {formatMicros(generation.estimatedCostMicros)} · Settled{' '}
+                          {formatMicros(
+                            generation.calculatedCostMicros ?? generation.estimatedCostMicros
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="mt-3">
+                      <div className="quiet text-xs">Immutable prompt</div>
+                      <p className="mt-1 whitespace-pre-wrap text-xs leading-5">
+                        {prompt?.content ?? 'No prompt version attached.'}
+                      </p>
+                    </div>
+                    <div className="mt-3">
+                      <div className="quiet text-xs">Private inputs</div>
+                      {inputs.length ? (
+                        <ul className="mt-1 grid gap-1 text-xs">
+                          {inputs.map((input) => (
+                            <li key={input.id}>
+                              {titleCase(input.role.replaceAll('_', ' '))} ·{' '}
+                              {input.asset?.filename ?? 'Unavailable asset'}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-1 text-xs">No input media attached.</p>
+                      )}
+                    </div>
+                  </details>
+                ) : null}
+                {generation.executionMode === 'managed' ? (
                   <div className="mt-3 rounded-xl border border-[var(--line)] bg-black/10 p-3">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
@@ -404,10 +546,7 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
                       ) : null}
                     </div>
                     <ol className="quiet mt-2 grid gap-1 text-[0.65rem]">
-                      {data.generationEvents
-                        .filter((event) => event.generationId === generation.id)
-                        .slice(-4)
-                        .map((event) => (
+                      {lifecycle.map((event) => (
                           <li key={event.id}>
                             {formatShortDate(event.createdAt)} · {event.message}
                           </li>
@@ -508,26 +647,42 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
 
       <Modal
         open={simulationOpen}
-        onClose={() => setSimulationOpen(false)}
-        title="Account-free simulation"
-        description="Exercises the managed lifecycle with a fictional $0.00 result. Nothing leaves StudioFlow."
+        onClose={() => {
+          setSimulationOpen(false);
+          setSimulationPriceConfirmed(false);
+        }}
+        title={isDemo ? 'Account-free simulation' : liveModalTitle}
+        description={
+          isDemo
+            ? 'Exercises the managed lifecycle with a fictional $0.00 result. Nothing leaves StudioFlow.'
+            : simulationKind === 'video'
+              ? 'Prepares one owner-only, five-second 9:16 Runway video from the selected prompt and private starting image.'
+              : 'Prepares one owner-only Runway image from the selected prompt and private reference image.'
+        }
       >
         <div className="grid gap-3">
-          <Field label="Simulation type">
-            <select
-              className="select"
-              value={simulationKind}
-              onChange={(event) => setSimulationKind(event.target.value as GenerationMediaKind)}
-            >
-              <option value="image">Image</option>
-              <option value="video">Video</option>
-            </select>
+          <Field label={isDemo ? 'Simulation type' : 'Output type'}>
+              <select
+                className="select"
+                value={simulationKind}
+                onChange={(event) => {
+                  setSimulationKind(event.target.value as GenerationMediaKind);
+                  setSimulationPriceConfirmed(false);
+                  setSimulationError('');
+                }}
+              >
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+              </select>
           </Field>
           <Field label="Locked prompt version">
             <select
               className="select"
               value={effectiveSimulationPromptId}
-              onChange={(event) => setSimulationPromptId(event.target.value)}
+              onChange={(event) => {
+                setSimulationPromptId(event.target.value);
+                setSimulationPriceConfirmed(false);
+              }}
               disabled={!prompts.length}
             >
               {prompts.length ? (
@@ -544,14 +699,27 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
               )}
             </select>
           </Field>
-          <Field label={simulationKind === 'video' ? 'Starting image' : 'Optional reference image'}>
+          <Field
+            label={
+              simulationKind === 'video'
+                ? isDemo
+                  ? 'Starting image'
+                  : 'Required private starting image'
+                : isDemo
+                  ? 'Optional reference image'
+                  : 'Required private reference image'
+            }
+          >
             <select
               className="select"
               value={effectiveSimulationReferenceId}
-              onChange={(event) => setSimulationReferenceId(event.target.value)}
+              onChange={(event) => {
+                setSimulationReferenceId(event.target.value);
+                setSimulationPriceConfirmed(false);
+              }}
               disabled={!simulationReferences.length}
             >
-              {simulationKind === 'image' ? <option value="">No reference</option> : null}
+              {simulationKind === 'image' && isDemo ? <option value="">No reference</option> : null}
               {simulationReferences.map((asset) => (
                 <option key={asset.id} value={asset.id}>
                   {asset.filename}
@@ -559,19 +727,110 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
               ))}
             </select>
           </Field>
+          <section
+            className="rounded-xl border border-[color-mix(in_srgb,var(--violet)_42%,var(--line))] bg-[color-mix(in_srgb,var(--violet)_9%,transparent)] p-3"
+            aria-labelledby="generation-preflight-title"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div className="eyebrow">
+                  {simulationKind === 'video'
+                    ? 'Five-second video preflight'
+                    : 'First-image preflight'}
+                </div>
+                <h3 id="generation-preflight-title" className="mt-1 text-sm font-semibold">
+                  {activePreflight.providerLabel} · {activePreflight.modelLabel}
+                </h3>
+              </div>
+              <span className="badge">{isDemo ? 'Mock only' : 'Live request'}</span>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+              <div className="rounded-lg border border-[var(--line)] bg-black/10 p-2">
+                <dt className="quiet">Output</dt>
+                <dd className="mt-1 font-semibold">{outputLabel}</dd>
+              </div>
+              <div className="rounded-lg border border-[var(--line)] bg-black/10 p-2">
+                <dt className="quiet">Maximum credits</dt>
+                <dd className="mt-1 font-semibold">{activePreflight.providerCredits} credits</dd>
+              </div>
+              <div className="rounded-lg border border-[var(--line)] bg-black/10 p-2">
+                <dt className="quiet">Maximum charge</dt>
+                <dd className="mt-1 font-semibold">
+                  {formatMicros(activePreflight.maximumCostMicros)} maximum
+                </dd>
+              </div>
+              <div className="rounded-lg border border-[var(--line)] bg-black/10 p-2">
+                <dt className="quiet">Output reservation</dt>
+                <dd className="mt-1 font-semibold">
+                  {activePreflight.estimatedOutputBytes / 1_000_000} MB
+                </dd>
+              </div>
+            </dl>
+            {simulationKind === 'video' ? (
+              <p className="muted mt-3 text-xs leading-5">
+                Locked format: {RUNWAY_FIRST_VIDEO_PREFLIGHT.aspectRatio} ·{' '}
+                {RUNWAY_FIRST_VIDEO_PREFLIGHT.outputRatio.replace(':', ' × ')} ·{' '}
+                {RUNWAY_FIRST_VIDEO_PREFLIGHT.durationSeconds} seconds.
+              </p>
+            ) : null}
+            <p id="generation-price-note" className="muted mt-3 text-xs leading-5">
+              Price checked{' '}
+              <time dateTime={activePreflight.reviewedOn}>{activePreflight.reviewedOnLabel}</time>.{' '}
+              {isDemo
+                ? 'This rehearsal costs $0.00 and does not call Runway.'
+                : `This live gate submits exactly one ${
+                    simulationKind === 'video' ? 'five-second video' : 'image'
+                  } after confirmation.`}
+            </p>
+            <label className="mt-3 flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-[var(--line)] bg-black/10 p-3 text-xs leading-5 text-[var(--ink)]">
+              <input
+                className="mt-0.5 size-5 shrink-0 accent-[var(--violet-strong)]"
+                type="checkbox"
+                checked={simulationPriceConfirmed}
+                onChange={(event) => {
+                  setSimulationPriceConfirmed(event.target.checked);
+                  setSimulationError('');
+                }}
+                aria-describedby="generation-price-note"
+              />
+              <span>
+                {isDemo
+                  ? 'I reviewed the later live-request maximum of '
+                  : 'I approve spending up to '}
+                {activePreflight.providerCredits} credits (
+                {formatMicros(activePreflight.maximumCostMicros)}).{' '}
+                {isDemo
+                  ? 'Run only the free simulation now.'
+                  : `Submit exactly one private Runway ${
+                      simulationKind === 'video'
+                        ? 'video using the selected starting image'
+                        : 'image using the selected private reference'
+                    }.`}
+              </span>
+            </label>
+          </section>
           {simulationError ? (
             <p role="alert" className="text-xs text-[var(--danger)]">
               {simulationError}
             </p>
           ) : null}
           <div className="flex flex-wrap justify-end gap-2">
-            <Button onClick={() => setSimulationOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setSimulationOpen(false);
+                setSimulationPriceConfirmed(false);
+              }}
+            >
+              Cancel
+            </Button>
             <Button
               variant="primary"
               onClick={() => void runSimulation()}
               disabled={
                 simulationBusy ||
                 !prompts.length ||
+                !simulationPriceConfirmed ||
+                (!isDemo && !simulationReferences.length) ||
                 (simulationKind === 'video' && !simulationReferences.length)
               }
             >
@@ -580,7 +839,7 @@ export function GenerationHistoryPanel({ episodeId }: { episodeId: string }) {
               ) : (
                 <Sparkles size={15} />
               )}
-              {simulationBusy ? 'Starting…' : 'Run free simulation'}
+              {simulationBusy ? 'Starting…' : isDemo ? 'Run free simulation' : liveModalTitle}
             </Button>
           </div>
         </div>

@@ -1251,6 +1251,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_generation_submission_with_reconcile: {
+        Args: {
+          requested_claim_id: string
+          target_generation_id: string
+          target_owner_id: string
+        }
+        Returns: boolean
+      }
       complete_generation_ingest: {
         Args: {
           output_bytes: number
@@ -1287,6 +1295,10 @@ export type Database = {
         Returns: boolean
       }
       recover_stale_generation_claims: { Args: never; Returns: number }
+      set_generation_reconciliation_active: {
+        Args: { target_active: boolean }
+        Returns: boolean
+      }
     }
     Enums: {
       asset_kind: "image" | "audio" | "video"

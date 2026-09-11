@@ -2,7 +2,7 @@
 
 ## Controls
 
-- GitHub OAuth establishes identity; it does not by itself grant workspace access.
+- GitHub OAuth uses PKCE to establish identity; it does not by itself grant workspace access. Callback URLs are not inspected until session exchange and URL cleanup finish.
 - GitHub is the only enabled authentication provider; unused email/password login is disabled.
 - `app_owners_singleton_idx` allows exactly one owner UUID.
 - Every production table has an indexed `owner_id`; RLS checks `auth.uid()` and the non-exposed `private.is_app_owner()` helper.
@@ -10,7 +10,8 @@
 - Owner authorization uses an explicit startup lifecycle. Only a successful, current-session `false` result is classified as non-owner denial; network/RPC failures remain retryable verification errors, and stale results from an older session cannot overwrite a newer session.
 - Anonymous table grants are revoked. Non-owner sessions receive no rows and cannot insert, update, or delete.
 - Edge Functions repeat owner verification using the bearer token before touching B2 or service-role database access.
-- Internal generation reconciliation and ingest use a distinct server-only secret, reject browser bearer authentication, accept only a generation ID where needed, and reload owner/provider/storage context from PostgreSQL. The reconciler accepts no caller-supplied identifiers and selects due singleton-owner rows itself.
+- Encrypted restore accepts no browser-supplied records or storage key. The owner-authenticated function selects the latest completed backup for the same owner, validates the private B2 prefix and bounded ciphertext size, decrypts server-side, inserts only missing rows, and forces generation off.
+- Internal generation reconciliation and ingest use a distinct server-only secret, reject browser bearer authentication, accept only a generation ID where needed, and reload owner/provider/storage context from PostgreSQL. The reconciler accepts no caller-supplied identifiers and selects due singleton-owner rows itself. Its cron job is service-controlled, inactive while idle, and cannot be activated by `anon` or `authenticated` roles.
 - B2 stays private. Browser access uses short-lived, purpose-specific inline-preview or attachment-download URLs that expire in 10–15 minutes.
 - Asset links are validated against records in the same owner workspace. Permanent deletion requires trash and removes explicit and embedded references through a service-role-only database function.
 - Generation result links additionally require media from the same project. Database triggers synchronize explicit result links with backward-compatible generation result arrays and reject duplicate or cross-project references.
@@ -27,9 +28,11 @@ The application assumes the owner's GitHub, Supabase, Netlify, Backblaze, and lo
 
 ## AI-provider and generated-output boundary
 
-AI-1 and AI-2 use a deterministic fake provider and mocked Runway HTTP. No Runway account, key, provider request, paid balance, scheduler secret, or live function deployment is part of those checkpoints, and the database `generation_enabled` switch remains false.
+AI-1 and AI-2 use a deterministic fake provider and mocked Runway HTTP. One StudioFlow-scoped credential remains only in the hosted Supabase Edge Function secret `RUNWAYML_API_SECRET`; its value is absent from the browser bundle, Netlify, PostgreSQL, source, logs, screenshots, and documentation. AI-3 Gate 3 submitted exactly one approved `gen4_image_turbo` still. AI-4 later submitted exactly one separately confirmed five-second `gen4_turbo` video capped at 25 promotional credits/$0.25. Both results were copied into private B2 with one canonical link and one cost entry. No retry, Netlify deployment, or production release occurred, and `generation_enabled` is false.
 
-Future browser-started generation functions accept only the stored generation ID and require the existing owner bearer token. They reload the immutable prompt, input assets, settings, and owner context, recalculate the frozen price estimate on the server, and receive an atomic database claim before a provider request can begin.
+The recovery schedule invokes only `generation-reconcile` through an encrypted Vault credential synchronized with a distinct Edge secret. A successful managed claim and schedule activation are one database transaction, eliminating the browser-close gap. The scheduler sleeps while idle and the reconciler pauses it after all active jobs reach terminal state. Missing or invalid Vault values fail closed before any HTTP request. The empty live rehearsal confirmed that the authenticated invocation succeeds and returns the job to inactive without changing generation records or enabling provider generation.
+
+Browser-started generation functions accept only the stored generation ID and require the existing owner bearer token. They reload the immutable prompt, input assets, settings, and owner context, recalculate the frozen price estimate on the server, and receive an atomic database claim before a provider request can begin.
 
 Private reference images are exposed to a provider only through provider-only signed B2 URLs prepared on the server. The URL must use the exact configured B2 hostname, stay within 2,048 characters, and expire quickly. It is never returned to the browser or written to a record, export, backup, log, screenshot, issue, or chat.
 
@@ -38,8 +41,11 @@ Successful provider output uses a generated-output-only exception to the normal 
 - accepts only an internally authenticated generation ID, not a URL;
 - retrieves the stored provider job through the adapter and keeps the temporary result URL in memory only;
 - permits only an exact configured HTTPS output hostname and rejects credentials, IP literals, localhost, subdomain assumptions, redirects, unsupported media types, missing/invalid lengths, and streamed length mismatches;
-- streams at most the persisted output reservation, never the ordinary 2 GB upload maximum, directly into the private owner B2 prefix;
+- transfers at most the persisted output reservation, never the ordinary 2 GB upload maximum, into the private owner B2 prefix. Source uses one bounded payload through 8 MiB or sequential 8 MiB B2 multipart parts above that threshold, never complete-video materialization or parallel part uploads;
+- applies a 100-second transfer deadline, exact byte-count checks, best-effort multipart abort with lifecycle cleanup as fallback, exact-match retry reuse, conflict refusal, and post-upload generation/type/length verification;
 - completes metadata through one atomic, idempotent database operation that creates at most one generated asset, one canonical link, and one linked cost entry.
+
+The bounded multipart path and sanitized failure behavior are locally verified with mocks. The updated `generation-ingest` bundle is active as version 10, and the first live 497,698-byte MP4 completed through its bounded single-payload branch. Authenticated playback reported 720×1280 and 5.04 seconds. The output was too small to enter multipart, so that branch remains pending for a naturally larger approved result. Generation is disabled, no active or uncertain job exists, and the scheduler is inactive.
 
 An interrupted request after the provider-submission marker is not auto-retried. It becomes `submission_unknown`, keeps its cost and storage reservations, and requires an explicit owner-recorded no-charge or confirmed-charge outcome. Cancellation is not treated as evidence of a refund.
 
@@ -51,6 +57,14 @@ The first approved GitHub identity is registered directly in `app_owners`; the s
 
 Hosted verification proves the signed-out login boundary, simulated non-owner read/write denial, the configured owner's access to Creator HQ, and anonymous HTTP 401 denial at the media-signing boundary. The startup-race regression suite verifies retryable errors, explicit denial, successful retry, session changes, and stale-result protection. The current local Phase 3 verification passes 102 unit/component tests, including environment, health, error-tracking, and route coverage; the focused `/health` Playwright check passes all four supported viewports. `supabase/tests/database` additionally covers the function grants and owner policies; the full isolated pgTAP suite passed in GitHub Actions and must run again whenever migrations or policies change.
 
+The AI-3 deployment checkpoint reverified the one disabled generation-settings row after deployment. All four generation functions are active with gateway JWT verification disabled only because their bodies enforce the documented custom owner or internal-job authentication. Unauthenticated POST requests to each function returned HTTP 401 before any provider work. The complete local suite passes 104 unit/component tests and all 40 Playwright scenarios; the browser command exits cleanly and releases its test server.
+
+AI-3 Gate 3 live verification proved one server-only signed-reference fetch, provider submission, status recovery, exact-host output fetch, private B2 ingest, atomic asset/link/cost completion, and authenticated preview. The portal balance changed from 500 to 498 promotional credits, matching the stored two-credit cost. Both asset and generation decisions are selected, all reservations are released, zero managed jobs are active, and the server generation switch is off. Retried ingest reused the same completed provider job and did not create another charge. The final repository checkpoint passes formatting, TypeScript, ESLint, 105 unit/component tests, six production-lock tests, the production build, and all 40 Playwright scenarios with a clean exit.
+
+During Gate 3 browser verification, an implicit-flow OAuth callback exposed transient callback credentials to agent-visible diagnostic output. Work stopped before provider submission. The GitHub grant and active Supabase session were revoked, the stale local session was signed out, and Supabase browser auth was changed to PKCE. A fresh GitHub authorization then restored owner access without exposing the replacement session. No token, code, callback URL, owner identifier, or account detail is reproduced in repository documentation.
+
 The private B2 bucket, restricted application key, exact local and approved Deploy Preview CORS origins, lifecycle cleanup, and exact removal of all generated rehearsal objects were verified without placing credentials in the repository. The protected Deploy Preview passed a fresh GitHub sign-out/sign-in and three reloads without reproducing the false non-owner state. A 522-byte PNG uploaded directly to private B2, previewed at 16 × 16, downloaded with an identical byte count and SHA-256 hash, moved to trash, restored, and permanently deleted. The delete function returned success only after its awaited B2 deletion path, all queried temporary workflow tables returned to zero, and the browser logged no warnings or errors.
+
+The current encrypted schema-version-2 backup and restore path is also live-verified. The hosted writer created a private AES-256-GCM object, and the owner-authenticated restore function decrypted and validated it without accepting record data from the browser. It checked existing rows before any insert, completed without deletion or overwrite, and left generation disabled with no active managed job and the scheduler inactive.
 
 Netlify published one initial production-context shell during site creation despite the original repository ignore rule. It remains edge-protected and has no production browser values. A later fail-closed production command now rejects any production build that bypasses the ignore rule unless a separately managed full commit SHA exactly matches Netlify's current commit. The provider-level Auto Publishing control is locked and must remain locked. The shell is not an approved production release and must not be described as live StudioFlow.

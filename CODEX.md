@@ -87,11 +87,11 @@ Maintain these boundaries:
 - B2 stores private media bytes and encrypted backups.
 - The browser stores temporary UI state and fictional demo data only.
 - Large media uploads directly between the browser and B2 using short-lived signed URLs. Do not proxy large files through Netlify or Supabase.
-- Generated provider outputs have one narrow exception: an internal-only Edge Function may stream one bounded result directly from an exact approved provider host into private B2. It accepts only a stored generation ID, never a caller-supplied URL, never follows redirects, never buffers the complete object, and never stores or returns the temporary provider URL.
+- Generated provider outputs have one narrow exception: an internal-only Edge Function may transfer one strictly bounded result from an exact approved provider host into private B2. It accepts only a stored generation ID, never a caller-supplied URL, never follows redirects, and never stores or returns the temporary provider URL. Source uses a provider-neutral bounded transfer: results through 8 MiB use one bounded payload, larger results use sequential 8 MiB B2 multipart parts, and exact object identity is verified before database completion. Keep the 100-second transfer deadline, exact-length checks, best-effort multipart abort, and 200 MB first-video reservation. The hosted bundle and authentication boundary are verified; actual B2 multipart execution remains a separate approval gate.
 - Cloudflare is deliberately excluded.
 - The public web shell is not a security boundary. Authentication, the singleton owner allowlist, RLS, authenticated Edge Functions, and private B2 objects provide security.
 
-Every owner-scoped database record must carry an indexed `owner_id`. Anonymous and non-owner access must be denied at the database layer, not only hidden in the interface. Browser-started Edge Functions using privileged credentials must repeat owner verification. Scheduled generation recovery is the only internal-service exception: it uses a separate server-only secret, accepts no caller-supplied owner/job/storage identifiers, selects due records itself, and remains scoped to the singleton owner.
+Every owner-scoped database record must carry an indexed `owner_id`. Anonymous and non-owner access must be denied at the database layer, not only hidden in the interface. Browser-started Edge Functions using privileged credentials must repeat owner verification. Scheduled generation recovery is the only internal-service exception: it uses a separate server-only secret, accepts no caller-supplied owner/job/storage identifiers, selects due records itself, and remains scoped to the singleton owner. Its cron job stays inactive while no managed generation is active, is enabled in the same transaction as a successful submission claim, and pauses itself after the final active job reaches a terminal state.
 
 Prefer small vertical feature slices. Reuse existing types, domain helpers, state patterns, shared components, and design tokens before adding new abstractions or dependencies. Do not introduce a new service, framework, state library, database, storage provider, or paid dependency without explicit approval.
 
@@ -102,6 +102,7 @@ Prefer small vertical feature slices. Reuse existing types, domain helpers, stat
 - Keep domain calculations in testable pure functions.
 - Keep components focused. Move repeated controls and behavior into shared components or helpers.
 - Preserve immutable script and prompt histories. Add new versions instead of editing history in place.
+- Keep Supabase browser authentication on PKCE. Never inspect, capture, log, or repeat an OAuth callback URL before session exchange and URL cleanup are complete.
 - Keep database migrations deterministic and reviewable. Never silently rewrite an already-applied production migration.
 - Regenerate `src/lib/database.types.ts` after verified schema changes when the local Supabase stack is available.
 - Use project-local dependencies and existing npm scripts. Do not install global tools unless the owner approves it.
@@ -190,7 +191,7 @@ Maintain the media safeguards unless the owner explicitly approves a reviewed ch
 
 Maintain managed-generation safeguards unless the owner explicitly approves a reviewed change:
 
-- Keep the server-owned `generation_enabled` switch false until the separately approved first paid test.
+- Keep the server-owned `generation_enabled` switch false between provider requests. Enable it only for a separately approved, exactly bounded action and turn it off immediately after the one intended submission is accepted or fails safely before submission.
 - Recalculate and atomically reserve the maximum request cost and expected output bytes before any provider request.
 - Allow only one active managed job, one immutable prepared-intent ID, one linked generated asset, and one generation-linked cost entry.
 - Keep provider calls, credentials, reference URLs, and temporary output URLs outside the browser, database, exports, logs, screenshots, and chat.
@@ -240,7 +241,7 @@ Before any approved production release, follow `docs/PRODUCTION-RELEASE.md`. Do 
 
 ## Files to update after meaningful work
 
-Keep documentation synchronized with behavior. Update only documents affected by the change, but do not leave known contradictions.
+Documentation updates are a required part of completing meaningful work, not optional follow-up housekeeping. Before reporting a task complete, update every affected status, feature, security, build, setup, or release document in the same work unit. Update only documents affected by the change, but do not leave known contradictions.
 
 - `README.md`: current capabilities, prerequisites, commands, or repository status.
 - `docs/BUILD-PLAN.md`: milestone state or scope completion.

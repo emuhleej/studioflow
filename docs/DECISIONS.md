@@ -506,25 +506,29 @@ The current computer is at the practical edge of Docker Desktop's supported Wind
 
 StudioFlow represents managed image/video work with provider-neutral requests, capabilities, frozen price estimates, persisted cost/output reservations, append-only events, and explicit lifecycle states. Provider adapters translate those records only in server code. The browser never receives an AI credential, signed private-reference URL, or temporary provider-output URL and cannot directly claim paid work.
 
-`generation_enabled` remains false through AI-2. A real provider account, prepaid balance, API key, server-secret change, first paid request, function/scheduler deployment, and production release remain separate approval gates.
+`generation_enabled` remains false between provider requests. A provider account, prepaid balance, API key, server-secret change, each paid request, scheduler deployment, video gate, and production release remain separate approval boundaries.
 
 Two narrow infrastructure exceptions are approved:
 
-1. An internal-only generated-output function may accept one generation ID, reload the stored provider job itself, keep its temporary result URL in memory, require an exact approved HTTPS hostname/direct `200`/valid type and length, and stream no more than the persisted 250 MB-or-lower output reservation into private B2. This exception applies only to generated output; ordinary large uploads remain direct browser-to-B2 transfers.
+1. An internal-only generated-output function may accept one generation ID, reload the stored provider job itself, keep its temporary result URL in memory, require an exact approved HTTPS hostname/direct `200`/valid type and length, and transfer no more than the persisted output reservation into private B2. Results through 8 MiB use one bounded payload; larger results use sequential 8 MiB B2 multipart parts under a 100-second deadline. The path never materializes a complete video, reuses only an exact generation/type/length match, refuses conflicting objects, verifies storage before database completion, and attempts multipart abort on failure. The first-video reservation remains 200 MB. This exception applies only to generated output; ordinary large uploads remain direct browser-to-B2 transfers.
 2. Closed-browser reconciliation may use a separate server-only scheduler credential. The reconciler accepts no caller-supplied owner, generation, provider-job, URL, or storage identifiers; it selects due rows for the singleton owner and applies the same database transition and reservation rules.
 
-Runway is the first mocked adapter because one developer API can cover the planned image and image-to-video flow. It is not embedded in the UI/domain model and is not live-verified in AI-2.
+The scheduler is on-demand rather than continuously active. A service-only database wrapper activates the once-per-minute cron job in the same transaction that successfully claims managed work. The reconciler pauses the job after no active managed rows remain. Missing or invalid Vault configuration produces no HTTP request, and the scheduler cannot change `generation_enabled` or create a provider submission.
+
+Runway is the first adapter because one developer API can cover the planned image and image-to-video flow. It is not embedded in the UI/domain model. AI-2 verified it with mocks; AI-3 Gate 3 later live-verified exactly one still-image request and private ingest without approving video or additional requests.
 
 ### Rationale
 
-Provider jobs are asynchronous, temporary result URLs must be copied into owned storage, and a browser may close after a chargeable request begins. Server ownership prevents credential exposure and client-side budget bypass. Persisted claims and reservations make uncertainty visible instead of silently retrying a request that may already have been charged. Exact-host, no-redirect, length-bounded streaming limits the unavoidable server transfer without creating a general URL-fetch proxy.
+Provider jobs are asynchronous, temporary result URLs must be copied into owned storage, and a browser may close after a chargeable request begins. Server ownership prevents credential exposure and client-side budget bypass. Persisted claims and reservations make uncertainty visible instead of silently retrying a request that may already have been charged. Exact-host, no-redirect, length-bounded transfer limits the unavoidable server hop without creating a general URL-fetch proxy.
 
 ### Consequences
 
 - One prepared client request ID, one active managed job, one generated asset, one canonical asset link, and one generation-linked cost entry are enforced by database constraints or atomic functions.
 - Lost submission responses and uncertain cancellation charges enter `submission_unknown` with reservations held until the owner records an outcome.
 - Successful ingest atomically replaces reservations with actual asset/cost records; failed ingest retries storage without purchasing another generation.
+- Idle periods create no reconciliation invocations or unbounded cron-run history because the job is inactive outside active managed work.
 - Provider output URLs and provider-only signed references never enter PostgreSQL, exports, backups, logs, screenshots, or browser responses.
+- Multipart upload identifiers remain invocation-local, part uploads are sequential, and only ordered part numbers and ETags reach completion. The hosted Edge bundle and authentication boundary are verified; actual B2 multipart execution remains separately approved and unverified.
 - AI-1/AI-2 tests use the deterministic fake provider and mocked Runway HTTP only. They create no provider account, key, request, or charge.
 - DEC-006 remains authoritative for ordinary uploads; this entry records its generated-output-only exception.
 - DEC-012 remains authoritative for the production-core release; this entry opens only the separately approved managed-AI implementation track.
@@ -537,7 +541,7 @@ Provider jobs are asynchronous, temporary result URLs must be copied into owned 
 - Accepting a URL or storage key from a scheduler or ingest caller.
 - Automatically retrying a request after an ambiguous submission response.
 - Treating cancellation as proof of refund.
-- Reusing the ordinary 2 GB upload limit for generated-output Edge streaming.
+- Reusing the ordinary 2 GB upload limit, materializing a complete generated video, parallelizing part uploads, or persisting multipart state for the first five-second gate.
 
 ## DEC-019 — Production configuration fails closed and public health stays minimal
 
@@ -570,6 +574,88 @@ A production build must not silently appear healthy while serving the fictional 
 - Exposing Supabase, B2, OAuth, owner, or AI-provider details on a public route.
 - Creating a second remote error-reporting service for this checkpoint.
 
+## DEC-020 — Browser OAuth uses PKCE and callback URLs are never diagnostic output
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-10
+- **Area:** Authentication and credential containment
+
+### Decision
+
+StudioFlow's Supabase browser client uses the PKCE OAuth flow. Automation and debugging must not inspect, capture, log, screenshot, quote, or otherwise expose an OAuth callback URL before the client has exchanged the authorization code and cleaned the address bar. Verification resumes only from the clean application URL.
+
+### Rationale
+
+An implicit-flow callback can place transient session credentials in the URL fragment. During Gate 3 verification, diagnostic inspection exposed that callback state to agent-visible output. The existing GitHub grant and Supabase session were revoked before any provider request, the stale local session was signed out, PKCE was enabled, and a fresh authorization restored owner access without exposing the replacement session.
+
+### Consequences
+
+- OAuth callback URLs are treated as secrets until exchange and cleanup finish.
+- A suspicious callback capture triggers immediate stop, grant/session revocation, local sign-out, and fresh authorization before private work resumes.
+- PKCE remains part of the authentication architecture and must not be removed as an incidental refactor.
+- Incident records describe scope and containment without reproducing tokens, codes, callback URLs, owner identifiers, or account details.
+
+### Rejected alternatives
+
+- Keeping implicit OAuth because the URL fragment is short-lived.
+- Inspecting the callback page to confirm login before URL cleanup.
+- Treating deletion of a log line as sufficient containment without revoking the grant/session.
+
+## DEC-021 — Shot generation compiles production memory into an immutable prompt
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-10
+- **Area:** Production memory and generation provenance
+
+### Decision
+
+A direct generation handoff from a shot creates a new immutable prompt version before opening the existing generation gate. The compiler uses the current series, episode, scene, and shot text; explicitly assigned characters and scene location; prop entities whose names appear in the shot context; and all active project style fragments.
+
+### Rationale
+
+The exact creative context sent to a provider must remain visible and reproducible. Persisting the compiled text as an ordinary prompt version avoids a hidden second prompt system and preserves the source state even when production-memory records change later.
+
+### Consequences
+
+- The browser compiles creative context; server provider adapters still receive only a stored immutable prompt and validated private inputs.
+- Character and location assignment remains explicit in the shot workspace.
+- Prop inclusion is deliberate through naming, while active project styles act as global visual guidance.
+- Repeated handoffs create new versions rather than overwriting history.
+
+### Rejected alternatives
+
+- Compiling a prompt only inside an Edge Function without saving the final text.
+- Sending every project prop to every shot.
+- Editing a previous prompt version when production memory changes.
+
+## DEC-022 — Encrypted recovery is owner-authenticated and non-destructive
+
+- **Status:** Accepted
+- **Recorded:** 2026-09-11
+- **Area:** Backup, restore, and server ownership
+
+### Decision
+
+The browser may request an encrypted restore rehearsal but cannot send records, an object key, or privileged lifecycle state to the restore service. `metadata-restore` authenticates the singleton owner, selects that owner's latest completed backup row, validates the exact private B2 prefix and ciphertext size, decrypts schema version 2 server-side, checks existing IDs, and inserts only missing records. It never deletes or overwrites records and always restores generation settings as disabled.
+
+### Rationale
+
+Completed managed-generation history is intentionally immutable to browser clients. Attempting to restore it through ordinary authenticated upserts correctly triggers those safeguards. Reading StudioFlow's authenticated encrypted backup at the trusted server boundary preserves the guard instead of weakening it or accepting forged lifecycle fields from the browser.
+
+### Consequences
+
+- In-place restore is a rehearsal and additive recovery path, not a destructive production cutover.
+- Backup encryption keys, B2 credentials, object paths, and decrypted records remain outside the browser.
+- Existing rows are checked before insert so immutable triggers are not invoked by conflict-only writes.
+- A future destructive disaster-recovery cutover must first target a fresh test project and receive separate approval.
+
+### Rejected alternatives
+
+- Disabling managed-generation integrity triggers for browser imports.
+- Accepting arbitrary workspace JSON through a service-role Edge Function.
+- Overwriting production rows during a rehearsal.
+- Restoring `generation_enabled=true` from any backup.
+
 ## Frequently re-proposed ideas that remain rejected
 
 Future agents should not reopen these suggestions without new constraints or explicit owner direction:
@@ -597,6 +683,9 @@ Future agents should not reopen these suggestions without new constraints or exp
 | “Retry an unknown submission automatically; it probably did not charge.”        | DEC-018           |
 | “Let production use demo mode when its private configuration is missing.”       | DEC-019           |
 | “Put private service readiness details on the public health page.”              | DEC-019           |
+| “Switch back to implicit OAuth or inspect the callback URL while debugging.”    | DEC-020           |
+| “Compile prompts invisibly on the server without an immutable saved version.”   | DEC-021           |
+| “Let the browser bypass immutable generation guards during restore.”             | DEC-022           |
 
 ## When to update this document
 

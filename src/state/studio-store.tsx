@@ -15,7 +15,9 @@ import { deleteAssetBlob } from '../lib/blob-store';
 import { deleteRemoteAsset } from '../lib/media-upload';
 import {
   loadRemoteWorkspace,
+  insertRemoteRecordIfMissing,
   permanentlyDeleteRemoteRecord,
+  updateRemoteRecord,
   upsertRemoteRecord,
 } from '../lib/remote-repository';
 import { getNextPromptVersion, validatePromptContent } from '../lib/prompt-history';
@@ -69,6 +71,36 @@ function replaceCollection(
   records: BaseRecord[]
 ): WorkspaceData {
   return { ...workspace, [key]: records } as WorkspaceData;
+}
+
+function cloudErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message;
+  }
+  return 'Unknown cloud error';
+}
+
+async function functionErrorMessage(error: unknown, fallback: string): Promise<string> {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'context' in error &&
+    error.context instanceof Response
+  ) {
+    try {
+      const body = (await error.context.clone().json()) as { error?: unknown };
+      if (typeof body.error === 'string') return body.error;
+    } catch {
+      // Keep the private provider response out of logs and use the safe fallback.
+    }
+  }
+  return fallback;
 }
 
 export function StudioProvider({ children }: { children: ReactNode }) {
@@ -189,7 +221,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     if (demoMode) return;
     void saveWithRetry(() => upsertRemoteRecord(key, record)).catch((error: unknown) => {
       rollback();
-      const message = error instanceof Error ? error.message : 'Unknown cloud error';
+      const message = cloudErrorMessage(error);
       setNotice({
         tone: 'error',
         message: `Cloud save failed twice, so the local change was rolled back: ${message}`,
@@ -355,15 +387,19 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setNotice,
   });
 
-  const { simulateGeneration, cancelManagedGeneration, resolveUnknownSubmission } =
-    useGenerationManager({
-      data,
-      isDemo: demoMode,
-      user,
-      getWorkspace: getData,
-      setWorkspace: setData,
-      setNotice,
-    });
+  const {
+    simulateGeneration,
+    startRunwayGeneration,
+    cancelManagedGeneration,
+    resolveUnknownSubmission,
+  } = useGenerationManager({
+    data,
+    isDemo: demoMode,
+    user,
+    getWorkspace: getData,
+    setWorkspace: setData,
+    setNotice,
+  });
 
   const patchEpisodeDraft = useCallback((episodeId: string, patch: Partial<EpisodeDraft>) => {
     setEpisodeDrafts((current) => {
@@ -690,6 +726,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         return record;
       },
       simulateGeneration,
+      startRunwayGeneration,
       cancelManagedGeneration,
       resolveUnknownSubmission,
       linkGenerationAsset,
@@ -697,7 +734,34 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setGenerationOutcome: (generationId, outcome) => {
         const validationError = validateGenerationOutcome(data, generationId, outcome);
         if (validationError) throw new Error(validationError);
-        mutateRecord('generations', generationId, { outcome });
+        const generation = data.generations.find((item) => item.id === generationId);
+        if (!generation) return;
+        if (generation.executionMode !== 'managed') {
+          mutateRecord('generations', generationId, { outcome });
+          return;
+        }
+
+        const updatedAt = now();
+        const attempted = { ...generation, outcome, updatedAt };
+        setData((latest) => ({
+          ...latest,
+          generations: latest.generations.map((item) =>
+            item.id === generationId ? attempted : item
+          ),
+        }));
+        if (demoMode) return;
+        void saveWithRetry(() =>
+          updateRemoteRecord('generations', generationId, { outcome, updatedAt })
+        ).catch((error: unknown) => {
+          setData((latest) => ({
+            ...latest,
+            generations: rollbackUpdatedRecord(latest.generations, attempted, generation),
+          }));
+          setNotice({
+            tone: 'error',
+            message: `Cloud save failed twice, so the local change was rolled back: ${cloudErrorMessage(error)}`,
+          });
+        });
       },
       quickCapture: (text) => appendRecord('captures', { ...createBaseRecord(data.ownerId), text }),
       convertCaptureToEpisode: (captureId, seriesId) => {
@@ -722,6 +786,54 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         anchor.click();
         URL.revokeObjectURL(url);
       },
+      createEncryptedBackup: async () => {
+        if (demoMode) throw new Error('Encrypted B2 backup is available in the private workspace.');
+        if (!user || !supabase) throw new Error('Sign in as the StudioFlow owner first.');
+        const { data: backup, error } = await supabase.functions.invoke('metadata-backup', {
+          body: {},
+        });
+        if (error) throw new Error('The encrypted metadata backup could not be confirmed.');
+        const result = backup as { backedUp?: number } | null;
+        if (result?.backedUp !== 1) throw new Error('The backup response was incomplete.');
+        setNotice({
+          tone: 'success',
+          message: 'One encrypted metadata backup was stored in private B2.',
+        });
+      },
+      rehearseRestore: async () => {
+        if (demoMode) {
+          const normalized = parseWorkspaceExport(structuredClone(data), data.ownerId);
+          setData(normalized);
+        } else {
+          if (!user || !supabase) throw new Error('Sign in as the StudioFlow owner first.');
+          const { data: restore, error } = await supabase.functions.invoke('metadata-restore', {
+            body: {},
+          });
+          if (error) {
+            throw new Error(
+              await functionErrorMessage(
+                error,
+                'The encrypted backup restore could not be confirmed.'
+              )
+            );
+          }
+          const result = restore as
+            | { restored?: boolean; schemaVersion?: number; generationEnabled?: boolean }
+            | null;
+          if (
+            result?.restored !== true ||
+            result.schemaVersion !== 2 ||
+            result.generationEnabled !== false
+          ) {
+            throw new Error('The restore response was incomplete.');
+          }
+          setData(await loadRemoteWorkspace(user));
+        }
+        setNotice({
+          tone: 'success',
+          message: 'Encrypted version 2 restore rehearsal completed without deleting records.',
+        });
+      },
       importWorkspace: async (file) => {
         const parsed = JSON.parse(await file.text()) as unknown;
         const normalized = parseWorkspaceExport(parsed, data.ownerId);
@@ -729,7 +841,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
           try {
             for (const key of workspaceCollectionKeys) {
               for (const record of normalized[key])
-                await saveWithRetry(() => upsertRemoteRecord(key, record));
+                await saveWithRetry(() => insertRemoteRecordIfMissing(key, record));
             }
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown cloud error';
@@ -779,6 +891,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       session,
       setData,
       simulateGeneration,
+      startRunwayGeneration,
       startUpload,
       unlinkGenerationAsset,
       uploadTasks,

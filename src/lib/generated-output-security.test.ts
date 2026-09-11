@@ -49,6 +49,7 @@ describe('generated-output transport security', () => {
 
   it('streams an allowed direct response without buffering it into the contract', async () => {
     const bytes = new Uint8Array([1, 2, 3, 4]);
+    const controller = new AbortController();
     const fetcher = vi.fn(
       async () =>
         new Response(bytes, {
@@ -62,13 +63,29 @@ describe('generated-output transport security', () => {
         allowedHosts,
         maximumBytes: 10,
         fetcher,
+        signal: controller.signal,
       }
     );
     expect(output).toMatchObject({ contentType: 'image/png', contentLength: 4 });
     expect(new Uint8Array(await new Response(output.body).arrayBuffer())).toEqual(bytes);
     expect((fetcher as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1]).toMatchObject({
       redirect: 'manual',
+      signal: controller.signal,
     });
+  });
+
+  it('sanitizes provider fetch failures', async () => {
+    const fetcher = vi.fn(async () => {
+      throw new Error('https://temporary.example/result?credential=secret');
+    }) as unknown as typeof fetch;
+
+    await expect(
+      openBoundedGeneratedOutput('https://approved-output.example.com/result', {
+        allowedHosts,
+        maximumBytes: 10,
+        fetcher,
+      })
+    ).rejects.toThrow('Provider output could not be opened.');
   });
 
   it('rejects redirects, unsupported types, missing lengths, and oversized declarations', async () => {

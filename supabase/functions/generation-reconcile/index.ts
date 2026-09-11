@@ -156,11 +156,32 @@ Deno.serve(async (request) => {
       if (error) throw error;
     }
 
+    const { count: activeJobs, error: activeJobsError } = await admin
+      .from('generation_records')
+      .select('id', { count: 'exact', head: true })
+      .eq('execution_mode', 'managed')
+      .eq('owner_id', owner.user_id)
+      .in('operational_status', ['submitting', 'queued', 'running', 'saving', 'cancel_requested']);
+    if (activeJobsError) throw activeJobsError;
+
+    let scheduleActive = true;
+    if ((activeJobs ?? 0) === 0) {
+      const { data: deactivated, error: deactivateError } = await admin.rpc(
+        'set_generation_reconciliation_active',
+        { target_active: false }
+      );
+      if (deactivateError || !deactivated) {
+        throw deactivateError ?? new Error('Generation reconciliation schedule was not paused.');
+      }
+      scheduleActive = false;
+    }
+
     return json(request, {
       recoveredClaims: Number(recovered ?? 0),
       checked,
       ingestQueued,
       attentionRequired,
+      scheduleActive,
     });
   } catch (error) {
     return errorResponse(request, error);

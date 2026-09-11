@@ -29,6 +29,10 @@ export function CreatorHQPage() {
   const published = data.episodes.filter((episode) => episode.status === 'published');
   const totalMinutes = data.timeEntries.reduce((sum, entry) => sum + entry.minutes, 0);
   const totalCost = data.costEntries.reduce((sum, entry) => sum + entry.amountCents, 0);
+  const generatedCosts = data.costEntries.filter(
+    (entry) => entry.sourceGenerationId && !entry.deletedAt
+  );
+  const generatedCostTotal = generatedCosts.reduce((sum, entry) => sum + entry.amountCents, 0);
   const storage = getActiveStorageBytes(data);
   const storagePercent = Math.min(100, (storage / B2_UPLOAD_BLOCK_BYTES) * 100);
   const pendingCaptures = data.captures.filter((capture) => !capture.convertedToEpisodeId);
@@ -72,9 +76,11 @@ export function CreatorHQPage() {
           label="Production cost"
           value={formatCurrency(totalCost)}
           detail={
-            published.length
-              ? `${formatCurrency(Math.round(totalCost / published.length))} / published`
-              : 'No published baseline yet'
+            generatedCosts.length
+              ? `Includes ${formatCurrency(generatedCostTotal)} from ${generatedCosts.length} generated ${generatedCosts.length === 1 ? 'result' : 'results'}`
+              : published.length
+                ? `${formatCurrency(Math.round(totalCost / published.length))} / published`
+                : 'No published baseline yet'
           }
         />
         <Metric

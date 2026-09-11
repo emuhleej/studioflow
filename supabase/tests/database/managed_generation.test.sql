@@ -1,5 +1,5 @@
 begin;
-select plan(26);
+select plan(36);
 
 select has_table('public', 'generation_input_assets', 'managed inputs table exists');
 select has_table('public', 'generation_events', 'managed lifecycle events table exists');
@@ -11,6 +11,21 @@ select has_column('public', 'cost_entries', 'source_generation_id', 'managed cos
 select has_function('public', 'claim_generation_submission', array['uuid', 'uuid', 'uuid'], 'atomic submission claim exists');
 select has_function('public', 'recover_stale_generation_claims', array[]::text[], 'scheduled claim recovery exists');
 select has_function('public', 'complete_generation_ingest', array['uuid', 'uuid', 'text', 'text', 'bigint', 'text'], 'atomic output completion exists');
+select ok(
+  exists(select 1 from pg_extension where extname = 'pg_cron'),
+  'pg_cron is enabled for closed-browser recovery'
+);
+select ok(
+  exists(select 1 from pg_extension where extname = 'pg_net'),
+  'pg_net is enabled for the internal Edge Function invocation'
+);
+select has_function('private', 'invoke_generation_reconcile', array[]::text[], 'Vault-backed reconciliation invocation exists');
+select has_function('public', 'set_generation_reconciliation_active', array['boolean'], 'internal schedule lifecycle control exists');
+select has_function('public', 'claim_generation_submission_with_reconcile', array['uuid', 'uuid', 'uuid'], 'atomic claim and scheduler activation exists');
+select ok(
+  not has_function_privilege('authenticated', 'public.set_generation_reconciliation_active(boolean)', 'execute'),
+  'authenticated browser clients cannot control the reconciliation schedule'
+);
 
 insert into auth.users (id, email, aud, role)
 values
@@ -75,20 +90,30 @@ select throws_ok(
   $$select public.claim_generation_submission('77000000-0000-4000-8000-000000000001', '79000000-0000-4000-8000-000000000010', '70000000-0000-4000-8000-000000000001')$$,
   '42501', null, 'owner browser cannot execute the atomic service claim directly'
 );
+select throws_ok(
+  $$select public.claim_generation_submission_with_reconcile('77000000-0000-4000-8000-000000000001', '79000000-0000-4000-8000-000000000010', '70000000-0000-4000-8000-000000000001')$$,
+  '42501', null, 'owner browser cannot activate scheduled recovery through the claim wrapper'
+);
 reset role;
 
 set local role service_role;
 select is(
-  public.claim_generation_submission(
+  public.claim_generation_submission_with_reconcile(
     '77000000-0000-4000-8000-000000000001',
     '79000000-0000-4000-8000-000000000010',
     '70000000-0000-4000-8000-000000000001'
   ),
   true,
-  'free fake work receives one atomic claim'
+  'free fake work receives one atomic claim with scheduled recovery'
 );
+reset role;
+select ok(
+  (select active from cron.job where jobname = 'studioflow-generation-reconcile'),
+  'a successful claim activates the reconciliation schedule'
+);
+set local role service_role;
 select is(
-  public.claim_generation_submission(
+  public.claim_generation_submission_with_reconcile(
     '77000000-0000-4000-8000-000000000001',
     '79000000-0000-4000-8000-000000000011',
     '70000000-0000-4000-8000-000000000001'
@@ -110,6 +135,17 @@ update public.generation_records
 set submission_claim_expires_at = now() - interval '1 minute'
 where id = '77000000-0000-4000-8000-000000000001';
 select is(public.recover_stale_generation_claims(), 1, 'stale marked submission is recovered once');
+select is(
+  public.set_generation_reconciliation_active(false),
+  true,
+  'the internal lifecycle control can pause an idle reconciliation schedule'
+);
+reset role;
+select ok(
+  not (select active from cron.job where jobname = 'studioflow-generation-reconcile'),
+  'the reconciliation schedule is inactive after the final job leaves active state'
+);
+set local role service_role;
 select results_eq(
   $$select operational_status, reserved_output_bytes from public.generation_records where id = '77000000-0000-4000-8000-000000000001'$$,
   $$values ('submission_unknown'::text, 2048::bigint)$$,

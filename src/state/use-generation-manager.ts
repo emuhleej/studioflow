@@ -15,10 +15,13 @@ import {
   FAKE_PROVIDER_ID,
   type NormalizedGenerationRequest,
 } from '../lib/generation-provider';
-import { loadRemoteWorkspace } from '../lib/remote-repository';
+import { loadRemoteWorkspace, upsertRemoteRecord } from '../lib/remote-repository';
+import { createRunwayPreparationProvider } from '../lib/runway-pricing';
+import { supabase } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { GenerationRecord, GenerationRequestSettings, WorkspaceData } from '../types';
 import type { Notice } from './studio-context';
+import { saveWithRetry } from './cloud-save';
 
 interface GenerationManagerOptions {
   data: WorkspaceData;
@@ -81,6 +84,7 @@ export function useGenerationManager({
 }: GenerationManagerOptions) {
   const activeRuns = useRef(new Set<string>());
   const provider = useRef(createFakeGenerationProvider()).current;
+  const runwayPreparationProvider = useRef(createRunwayPreparationProvider()).current;
 
   const persistStep = useCallback(
     (next: WorkspaceData): WorkspaceData => {
@@ -201,12 +205,82 @@ export function useGenerationManager({
     [finishFakeRun, getWorkspace, isDemo, persistStep, provider]
   );
 
+  const startRunwayGeneration = useCallback(
+    async (input: PrepareManagedGenerationInput): Promise<string> => {
+      if (isDemo) throw new Error('Live Runway generation is unavailable in the fictional demo.');
+      if (!user || !supabase) throw new Error('Sign in as the StudioFlow owner before generating.');
+      const requiredRole = input.mediaKind === 'video' ? 'start_image' : 'reference_image';
+      if (input.references.length !== 1 || input.references[0]?.role !== requiredRole) {
+        throw new Error(
+          `The first live ${input.mediaKind} requires exactly one approved private ${
+            input.mediaKind === 'video' ? 'starting' : 'reference'
+          } image.`
+        );
+      }
+
+      const creation = prepareManagedGeneration(getWorkspace(), input, runwayPreparationProvider);
+
+      await saveWithRetry(() => upsertRemoteRecord('generations', creation.generation));
+      for (const reference of creation.inputs) {
+        await saveWithRetry(() => upsertRemoteRecord('generationInputs', reference));
+      }
+
+      setWorkspace((current) => ({
+        ...current,
+        generations: [...current.generations, creation.generation],
+        generationInputs: [...current.generationInputs, ...creation.inputs],
+        generationEvents: [...current.generationEvents, creation.event],
+      }));
+
+      const { data: response, error } = await supabase.functions.invoke('generation-start', {
+        body: { generationId: creation.generation.id },
+      });
+
+      try {
+        const remote = await loadRemoteWorkspace(user);
+        setWorkspace(remote);
+      } catch {
+        setNotice({
+          tone: 'info',
+          message: 'Generation started, but status refresh will retry automatically.',
+        });
+      }
+
+      if (error) {
+        throw new Error(
+          'The provider submission response was not confirmed. Do not retry this request; StudioFlow will reconcile its saved lifecycle.'
+        );
+      }
+      const result = response as { accepted?: boolean; status?: string } | null;
+      if (!result?.accepted) {
+        throw new Error(`Generation was not started (${result?.status ?? 'unknown status'}).`);
+      }
+
+      setNotice({
+        tone: 'success',
+        message: `One private Runway ${input.mediaKind} request started. StudioFlow is tracking its lifecycle.`,
+      });
+      return creation.generation.id;
+    },
+    [getWorkspace, isDemo, runwayPreparationProvider, setNotice, setWorkspace, user]
+  );
+
   const cancelManagedGeneration = useCallback(
     async (generationId: string) => {
       let workspace = getWorkspace();
       const generation = workspace.generations.find((item) => item.id === generationId);
       if (!generation || generation.executionMode !== 'managed')
         throw new Error('Managed generation not found.');
+      if (!isDemo && generation.provider !== FAKE_PROVIDER_ID) {
+        if (!user || !supabase) throw new Error('Sign in as the StudioFlow owner to cancel.');
+        const { error } = await supabase.functions.invoke('generation-cancel', {
+          body: { generationId },
+        });
+        if (error) throw new Error('The generation cancellation could not be confirmed.');
+        setWorkspace(await loadRemoteWorkspace(user));
+        setNotice({ tone: 'info', message: 'Cancellation was sent to the generation provider.' });
+        return;
+      }
       if (generation.operationalStatus === 'draft') {
         persistStep(
           transitionManagedGeneration(
@@ -250,7 +324,7 @@ export function useGenerationManager({
         setNotice({ tone: 'info', message: 'Simulation cancelled. No provider was contacted.' });
       }
     },
-    [getWorkspace, persistStep, provider, setNotice]
+    [getWorkspace, isDemo, persistStep, provider, setNotice, setWorkspace, user]
   );
 
   const resolveUnknownSubmission = useCallback(
@@ -335,5 +409,10 @@ export function useGenerationManager({
     return () => window.clearInterval(refresh);
   }, [data.generations, isDemo, setNotice, setWorkspace, user]);
 
-  return { simulateGeneration, cancelManagedGeneration, resolveUnknownSubmission };
+  return {
+    simulateGeneration,
+    startRunwayGeneration,
+    cancelManagedGeneration,
+    resolveUnknownSubmission,
+  };
 }

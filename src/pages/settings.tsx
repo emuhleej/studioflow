@@ -23,9 +23,22 @@ import { useStudio } from '../state/studio-store';
 import { Button, PageHeading } from '../components/ui';
 
 export function SettingsPage() {
-  const { data, isDemo, user, logout, resetDemo, exportWorkspace, importWorkspace } = useStudio();
+  const {
+    data,
+    isDemo,
+    user,
+    logout,
+    resetDemo,
+    exportWorkspace,
+    createEncryptedBackup,
+    rehearseRestore,
+    importWorkspace,
+  } = useStudio();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [backupMessage, setBackupMessage] = useState('');
   const storage = getActiveStorageBytes(data);
 
   const restore = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +52,38 @@ export function SettingsPage() {
       setError(
         restoreError instanceof Error ? restoreError.message : 'The export could not be restored.'
       );
+    }
+  };
+
+  const backup = async () => {
+    setError('');
+    setBackupMessage('');
+    setBackupBusy(true);
+    try {
+      await createEncryptedBackup();
+      setBackupMessage('Encrypted version 2 backup stored in private B2.');
+    } catch (backupError) {
+      setError(
+        backupError instanceof Error ? backupError.message : 'The encrypted backup failed.'
+      );
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const runRestoreRehearsal = async () => {
+    setError('');
+    setBackupMessage('');
+    setRestoreBusy(true);
+    try {
+      await rehearseRestore();
+      setBackupMessage('Encrypted version 2 restore rehearsal completed without deleting records.');
+    } catch (restoreError) {
+      setError(
+        restoreError instanceof Error ? restoreError.message : 'The restore rehearsal failed.'
+      );
+    } finally {
+      setRestoreBusy(false);
     }
   };
 
@@ -158,7 +203,20 @@ export function SettingsPage() {
               <Upload size={16} />
               Restore export
             </Button>
+            <Button onClick={() => void backup()} disabled={isDemo || backupBusy}>
+              <Cloud size={16} />
+              {backupBusy ? 'Backing up…' : 'Back up to B2'}
+            </Button>
+            <Button onClick={() => void runRestoreRehearsal()} disabled={restoreBusy}>
+              <RotateCcw size={16} />
+              {restoreBusy ? 'Rehearsing…' : 'Rehearse B2 restore'}
+            </Button>
           </div>
+          {backupMessage ? (
+            <p role="status" className="mt-3 text-xs text-[var(--mint)]">
+              {backupMessage}
+            </p>
+          ) : null}
         </section>
 
         <section className="panel panel-pad">
