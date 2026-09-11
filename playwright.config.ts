@@ -12,16 +12,6 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  webServer: {
-    command: `npm run dev -- --host 127.0.0.1 --port ${e2ePort}`,
-    url: `http://127.0.0.1:${e2ePort}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      ...process.env,
-      VITE_DEMO_MODE: 'true',
-    },
-  },
   projects: [
     {
       name: 'desktop',

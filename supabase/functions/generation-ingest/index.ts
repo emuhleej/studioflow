@@ -1,9 +1,13 @@
-import { PutObjectCommand } from 'npm:@aws-sdk/client-s3@3';
 import { z } from 'npm:zod@4';
+import {
+  GENERATED_OUTPUT_TRANSFER_TIMEOUT_MS,
+  transferGeneratedOutput,
+} from '../../../src/lib/generated-output-transfer.ts';
 import { adminClient, requireGenerationJob } from '../_shared/auth.ts';
 import { b2Bucket, b2Client, mediaStorageKey } from '../_shared/b2.ts';
 import { errorResponse, json, options } from '../_shared/cors.ts';
 import { openBoundedGeneratedOutput } from '../_shared/generated-output.ts';
+import { generatedOutputStorage } from '../_shared/generated-output-storage.ts';
 import {
   loadGenerationRow,
   runwayOutputHosts,
@@ -43,29 +47,55 @@ Deno.serve(async (request) => {
     if (!Number.isSafeInteger(maximumBytes) || maximumBytes <= 0) {
       throw new Error('Generation has no valid output-byte reservation.');
     }
-    const output = await openBoundedGeneratedOutput(temporaryUrl, {
-      allowedHosts: runwayOutputHosts(),
-      maximumBytes,
-    });
-    const filename = `runway-${generation.media_kind}-${generation.id}.${extensionFor(output.contentType)}`;
-    const storageKey = mediaStorageKey(generation.owner_id, generation.id, filename);
-    await b2Client().send(
-      new PutObjectCommand({
-        Bucket: b2Bucket(),
-        Key: storageKey,
-        Body: output.body as never,
-        ContentLength: output.contentLength,
-        ContentType: output.contentType,
-      })
+    const transferController = new AbortController();
+    const transferStartedAt = Date.now();
+    const transferDeadlineAt = transferStartedAt + GENERATED_OUTPUT_TRANSFER_TIMEOUT_MS;
+    const transferTimeout = setTimeout(
+      () => transferController.abort(),
+      GENERATED_OUTPUT_TRANSFER_TIMEOUT_MS
     );
+    let savedOutput: {
+      filename: string;
+      storageKey: string;
+      contentType: string;
+      contentLength: number;
+    };
+    try {
+      const output = await openBoundedGeneratedOutput(temporaryUrl, {
+        allowedHosts: runwayOutputHosts(),
+        maximumBytes,
+        signal: transferController.signal,
+      });
+      const filename = `runway-${generation.media_kind}-${generation.id}.${extensionFor(output.contentType)}`;
+      const storageKey = mediaStorageKey(generation.owner_id, generation.id, filename);
+      await transferGeneratedOutput({
+        body: output.body,
+        contentLength: output.contentLength,
+        contentType: output.contentType,
+        maximumBytes,
+        storageKey,
+        generationId: generation.id,
+        storage: generatedOutputStorage(b2Client(), b2Bucket()),
+        signal: transferController.signal,
+        clock: { now: () => Date.now(), deadlineAt: transferDeadlineAt },
+      });
+      savedOutput = {
+        filename,
+        storageKey,
+        contentType: output.contentType,
+        contentLength: output.contentLength,
+      };
+    } finally {
+      clearTimeout(transferTimeout);
+    }
 
     const { data: assetId, error } = await admin.rpc('complete_generation_ingest', {
       target_generation_id: generation.id,
       target_owner_id: generation.owner_id,
-      output_filename: filename,
-      output_mime_type: output.contentType,
-      output_bytes: output.contentLength,
-      output_storage_key: storageKey,
+      output_filename: savedOutput.filename,
+      output_mime_type: savedOutput.contentType,
+      output_bytes: savedOutput.contentLength,
+      output_storage_key: savedOutput.storageKey,
     });
     if (error) throw error;
     return json(request, { saved: true, alreadyCompleted: false, assetId });

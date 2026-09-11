@@ -152,8 +152,8 @@ No database, browser-storage, export, backup, or media schema changed. Toast and
 
 ## Exact Next Implementation Task
 
-Return to `docs/features/AI_GENERATION_STATE.md` and wait for explicit approval of AI-3 Gate 1 before creating a Runway account or prepaid balance. Do not configure credentials, make a paid request, deploy generation functions, merge, or release production without the separately named approval.
+Return to `docs/features/AI_GENERATION_STATE.md`. AI-3 Gate 3, scheduled reconciliation, memory-safe transfer, hosted ingest bundle/authentication verification, the AI-4 read-only preflight, and the local five-second preparation/confirmation path are complete. The next task is an action-time read-only provider/balance and hosted-guard check followed by a separate exact-request approval gate. Do not enable generation, submit the video request, or release production during that check.
 
 ## Remaining Implementation Order
 
-1. AI-3 Gate 1 — Runway account and prepaid balance, only after explicit owner approval.
+1. Follow the exact next task in `docs/features/AI_GENERATION_STATE.md`; Quick Wins itself is complete.

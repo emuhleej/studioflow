@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import {
   FAKE_PROVIDER_ID,
-  type GenerationProvider,
+  type GenerationPreparationProvider,
   type NormalizedGenerationRequest,
   type ProviderJobState,
 } from './generation-provider';
@@ -91,7 +91,7 @@ export function getGenerationProjectId(
 export function prepareManagedGeneration(
   workspace: WorkspaceData,
   input: PrepareManagedGenerationInput,
-  provider: GenerationProvider,
+  provider: GenerationPreparationProvider,
   runtime: RuntimeFactory = defaultRuntime
 ): ManagedGenerationCreation {
   const episode = workspace.episodes.find((item) => item.id === input.episodeId);
@@ -193,7 +193,10 @@ export function prepareManagedGeneration(
     durationSeconds: input.settings.durationSeconds,
     outcome: 'unreviewed',
     assetIds: [],
-    notes: 'Account-free StudioFlow simulation.',
+    notes:
+      capabilities.providerId === FAKE_PROVIDER_ID
+        ? 'Account-free StudioFlow simulation.'
+        : 'Owner-approved managed generation.',
   };
   const inputs = input.references.map((reference, position): GenerationInputAsset => ({
     ...baseRecord(workspace.ownerId, runtime),

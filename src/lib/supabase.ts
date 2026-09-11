@@ -6,7 +6,13 @@ const anonKey = env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
-export const supabase = isSupabaseConfigured ? createClient(url!, anonKey!) : null;
+export const supabase = isSupabaseConfigured
+  ? createClient(url!, anonKey!, {
+      auth: {
+        flowType: 'pkce',
+      },
+    })
+  : null;
 
 export async function signInWithGitHub(): Promise<void> {
   if (!supabase) throw new Error('Supabase is not configured.');

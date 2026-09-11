@@ -141,7 +141,33 @@ test('account-free generation simulation completes without provider access and s
   await page.getByLabel('Simulation type').selectOption('image');
   await page.getByLabel('Locked prompt version').selectOption('prompt-shot-one-v2');
   await page.getByLabel('Optional reference image').selectOption('asset-fridge-ref');
+  const preflightDialog = page.getByRole('dialog', { name: 'Account-free simulation' });
+  const viewport = page.viewportSize();
+  const dialogBox = await preflightDialog.boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(dialogBox).not.toBeNull();
+  expect(dialogBox!.x).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(viewport!.width);
+  expect(dialogBox!.y).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.y + dialogBox!.height).toBeLessThanOrEqual(viewport!.height);
+  const preflightWidth = await preflightDialog.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(preflightWidth.scrollWidth).toBeLessThanOrEqual(preflightWidth.clientWidth);
   const simulate = page.getByRole('button', { name: 'Run free simulation' });
+  await expect(page.getByText('2 credits', { exact: true })).toBeVisible();
+  await expect(page.getByText('$0.02 maximum', { exact: true })).toBeVisible();
+  await expect(simulate).toBeDisabled();
+  const confirmation = page.getByRole('checkbox', {
+    name: /I reviewed the later live-request maximum of 2 credits \(\$0\.02\)/,
+  });
+  const confirmationTouchHeight = await confirmation.evaluate(
+    (element) => element.closest('label')?.getBoundingClientRect().height ?? 0
+  );
+  expect(Math.round(confirmationTouchHeight)).toBeGreaterThanOrEqual(44);
+  await confirmation.check();
+  await expect(simulate).toBeEnabled();
   const buttonBox = await simulate.boundingBox();
   expect(Math.round(buttonBox?.height ?? 0)).toBeGreaterThanOrEqual(44);
   await simulate.click();
@@ -162,6 +188,41 @@ test('account-free generation simulation completes without provider access and s
     clientWidth: document.documentElement.clientWidth,
   }));
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+});
+
+test('five-second video preparation requires exact confirmation and completes only as a free simulation', async ({
+  page,
+}) => {
+  await page.goto('/episodes/episode-fridge');
+  await page.getByRole('tab', { name: 'Prompts & generations' }).click();
+  await page.getByRole('button', { name: 'Try free simulation' }).click();
+  await page.getByLabel('Simulation type').selectOption('video');
+  await page.getByLabel('Locked prompt version').selectOption('prompt-shot-one-v2');
+  await page.getByLabel('Starting image').selectOption('asset-fridge-ref');
+
+  const dialog = page.getByRole('dialog', { name: 'Account-free simulation' });
+  await expect(dialog.getByText('Five-second video preflight')).toBeVisible();
+  await expect(dialog.getByText('25 credits', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('$0.25 maximum', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('200 MB', { exact: true })).toBeVisible();
+  await expect(dialog.getByText(/9:16 · 720 × 1280 · 5 seconds/)).toBeVisible();
+
+  const simulate = dialog.getByRole('button', { name: 'Run free simulation' });
+  await expect(simulate).toBeDisabled();
+  await dialog
+    .getByRole('checkbox', {
+      name: /I reviewed the later live-request maximum of 25 credits \(\$0\.25\)/,
+    })
+    .check();
+  await expect(simulate).toBeEnabled();
+  await simulate.click();
+
+  await expect(page.getByText(/^Free simulation started\./)).toContainText(
+    'No AI provider or paid service was contacted'
+  );
+  await expect(page.getByText('studioflow-fake · fake-video-v1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Completed', { exact: true })).toBeVisible();
+  await expect(page.getByText('studioflow-simulated-video.mp4', { exact: true })).toBeVisible();
 });
 
 test('generation results and review decisions persist across reload', async ({ page }) => {

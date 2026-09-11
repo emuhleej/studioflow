@@ -99,7 +99,7 @@ export interface Scene extends BaseRecord {
   beat: BeatType;
   summary: string;
   position: number;
-  locationId?: Id;
+  locationId?: Id | undefined;
 }
 
 export interface Shot extends BaseRecord {

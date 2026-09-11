@@ -1,7 +1,7 @@
 # Memory-Safe Generated-Video Transfer Design
 
 Date: 2026-09-10  
-Status: Approved by the owner; ready for implementation planning
+Status: Implemented and locally verified; hosted bundle/authentication verified; B2 multipart execution pending
 
 ## Purpose
 
@@ -222,7 +222,7 @@ The source implementation is complete when:
 - every required local test and repository check passes;
 - existing still-image behavior remains covered and passing;
 - affected architecture, security, setup, feature-state, build, and function documentation is synchronized;
-- the feature checkpoint says `source-tested; hosted verification pending`;
+- the feature checkpoint distinguishes locally tested transfer logic and hosted bundle/authentication verification from the still-pending hosted B2 multipart execution;
 - no external provider or deployment action occurred.
 
 ## Later Hosted Verification Gate

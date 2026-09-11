@@ -48,11 +48,14 @@ Deno.serve(async (request) => {
     if (estimateError) throw estimateError;
 
     const claimId = crypto.randomUUID();
-    const { data: claimed, error: claimError } = await admin.rpc('claim_generation_submission', {
-      target_generation_id: generation.id,
-      requested_claim_id: claimId,
-      target_owner_id: user.id,
-    });
+    const { data: claimed, error: claimError } = await admin.rpc(
+      'claim_generation_submission_with_reconcile',
+      {
+        target_generation_id: generation.id,
+        requested_claim_id: claimId,
+        target_owner_id: user.id,
+      }
+    );
     if (claimError) throw claimError;
     if (!claimed) return json(request, { accepted: false, status: 'already_claimed' });
 

@@ -11,6 +11,8 @@ export function b2Client(): S3Client {
     region: Deno.env.get('B2_REGION') ?? 'us-west-004',
     endpoint: required('B2_ENDPOINT'),
     forcePathStyle: true,
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
     credentials: {
       accessKeyId: required('B2_KEY_ID'),
       secretAccessKey: required('B2_APPLICATION_KEY'),

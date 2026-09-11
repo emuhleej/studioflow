@@ -57,6 +57,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.metadata-backup]
 verify_jwt = false
+[functions.metadata-restore]
+verify_jwt = false
 [functions.generation-start]
 verify_jwt = false
 [functions.generation-cancel]

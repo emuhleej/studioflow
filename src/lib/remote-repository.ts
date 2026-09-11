@@ -55,6 +55,7 @@ export function fromDatabaseRecord<T>(record: Record<string, unknown>): T {
 export function getRemoteUpsertOptions(
   key: WorkspaceArrayKey
 ): { onConflict: string; ignoreDuplicates?: boolean } | undefined {
+  if (key === 'scripts' || key === 'prompts') return { onConflict: 'id', ignoreDuplicates: true };
   if (key === 'assetLinks') return { onConflict: 'asset_id,target_type,target_id' };
   if (key === 'generationInputs') return { onConflict: 'generation_id,asset_id,role' };
   if (key === 'generationEvents') return { onConflict: 'id', ignoreDuplicates: true };
@@ -115,6 +116,31 @@ export async function upsertRemoteRecord(
   const { error } = options
     ? await supabase.from(tableByKey[key]).upsert(databaseRecord, options)
     : await supabase.from(tableByKey[key]).upsert(databaseRecord);
+  if (error) throw error;
+}
+
+export async function insertRemoteRecordIfMissing(
+  key: WorkspaceArrayKey,
+  record: BaseRecord
+): Promise<void> {
+  if (!supabase) return;
+  const databaseRecord = toDatabaseRecord(record as unknown as Record<string, unknown>);
+  const options = getRemoteUpsertOptions(key);
+  const { error } = await supabase.from(tableByKey[key]).upsert(databaseRecord, {
+    onConflict: options?.onConflict ?? 'id',
+    ignoreDuplicates: true,
+  });
+  if (error) throw error;
+}
+
+export async function updateRemoteRecord(
+  key: WorkspaceArrayKey,
+  id: string,
+  patch: Record<string, unknown>
+): Promise<void> {
+  if (!supabase) return;
+  const databasePatch = toDatabaseRecord(patch);
+  const { error } = await supabase.from(tableByKey[key]).update(databasePatch).eq('id', id);
   if (error) throw error;
 }
 

@@ -1,19 +1,19 @@
 # StudioFlow Project State
 
-Last updated: 2026-09-03
+Last updated: 2026-09-11
 
 This document is StudioFlow's current project dashboard. It records the state a fresh coding agent needs in order to resume work safely. Read `CODEX.md` first, then this file, before opening a feature checkpoint.
 
 ## Current project status
 
-| Field                       | Current state                                                                                |
-| --------------------------- | -------------------------------------------------------------------------------------------- |
-| Status                      | Active development                                                                           |
-| Production                  | Stable                                                                                       |
-| Current major feature       | AI Image and Video Generation                                                                |
-| Active implementation unit  | None — Quick Wins Phases 1–3 are complete locally; AI generation remains paused before AI-3  |
-| Latest completed checkpoint | Phase 3 environment validation, public shell health page, and privacy-bounded error tracking |
-| Next checkpoint to open     | AI-3 Gate 1 only after explicit owner approval for a Runway account and prepaid balance      |
+| Field                       | Current state                                     |
+| --------------------------- | ------------------------------------------------- |
+| Status                      | Active development                                |
+| Production                  | Stable                                            |
+| Current major feature       | AI Generation release hardening                   |
+| Active implementation unit  | Release-candidate preparation                     |
+| Latest completed checkpoint | Encrypted version 2 backup and restore rehearsal   |
+| Next checkpoint to open     | Exact release-candidate commit and preview review  |
 
 “Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
 
@@ -26,19 +26,22 @@ This document is StudioFlow's current project dashboard. It records the state a 
 - Fictional browser-only demo workspace using localStorage and IndexedDB.
 - Media metadata, asset links, upload-session records, trash state, review state, and image/audio/video classifications.
 - Media safeguards for supported formats, non-empty files, a 2 GB per-file maximum, an 8 GB warning, and a 9 GB upload block.
-- Connected hosted Supabase schema with seven reviewed migrations, 22 row-level-secured public tables, a configured singleton owner allowlist, hardened owner-only RLS, generated TypeScript types, and passing isolated pgTAP coverage.
-- Configured GitHub OAuth with verified signed-out, non-owner, and real owner behavior; OAuth credentials and the owner UUID remain outside the repository.
-- Supabase Edge Function code for private B2 upload, multipart signing, resume, completion, cancellation, preview URLs, deletion, and encrypted metadata backup.
+- Connected hosted Supabase schema with eight reviewed migrations, 22 row-level-secured public tables, a configured singleton owner allowlist, hardened owner-only RLS, generated TypeScript types, and passing isolated pgTAP coverage.
+- Configured GitHub OAuth using PKCE with verified signed-out, non-owner, and real owner behavior; OAuth credentials and the owner UUID remain outside the repository.
+- Supabase Edge Function code for private B2 upload, multipart signing, resume, completion, cancellation, preview URLs, deletion, encrypted metadata backup, and non-destructive restore rehearsal.
 - Connected private Backblaze B2 bucket with server-side encryption, restricted credentials, exact local and approved Deploy Preview CORS origins, one-day hidden-version cleanup, and three-day abandoned-multipart cleanup.
-- Eight active Supabase Edge Functions with provider and backup credentials stored only as server-side secrets.
-- Prompt-version and generation-provenance records without live AI-provider execution.
+- Thirteen active Supabase Edge Functions with media, backup/restore, Runway, exact-host, and internal-job credentials/configuration stored only as server-side secrets.
+- Prompt-version and generation-provenance records, including one completed owner-approved live Runway still and one separately confirmed five-second video.
 - Same-project generation result linking, synchronized compatibility references, and selected/rejected/unreviewed attempt decisions.
 - Provider-neutral managed-generation records, immutable input/history records, hard budget and storage reservations, atomic submission/ingest rules, one-active-job enforcement, and a server-authoritative generation switch that remains off.
-- Deterministic account-free image/video simulation in the fictional workspace plus source-only, mocked Runway request, cancellation, reconciliation, and private-output-ingest adapters. No generation function is deployed.
+- Deterministic account-free image/video simulation plus separate private Runway image and five-second video preparation gates. Both require an immutable prompt, one appropriate private image, a locked request envelope, and exact price confirmation. Four generation functions are deployed; the server-side switch is off between separately approved requests.
+- Generated-video transfer with a single bounded payload through 8 MiB, sequential 8 MiB B2 multipart parts above that threshold, exact-object reuse, conflict refusal, post-upload verification, a 100-second deadline, and best-effort abort cleanup. The first live 497,698-byte video completed through the bounded single-payload path; multipart remains pending until a later approved output naturally exceeds 8 MiB.
+- Direct shot-to-generation handoff that creates an immutable prompt from series, episode, scene, shot, assigned-character/location, named-prop, and project-style production memory.
+- Expandable managed-attempt details for request shape, immutable prompt, private inputs, lifecycle, result, and settled cost, with Creator HQ identifying generated-result cost totals.
 - Time, cost, publication, per-episode totals, metadata export, and restore workflows.
 - Vitest, Playwright, lint, type-check, production-build, and database-test configuration.
 - Modular workspace state with separate public context, demo persistence, upload management, current-state tracking, and cloud-save recovery.
-- Private metadata writes retry once and safely roll back a failed optimistic change without overwriting newer work.
+- Private metadata writes retry once and safely roll back a failed optimistic change without overwriting newer work. Managed-generation review uses an update-only path so the database's inert-draft insert guard remains intact.
 - Race-safe owner authorization with a distinct retryable verification-error state, stale-request protection, and definitive denial only after an explicit non-owner result.
 - Private Netlify Deploy Preview with preview-only browser variables, protected access, SPA routing, and responsive owner-workspace verification.
 - Top-level render-error containment, typed four-tone notifications, and accessible shared loading primitives with focused tests.
@@ -50,11 +53,29 @@ This document is StudioFlow's current project dashboard. It records the state a 
 
 The bounded **Quick Wins and Critical Fixes Phases 1–3** are complete in the local working tree. Phase 3 centralizes environment validation, prevents invalid or demo-mode production startup, adds a minimal public shell health page, and routes render and unhandled-promise failures through a sanitized 50-report in-memory tracker backed by the existing authenticated client-error recorder. The `/health` page does not open the private workspace or probe Supabase, B2, authentication, or AI providers. No database, provider, hosted environment, or deployment configuration changed.
 
-The current major feature is **AI Image and Video Generation**. AI-1 and AI-2 are complete on `codex/ai-1-2-foundation` and draft PR #6. The account-free simulator is integrated with the fictional episode workspace, while the provider connector and recovery/ingest functions remain source-only and mock-tested.
+The current major feature is **AI Image and Video Generation**. AI-1, AI-2, and AI-3 Gate 3 are complete. PR #6 was marked ready and merged into `main` as merge commit `2d6b5df70593bef82065137553de248f7f7b121e`; its reviewed head was `2c49ebbefe0a0cc8b5e1a94f2810f0d0a634f26c`. The account-free simulator remains integrated with the fictional episode workspace, and the private workspace now has one live-verified owner-approved Runway still-image path.
 
 The additive managed-generation migration is applied to hosted Supabase, the hosted TypeScript definitions are regenerated, all 22 public tables have RLS enabled, and the singleton generation settings row is confirmed disabled. Live database lint reports no schema errors. Current advisors add no AI-related security warning or error; performance results are informational, including expected unused fresh indexes and an optional generation-event foreign-key index.
 
-No Runway account, organization, balance, key, provider call, paid request, scheduled recovery job, generation-function deployment, preview deployment, production deployment, or merge was performed. AI-3 requires a new explicit approval.
+AI-3 Gate 3 completed on 2026-09-10 under exact action-time approval. StudioFlow temporarily enabled generation, submitted exactly one `gen4_image_turbo` still from an immutable fictional prompt and one private fictional reference, then immediately returned `generation_enabled` to false. Runway accepted one job; no automatic paid retry or second provider request occurred. Temporary server-side reconciliation recovered the completed result without installing a schedule. The result is privately stored in B2, visible through authenticated StudioFlow preview, linked once, costed once at two cents/two credits, and selected at the asset and generation levels. The Runway portal balance changed from 500 to 498 promotional credits, matching the stored calculation. All reservations are released, no managed job is active, and no Netlify or production deployment occurred.
+
+The shared Gen-4 Image Turbo price definition now drives the UI, mocked adapter, server estimate, and completed live record. Live B2 ingest exposed two Deno/AWS SDK compatibility defects after provider completion. The B2 client now disables optional request/response checksum calculation for the flowing response, and the already length-bounded still image is converted to bytes before upload. Retrying ingest reused the existing completed provider job and consumed no additional credits. The managed-generation review path now issues an update rather than an insert-capable upsert, preserving the server-owned draft guard while allowing the owner to record a decision. The prior Playwright shutdown hang remains fixed by the project-owned Vite lifecycle runner.
+
+Scheduled reconciliation is fully configured in hosted Supabase. The eighth migration enables `pg_cron` and `pg_net`, creates a once-per-minute job that is inactive while idle, denies browser control, and adds an atomic claim-plus-schedule activation wrapper. The independent internal credential and project URL are synchronized only in Edge secrets/Vault, and the updated `generation-start` and `generation-reconcile` functions are active. An empty live cron invocation succeeded and paused itself; generation stayed disabled, active and uncertain job counts stayed at zero, the managed-record count did not change, and no provider request was made.
+
+The approved first-video transfer is complete in source and local mocks. `generation-ingest` no longer materializes the complete provider result. The provider-neutral orchestrator holds no more than one 8 MiB payload, uploads multipart parts sequentially, verifies exact length and object identity, reuses only an exact existing object, and attempts bounded cleanup after failure. The complete local gate passes TypeScript, ESLint, 118 unit/component tests, all six production-release guard tests, and the production build. No Edge Function was deployed, no hosted B2 object was written, and Runway was not contacted.
+
+The AI-4 local video preparation and confirmation gate is complete. StudioFlow offers a separate five-second private-video action, locks it to one `gen4_turbo` 9:16/`720:1280` output from exactly one private start image, displays the 25-credit/$0.25 maximum and 200 MB reservation, and requires explicit confirmation before the submit control is enabled. The browser command now safely accepts either the reviewed image or video request shape. Local tests used only the fake provider; no hosted function, Runway request, B2 write, credit, or deployment changed.
+
+The AI-4 action-time safety check passed. Runway currently shows 498 promotional credits and auto-billing off; `gen4_turbo` remains 5 credits per second, so the locked five-second request remains 25 credits/$0.25. Hosted generation is disabled, active and uncertain job counts are zero, cost/output reservations are zero, and the scheduler is inactive. The hosted request/daily/monthly/output limits fit the request. No provider request or external mutation occurred during the check.
+
+AI-4 completed after exact confirmation. StudioFlow submitted one `gen4_turbo` request and immediately disabled generation. The job completed without retry, copied a 497,698-byte MP4 into private B2, played through an authenticated short-lived URL at 720×1280 for 5.04 seconds, recorded one canonical result link and one $0.25 cost row, released all reservations, and returned the scheduler to inactive. The episode total moved from $0.02 to $0.27. The output was below the multipart threshold.
+
+AI-5 local production-memory integration is complete. Each shot has a direct generation action; location and character assignments are visible in the shot workspace; the handoff compiles relevant production memory into a new immutable prompt; and managed history exposes complete input, request, lifecycle, result, and settled-cost details. A free fictional rehearsal completed without external service use.
+
+The final AI-5 backup gate is complete. Hosted `metadata-backup` now writes schema version 2, and the owner-authenticated `metadata-restore` function reads only the latest encrypted object from the owner's private B2 prefix. The live rehearsal decrypted and validated that backup, checked every collection before inserting only missing rows, preserved all existing records, and forced generation off. The follow-up database check confirmed the same production counts, one completed five-second video, one settled video cost, no active managed job, disabled generation, and an inactive scheduler. No Runway request or Netlify deployment occurred.
+
+During Gate 3 browser verification, an implicit-flow OAuth callback exposed transient callback credentials to agent-visible diagnostic output. Work stopped before provider submission; the GitHub grant and active Supabase session were revoked, and the stale local session was signed out. Supabase browser auth now uses PKCE, callback URLs are cleaned before inspection, and a fresh GitHub authorization restored owner access without exposing the replacement session. The exact Deploy Preview redirect remains allowlisted without a wildcard.
 
 Milestone 10A connected the hosted Supabase project, applied the five production-core migrations, regenerated `src/lib/database.types.ts`, and ran hosted checks. Milestone 10B added and applied the reviewed owner-auth hardening migration, configured GitHub OAuth and local callbacks, disabled unused email/password login, registered the single owner, and verified signed-out, non-owner, and real owner access. All 19 public tables have row-level security enabled and anonymous public-table grants are zero.
 
@@ -89,7 +110,7 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 
 ## Current build and deployment state
 
-- Quick Wins Phase 1 passes TypeScript, lint, all 94 unit/component tests across 23 files, all six production-release guard tests, and the production build. The build retains its existing informational warning for a JavaScript chunk larger than 500 kB. A full Playwright run reported all 36 scenarios successful but did not exit cleanly during runner cleanup; the single-worker confirmation was interrupted by the owner and remains a later verification item.
+- Quick Wins Phase 1 passed TypeScript, lint, all 94 unit/component tests across 23 files, all six production-release guard tests, and the production build. Its historical Playwright shutdown defect is superseded by the project-owned Vite lifecycle runner verified during the AI-3 deployment checkpoint.
 - Quick Wins Phase 2 passes the stricter TypeScript build, ESLint, Prettier's complete repository check, all 94 unit/component tests across 23 files, all six production-release guard tests, and the production build. The production dependency audit reports zero vulnerabilities. The full development audit reports seven high-severity advisories confined to the existing Netlify CLI dependency tree; no automatic dependency rewrite was applied.
 - Quick Wins Phase 3 passes TypeScript, ESLint, Prettier's complete repository check, all 102 unit/component tests across 26 files, all six production-release guard tests, and the production build. The focused public-health Playwright check passes and exits cleanly at desktop, iPad landscape, iPad portrait, and 390 × 844 phone viewports. The build retains its informational large-chunk warning.
 
@@ -103,11 +124,15 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 - Guarded private Netlify Deploy Preview deployment `6a98ade0b248ff000843f8f0` at application revision `294acc8` contains the auth fix, production guard, and proposed provider-neutral AI plan. Owner access, a fresh OAuth cycle, three reloads, Creator HQ, `/library`, `/media`, a clean console, route refreshes, all four supported viewport sizes, and the exact tiny-media cleanup cycle are verified. Documentation-only closeout deployment `6a98b784104acf0008957b1c` at `faef374` completed; the canonical preview still opened Creator HQ as the owner with no browser warnings or errors.
 - The authorization-race regression suite increased the verified application total to 69 unit/component tests; `npm run verify` and all 32 Playwright scenarios pass.
 - Netlify published an initial production-context build of `main` at `6c18ece` during site creation. It remains edge-protected, has no production browser values, and is not an approved release. Site-level Auto Publishing is locked.
-- GitHub OAuth, exact local and preview redirects, the singleton owner, private owner access, eight Edge Functions, server-only secrets, and the live B2 integration are configured. No custom domain or approved production release exists.
-- AI-1/AI-2 verification passes locally with TypeScript, lint, 87 unit/component tests, six production-lock checks, and the production build. GitHub Actions run `33705389130` passes the same application checks, all 36 Playwright scenarios, secret scanning, and all 80 pgTAP assertions across six database suites.
-- Hosted migration history now matches all seven source migrations. Live database lint reports no schema errors; all 22 public tables have RLS enabled; generated hosted types include the three managed-generation tables and four service-only database functions; `generation_enabled` remains false.
-- The private B2 integration is live-verified. Two generated test assets and one encrypted test backup were written, exercised, restored, and permanently removed; the dedicated bucket and hosted owner workspace returned to zero test records.
-- Provider configuration and production deployment remain separate approval gates.
+- GitHub OAuth remains configured with PKCE. After containment of a transient callback-log exposure, the previous grant/session was revoked and a fresh authorization restored owner access without exposing the replacement session. The exact PR #6 preview redirect is allowlisted without a wildcard. No custom domain or approved production release exists.
+- AI-1/AI-2 verification passes locally with TypeScript, lint, 102 unit/component tests in the stable one-worker confirmation, six production-lock checks, and the production build. Final-head GitHub Actions run `33787517971` concluded successfully. PR #6 was merged into `main` as `2d6b5df70593bef82065137553de248f7f7b121e`.
+- Hosted migration history includes the eighth source migration for on-demand reconciliation. All 22 public tables retain RLS; generated hosted types include the service-only schedule-control functions; the two required Vault entries are present and valid by name/shape; `generation_enabled` remains false.
+- The private B2 integration is live-verified. Earlier disposable media/backup fixtures were exercised and removed. The current owner workspace now also has a retained encrypted schema-version-2 backup whose non-destructive restore rehearsal completed successfully without changing record counts.
+- All four generation functions remain active with server-only configuration and custom authentication; `generation-start` and `generation-reconcile` are on their newly deployed reconciliation-aware versions. Unauthenticated POST checks returned HTTP 401. Exactly one approved Runway still exists from the prior gate. The scheduler is credentialed, tested, and inactive while idle. The singleton generation switch is false, no managed or uncertain job is active, and production deployment remains a separate approval gate.
+- The AI-3 deployment checkpoint passes repository formatting, TypeScript, ESLint, all 104 unit/component tests, all six production-lock tests, and the production build. The full 40-scenario Playwright suite passed in 2.8 minutes, returned exit code 0, and released port 4174 without manual termination. The existing informational large-chunk build warning remains unchanged.
+- The AI-3 Gate 3 code checkpoint passes repository formatting, TypeScript, ESLint, all 105 unit/component tests, all six production-lock tests, and the production build. The full 40-scenario Playwright suite passed in 3.3 minutes, exited cleanly, and released port 4174. The build retains the existing informational large-chunk warning.
+- The memory-safe generated-video transfer source passes TypeScript, ESLint, all 118 unit/component tests across 27 files, all six production-lock tests, and the production build. Focused transfer/security coverage passes 18 tests using the real 8 MiB part boundary. Playwright and pgTAP were not required because this unit changed no UI or database schema. The existing informational large-chunk warning remains.
+- The AI-4 local video gate passes TypeScript, ESLint, all 121 unit/component tests across 28 files, all six production-lock tests, and the production build. Focused pricing/component coverage passes 16 tests, and all 44 Playwright scenarios pass across desktop, iPad landscape, iPad portrait, and 390 × 844 phone layouts. The project-owned runner exited cleanly. No pgTAP run was required because the database schema did not change.
 
 ## Next checkpoint
 
@@ -125,7 +150,7 @@ Before opening the next separately approved gate, re-read:
 10. `docs/SETUP.md`
 11. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-Quick Wins is complete. The exact next product task is to return to `docs/features/AI_GENERATION_STATE.md` and wait for explicit approval of **AI-3 Gate 1**: create the Runway account and approve the prepaid balance. Do not create an AI key, configure a server secret, deploy generation functions, submit a paid request, merge, or release production without the separately named approval.
+Quick Wins and AI-1 through AI-5 are complete, including the live encrypted version 2 backup/non-destructive restore rehearsal. The exact next task is to prepare one release-candidate commit, run its approved review checks, and review its private preview. Obtain action-time confirmation immediately before publishing that exact candidate to production. Do not submit another provider request.
 
 ## Active documentation
 
@@ -135,7 +160,7 @@ Quick Wins is complete. The exact next product task is to return to `docs/featur
 - `docs/features/LIVE_SERVICE_READINESS_STATE.md` — completed 10A–10F live-service integration and the separate repository/release boundaries.
 - `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` — completed fictional Milestone 9 rehearsal and remaining owner-private/physical-device trials.
 - `docs/features/GENERATION_HISTORY_STATE.md` — completed manual provenance scope, hosted verification, and the boundary to future managed generation.
-- `docs/features/AI_GENERATION_STATE.md` — current feature checkpoint: AI-1/AI-2 complete and paused before AI-3.
+- `docs/features/AI_GENERATION_STATE.md` — current feature checkpoint: live private image/video and AI-5 backup/restore complete; release-candidate preparation next.
 - `docs/features/AI_GENERATION_PLAN.md` — provider-neutral image/video implementation order and separate paid-service gates.
 - `docs/features/MEDIA_LIFECYCLE_STATE.md` — completed media feature scope, live provider results, and remaining physical-device review.
 - `README.md` — product overview, current capabilities, local commands, and repository status.

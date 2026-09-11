@@ -73,6 +73,8 @@ export interface GenerationProvider {
   normalizeResult(job: ProviderJobState): NormalizedGenerationResult;
 }
 
+export type GenerationPreparationProvider = Pick<GenerationProvider, 'capabilities' | 'estimate'>;
+
 export const FAKE_PROVIDER_ID = 'studioflow-fake';
 
 export function createFakeGenerationProvider(

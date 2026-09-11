@@ -7,6 +7,10 @@ import type {
   ProviderJob,
   ProviderJobState,
 } from '../../../src/lib/generation-provider.ts';
+import {
+  RUNWAY_CREDIT_COST_MICROS,
+  RUNWAY_FIRST_IMAGE_PREFLIGHT,
+} from '../../../src/lib/runway-pricing.ts';
 import { validateSignedReferenceUrl } from './generated-output.ts';
 
 const API_VERSION = '2024-11-06';
@@ -58,7 +62,7 @@ export class RunwayGenerationProvider implements GenerationProvider {
       mediaKinds: ['image', 'video'],
       models: [
         {
-          id: 'gen4_image_turbo',
+          id: RUNWAY_FIRST_IMAGE_PREFLIGHT.model,
           mediaKind: 'image',
           aspectRatios: ['9:16', '16:9', '1:1'],
           durations: [],
@@ -81,9 +85,12 @@ export class RunwayGenerationProvider implements GenerationProvider {
   estimate(request: NormalizedGenerationRequest): CostEstimate {
     const videoSeconds =
       request.mediaKind === 'video' ? (request.settings.durationSeconds ?? 0) : 0;
-    const providerCredits = request.mediaKind === 'image' ? 2 : videoSeconds * 5;
+    const providerCredits =
+      request.mediaKind === 'image'
+        ? RUNWAY_FIRST_IMAGE_PREFLIGHT.providerCredits
+        : videoSeconds * 5;
     return {
-      maximumCostMicros: providerCredits * 10_000,
+      maximumCostMicros: providerCredits * RUNWAY_CREDIT_COST_MICROS,
       providerCredits,
       estimatedOutputBytes: request.mediaKind === 'image' ? 20_000_000 : 200_000_000,
       pricingSnapshot: {
@@ -91,8 +98,12 @@ export class RunwayGenerationProvider implements GenerationProvider {
         model: request.model,
         currency: 'USD',
         unit: request.mediaKind === 'image' ? 'request' : 'second',
-        unitCostMicros: request.mediaKind === 'image' ? 20_000 : 50_000,
-        creditsPerUnit: request.mediaKind === 'image' ? 2 : 5,
+        unitCostMicros:
+          request.mediaKind === 'image'
+            ? RUNWAY_FIRST_IMAGE_PREFLIGHT.maximumCostMicros
+            : 5 * RUNWAY_CREDIT_COST_MICROS,
+        creditsPerUnit:
+          request.mediaKind === 'image' ? RUNWAY_FIRST_IMAGE_PREFLIGHT.providerCredits : 5,
         capturedAt: this.clock(),
       },
     };

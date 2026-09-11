@@ -46,10 +46,10 @@ flowchart LR
 | Validation                  | Zod                                                 | Validation at import and server-function input boundaries                            |
 | Styling                     | Tailwind CSS Vite integration plus `src/styles.css` | Design tokens, responsive layout, shared component styles, and utility classes       |
 | Icons                       | Lucide React                                        | Consistent interface iconography                                                     |
-| Authentication              | Supabase Auth with GitHub OAuth                     | Owner identity and authenticated sessions                                            |
+| Authentication              | Supabase Auth with GitHub OAuth using PKCE          | Owner identity and authenticated sessions without token-bearing callback URLs        |
 | Metadata database           | Supabase PostgreSQL                                 | Owner-scoped production records, relationships, constraints, history, and audit data |
 | Authorization               | PostgreSQL RLS plus `app_owners`                    | Anonymous and non-owner denial at the data layer                                     |
-| Server operations           | Supabase Edge Functions                             | Owner verification, B2 signing, upload lifecycle, deletion, preview URLs, and backup |
+| Server operations           | Supabase Edge Functions                             | Owner verification, B2 signing, upload lifecycle, deletion, preview URLs, backup, and restore rehearsal |
 | Media storage               | Backblaze B2 through its S3-compatible API          | Private images, audio, video, and encrypted metadata backups                         |
 | Browser persistence         | localStorage and IndexedDB through `idb`            | Fictional demo metadata, episode drafts, and local demo blobs                        |
 | Unit/component tests        | Vitest, Testing Library, jsdom                      | Domain and React behavior                                                            |
@@ -245,7 +245,7 @@ Demo mode must remain functional without external accounts or environment variab
 
 Private mode requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, with demo mode disabled.
 
-1. `supabase.ts` creates the browser client and performs GitHub OAuth.
+1. `supabase.ts` creates the browser client and performs GitHub OAuth with PKCE. Callback URLs must be cleaned by the session exchange before diagnostic inspection.
 2. `StudioProvider` observes the Supabase session.
 3. It calls the no-argument `current_user_is_app_owner()` self-check. The browser cannot supply an arbitrary UUID.
 4. `AuthGate` exposes the application only when the owner check succeeds.
@@ -282,13 +282,14 @@ Every production record that belongs to a workspace carries `owner_id`. Owner ac
 Managed AI orchestration is split deliberately:
 
 - `src/lib/generation-provider.ts` defines provider-neutral capabilities, requests, estimates, jobs, and normalized results. `src/lib/managed-generation.ts` owns the pure lifecycle, reservation, interruption, and idempotent demo rules.
-- `src/state/use-generation-manager.ts` runs the deterministic account-free simulation and refreshes visible private job state. It does not hold an AI credential or call a real provider.
-- `supabase/functions/_shared/runway.ts` is the first provider adapter. AI-2 verifies it only with mocked HTTP; no Runway credential or live request is part of that checkpoint.
+- `src/lib/shot-prompt.ts` assembles a deterministic, human-readable shot prompt from the existing series, episode, scene, shot, assigned-character/location, named-prop, and project-style records. The browser persists that text as a normal immutable prompt version before the existing generation gate opens; provider adapters never compile or mutate creative memory.
+- `src/state/use-generation-manager.ts` runs the deterministic account-free simulation, prepares owner-approved private Runway image drafts, invokes the generation functions, and refreshes visible private job state. It never holds an AI credential or calls Runway directly.
+- `supabase/functions/_shared/runway.ts` is the first provider adapter. AI-2 verified it with mocked HTTP; AI-3 Gate 3 live-verified one Gen-4 Image Turbo prompt/reference submission, status recovery, and normalized output.
 - `generation-start` and `generation-cancel` require the authenticated singleton owner and accept only a generation ID. The server reloads the immutable prompt, settings, inputs, and pricing context before acting.
-- `generation-reconcile` uses a separate internal-service credential, accepts no caller-supplied record identifiers, selects due singleton-owner rows itself, and applies bounded polling/recovery.
-- `generation-ingest` is internal-only and accepts only a generation ID. It retrieves the provider result through the adapter, keeps the temporary URL in memory, verifies an exact HTTPS host with redirects disabled, then streams at most the persisted output reservation into private B2.
+- `generation-reconcile` uses a separate internal-service credential, accepts no caller-supplied record identifiers, selects due singleton-owner rows itself, and applies bounded polling/recovery. A `pg_cron`/`pg_net` job invokes it at most once per minute only while managed work is active: the database claim wrapper activates the job atomically, and the reconciler pauses it after no active managed rows remain.
+- `generation-ingest` is internal-only and accepts only a generation ID. It retrieves the provider result through the adapter, keeps the temporary URL in memory, verifies an exact HTTPS host with redirects disabled, and enforces the persisted output reservation. `src/lib/generated-output-transfer.ts` owns provider-neutral byte transfer and verification; `supabase/functions/_shared/generated-output-storage.ts` adapts those operations to B2. Results through 8 MiB use one bounded payload and larger results use sequential 8 MiB multipart parts under a 100-second deadline. Exact existing objects are reused, conflicts fail closed, failures attempt multipart abort, and database completion follows a verifying `HeadObject`. This architecture is deployed in `generation-ingest` version 10. The first live 497,698-byte MP4 completed through the bounded single-payload branch; hosted multipart execution remains pending for a naturally larger approved result.
 
-Provider-only signed reference URLs and temporary generated-output URLs are never returned to the browser, written to PostgreSQL, included in exports/backups, or logged. The real-generation switch remains false through AI-2.
+Provider-only signed reference URLs and temporary generated-output URLs are never returned to the browser, written to PostgreSQL, included in exports/backups, or logged. The real-generation switch remains false between separately approved requests.
 
 ### Media lifecycle
 
@@ -327,11 +328,12 @@ sequenceDiagram
 
 The browser must never receive B2 application credentials. Ordinary large media must never be proxied through Netlify or Supabase.
 
-Generated provider results are the narrow exception to the ordinary direct browser/B2 transfer rule. They are not ordinary 2 GB uploads: one internal Edge invocation streams a single generated image or video through a bounded 250 MB-or-lower reservation, with a required direct `200`, declared length, approved MIME type, exact provider hostname, and no redirects. The metadata completion transaction uses the generation ID as its idempotent asset identity and creates at most one asset, one canonical asset link, and one linked cost entry.
+Generated provider results are the narrow exception to the ordinary direct browser/B2 transfer rule. They are not ordinary 2 GB uploads: one internal Edge invocation transfers a single result through its persisted reservation, with a required direct `200`, declared length, approved MIME type, exact provider hostname, and no redirects. The first-video envelope remains 200 MB. Source uses one bounded payload through 8 MiB or sequential 8 MiB B2 multipart parts above that threshold, never parallel part uploads or complete-video materialization. The transfer verifies exact generation metadata, type, and length before reuse and after upload. The metadata completion transaction then uses the generation ID as its idempotent asset identity and creates at most one asset, one canonical asset link, and one linked cost entry.
 
 ### Backup and error recording
 
 - `metadata-backup` reads owner-scoped records, including generation inputs, lifecycle events, budget settings, and linked costs, creates an import-compatible version 2 workspace package, encrypts it with AES-256-GCM, and writes the encrypted object to private B2 storage.
+- `metadata-restore` requires the current owner bearer token, selects the latest completed backup row for that owner, validates its exact private B2 prefix and bounded size, decrypts it server-side, and accepts no caller-supplied records. It checks existing IDs before inserting only missing rows, never deletes or overwrites records, and forces restored generation settings off.
 - `scripts/decrypt-backup.mjs` is the local decryption tool. The key remains outside the repository.
 - `errorTracker` retains the latest 50 sanitized reports only in the current browser memory and delegates remote recording to `recordClientError()`.
 - `recordClientError()` records a bounded error message, context label, route, and user agent for authenticated users. It must not include scripts, prompts, form values, signed URLs, or media content.
@@ -382,7 +384,7 @@ Private preview URLs are refreshed shortly before expiry. Downloads request atta
 - Older workspaces without `assetLinks` normalize that collection to an empty array while preserving unknown fields.
 - Restore writes generation records before asset links so polymorphic generation targets exist before their links are validated.
 - Asset-link upserts reconcile on `(asset_id, target_type, target_id)`, allowing a database-synchronized compatibility link and its imported explicit link to resolve as one relationship.
-- In private mode, normalized records are persisted through the repository adapter before the imported workspace replaces current local state. Each record retries once; failure stops the restore and attempts to reload the authoritative remote workspace.
+- Uploaded JSON imports use the owner-scoped browser repository for ordinary records and cannot bypass server-owned managed-generation controls. Encrypted B2 recovery uses the owner-authenticated `metadata-restore` function so completed immutable history can be checked through a trusted path without weakening browser protections.
 
 Schema evolution must retain a migration or normalization path for previously exported workspaces.
 
@@ -449,7 +451,7 @@ TypeScript project build/type-check
   -> Vite production bundle in dist/
 ```
 
-`npm run test:e2e` starts or reuses the Vite server and runs Playwright against desktop, iPad landscape, iPad portrait, and 390 x 844 phone projects.
+`npm run test:e2e` uses `scripts/run-playwright.mjs` to start Vite in-process, runs Playwright against desktop, iPad landscape, iPad portrait, and 390 x 844 phone projects, and then closes Vite through its API. This project-owned lifecycle avoids Playwright's denied Windows process-tree cleanup path and keeps the fictional-demo server isolated on port 4174.
 
 `npm run format` applies the repository Prettier policy, while `npm run format:check` verifies it without writing files. The pre-commit hook runs lint-staged: staged TypeScript receives ESLint fixes and Prettier formatting; staged JSON and Markdown receive Prettier formatting. Generated database types are excluded.
 
@@ -497,7 +499,7 @@ The following rules must remain true unless the owner explicitly approves an arc
 3. **Two explicit persistence modes:** fictional demo storage is browser-local; the private workspace uses Supabase for metadata and B2 for media. Both modes present the same domain model to the UI.
 4. **Owner enforcement is server-side:** route guards are not sufficient. Owner-scoped tables require indexed `owner_id`, RLS, and the singleton allowlist.
 5. **Privileged functions authenticate by purpose:** browser-started Edge Functions verify the bearer token and configured owner. Internal generation recovery/ingest uses a distinct server-only secret, accepts no caller-supplied owner or storage context, and selects or reloads records itself.
-6. **Media bytes bypass application hosting:** browser-to-B2 signed transfer is mandatory for ordinary large files. The only proxy exception is bounded internal streaming of a provider-generated result directly into private B2; temporary provider URLs never cross into product state.
+6. **Media bytes bypass application hosting:** browser-to-B2 signed transfer is mandatory for ordinary large files. The only proxy exception is bounded internal transfer of one provider-generated result into private B2. That path uses at most one 8 MiB application payload at a time, sequential multipart upload, exact-object verification, and a 100-second deadline; temporary provider URLs never cross into product state.
 7. **B2 remains private:** browser access uses short-lived, purpose-specific signed URLs. Credentials never enter the browser bundle.
 8. **History is append-only:** script and prompt revisions create new records and remain immutable at the database layer.
 9. **Storage safety is enforced twice:** media type, non-empty size, 2 GB maximum, and 9 GB cap are validated before upload and enforced by server/database rules.
@@ -510,7 +512,10 @@ The following rules must remain true unless the owner explicitly approves an arc
 16. **Failed cloud writes reconcile visibly:** ordinary metadata writes retry once and roll back only the still-current optimistic change after a second failure. Newer local edits are never overwritten by an older rollback.
 17. **Generation results have one canonical relationship:** explicit asset links are authoritative; the generation result-ID array remains synchronized only for backward compatibility and export continuity.
 18. **Managed generation is provider-neutral and server-owned:** browser/domain code uses normalized contracts; adapters translate provider fields only on the server; atomic claims, reservations, lifecycle transitions, and idempotency constraints remain authoritative in PostgreSQL.
-19. **AI-2 is inert by default:** the fake provider is account-free, the Runway adapter is mock-tested, `generation_enabled` is false, and no live provider key, request, scheduler, function deployment, or production promotion is implied.
+19. **Managed generation is disabled between approvals:** the fake provider remains account-free. The first Runway still and five-second video are live-verified, but `generation_enabled` returns to false after each approved submission. The on-demand recovery schedule may poll only already-claimed work and cannot enable or submit generation; another provider request or production promotion is never implied by scheduler configuration.
+20. **Shot prompt compilation creates history, not hidden state:** a direct shot handoff writes the compiled production memory as a new immutable prompt version before generation. Assigned characters and location are specific to the shot/scene; props are included when named in shot context; active project styles are included as global visual guidance.
+21. **OAuth callbacks are non-diagnostic:** Supabase browser auth uses PKCE, and callback URLs are not inspected until exchange and URL cleanup finish.
+22. **Encrypted restore is trusted and non-destructive:** the browser may request a rehearsal but cannot supply privileged restore records. The server decrypts only the latest completed owner backup, inserts only missing rows, preserves immutable history, and keeps generation disabled.
 
 ## When to update this document
 
