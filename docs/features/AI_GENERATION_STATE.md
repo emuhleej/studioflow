@@ -2,7 +2,7 @@
 
 ## Status
 
-ACTIVE — AI-5 COMPLETE; RELEASE-CANDIDATE PREPARATION ACTIVE
+ACTIVE — AI-5 COMPLETE; PR #12 RELEASE-CANDIDATE REVIEW ACTIVE
 
 ## Purpose
 
@@ -123,6 +123,7 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 - AI-5 production-memory integration: every shot now offers a direct generation handoff. StudioFlow compiles the series, episode, scene, shot, assigned-character, assigned/named-location, named-prop, and project-style fragments into a new immutable prompt version before opening the existing confirmed generation gate. The shot workspace exposes location and character assignment, and each managed attempt can expand to show its full immutable prompt, private inputs, request shape, settled cost, complete lifecycle, and result.
 - AI-5 cost visibility: Creator HQ continues to total canonical cost entries and now identifies the generated-result subtotal and count. The live database contains exactly one $0.25 video cost row for the completed video generation; the episode total changed from $0.02 to $0.27 as expected.
 - AI-5 encrypted recovery: deployed schema-version-2 backup writing and an owner-authenticated restore function that accepts no caller-supplied records, decrypts only the latest completed owner backup from private B2, checks existing IDs before inserting only missing rows, and forces generation off. The live restore rehearsal completed without deleting or overwriting records; database counts, the completed video/cost/history, disabled generation, zero active jobs, and the inactive scheduler remained intact.
+- Release review: PR #12 packages the current AI workflow. Its exact Netlify preview has an explicitly allowlisted OAuth return address, opens the owner workspace, displays both generation attempts and the $0.27 total, and loads the private 5.04-second 720×1280 video without a media error. The release remains unpublished.
 
 ## Partially Implemented
 
@@ -161,13 +162,13 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 
 ## Remaining Verification
 
-- Perform the final release-candidate responsive/privacy review after the current source is committed. Multipart execution remains a later opportunistic check when an already-approved output naturally exceeds 8 MiB.
+- Require successful CI and private preview review for every PR #12 head. Multipart execution remains a later opportunistic check when an already-approved output naturally exceeds 8 MiB.
 
 ## Exact Next Implementation Task
 
-Prepare one exact release-candidate commit and private preview for review. Do not publish production or submit another provider request.
+Close the PR #12 CI and private-preview gate. Do not publish production or submit another provider request.
 
 ## Remaining Implementation Order
 
-1. Create and review one exact release-candidate commit and its private preview.
+1. Require successful CI and private preview review for the exact PR #12 head.
 2. Obtain action-time confirmation, then follow the exact production release gate for that commit.

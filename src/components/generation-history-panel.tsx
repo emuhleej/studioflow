@@ -73,8 +73,10 @@ export function GenerationHistoryPanel({
   const [resultAssetId, setResultAssetId] = useState('');
   const [resultError, setResultError] = useState('');
   const [simulationKind, setSimulationKind] = useState<GenerationMediaKind>('image');
-  const [simulationOpen, setSimulationOpen] = useState(false);
-  const [simulationPromptId, setSimulationPromptId] = useState('');
+  const [simulationOpen, setSimulationOpen] = useState(Boolean(launchRequest));
+  const [simulationPromptId, setSimulationPromptId] = useState(
+    launchRequest?.promptVersionId ?? ''
+  );
   const [simulationReferenceId, setSimulationReferenceId] = useState('');
   const [simulationPriceConfirmed, setSimulationPriceConfirmed] = useState(false);
   const [simulationBusy, setSimulationBusy] = useState(false);
@@ -157,11 +159,6 @@ export function GenerationHistoryPanel({
 
   useEffect(() => {
     if (!launchRequest) return;
-    setSimulationError('');
-    setSimulationKind('image');
-    setSimulationPromptId(launchRequest.promptVersionId);
-    setSimulationPriceConfirmed(false);
-    setSimulationOpen(true);
     onLaunchHandled?.();
   }, [launchRequest, onLaunchHandled]);
 

@@ -106,10 +106,12 @@ select is(
   true,
   'free fake work receives one atomic claim with scheduled recovery'
 );
+reset role;
 select ok(
   (select active from cron.job where jobname = 'studioflow-generation-reconcile'),
   'a successful claim activates the reconciliation schedule'
 );
+set local role service_role;
 select is(
   public.claim_generation_submission_with_reconcile(
     '77000000-0000-4000-8000-000000000001',
@@ -138,10 +140,12 @@ select is(
   true,
   'the internal lifecycle control can pause an idle reconciliation schedule'
 );
+reset role;
 select ok(
   not (select active from cron.job where jobname = 'studioflow-generation-reconcile'),
   'the reconciliation schedule is inactive after the final job leaves active state'
 );
+set local role service_role;
 select results_eq(
   $$select operational_status, reserved_output_bytes from public.generation_records where id = '77000000-0000-4000-8000-000000000001'$$,
   $$values ('submission_unknown'::text, 2048::bigint)$$,

@@ -11,9 +11,9 @@ This document is StudioFlow's current project dashboard. It records the state a 
 | Status                      | Active development                                |
 | Production                  | Stable                                            |
 | Current major feature       | AI Generation release hardening                   |
-| Active implementation unit  | Release-candidate preparation                     |
+| Active implementation unit  | PR #12 release-candidate review                    |
 | Latest completed checkpoint | Encrypted version 2 backup and restore rehearsal   |
-| Next checkpoint to open     | Exact release-candidate commit and preview review  |
+| Next checkpoint to open     | Successful PR #12 CI and private preview review    |
 
 “Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
 
@@ -73,7 +73,7 @@ AI-4 completed after exact confirmation. StudioFlow submitted one `gen4_turbo` r
 
 AI-5 local production-memory integration is complete. Each shot has a direct generation action; location and character assignments are visible in the shot workspace; the handoff compiles relevant production memory into a new immutable prompt; and managed history exposes complete input, request, lifecycle, result, and settled-cost details. A free fictional rehearsal completed without external service use.
 
-The final AI-5 backup gate is complete. Hosted `metadata-backup` now writes schema version 2, and the owner-authenticated `metadata-restore` function reads only the latest encrypted object from the owner's private B2 prefix. The live rehearsal decrypted and validated that backup, checked every collection before inserting only missing rows, preserved all existing records, and forced generation off. The follow-up database check confirmed the same production counts, one completed five-second video, one settled video cost, no active managed job, disabled generation, and an inactive scheduler. No Runway request or Netlify deployment occurred.
+The final AI-5 backup gate is complete. Hosted `metadata-backup` now writes schema version 2, and the owner-authenticated `metadata-restore` function reads only the latest encrypted object from the owner's private B2 prefix. The live rehearsal decrypted and validated that backup, checked every collection before inserting only missing rows, preserved all existing records, and forced generation off. The follow-up database check confirmed the same production counts, one completed five-second video, one settled video cost, no active managed job, disabled generation, and an inactive scheduler. No additional Runway request or production deployment occurred. PR #12 is the active release-review vehicle; its exact preview now has an allowlisted OAuth return address and opens the owner workspace.
 
 During Gate 3 browser verification, an implicit-flow OAuth callback exposed transient callback credentials to agent-visible diagnostic output. Work stopped before provider submission; the GitHub grant and active Supabase session were revoked, and the stale local session was signed out. Supabase browser auth now uses PKCE, callback URLs are cleaned before inspection, and a fresh GitHub authorization restored owner access without exposing the replacement session. The exact Deploy Preview redirect remains allowlisted without a wildcard.
 
@@ -150,7 +150,7 @@ Before opening the next separately approved gate, re-read:
 10. `docs/SETUP.md`
 11. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-Quick Wins and AI-1 through AI-5 are complete, including the live encrypted version 2 backup/non-destructive restore rehearsal. The exact next task is to prepare one release-candidate commit, run its approved review checks, and review its private preview. Obtain action-time confirmation immediately before publishing that exact candidate to production. Do not submit another provider request.
+Quick Wins and AI-1 through AI-5 are complete, including the live encrypted version 2 backup/non-destructive restore rehearsal. PR #12 packages the release candidate. Every pushed PR head must pass CI and its private preview review before action-time production confirmation. Do not submit another provider request.
 
 ## Active documentation
 
