@@ -108,15 +108,15 @@ The separately approved AI-3 Gate 3 used those generation functions for exactly 
 
 ## Not Started
 
-- A separately approved production release, custom domain, and AI-4 video execution.
+- A custom domain remains later scope. The separately approved production release and AI-4 video execution are complete.
 
 ## Broken / Needs Verification
 
 - Docker remains absent from this desktop by design; the isolated pgTAP suite now runs successfully in GitHub Actions.
 - The security advisor's remaining `app_owners` notice is informational and expected: RLS is enabled with no browser policy so the allowlist remains deny-all to API clients.
 - The leaked-password advisor cannot be enabled on the free plan, so email/password authentication is disabled instead. GitHub OAuth remains the only enabled provider.
-- Performance advice now contains 22 informational unindexed-foreign-key and unused-index suggestions only. Review these separately before production release; they do not weaken the verified owner boundary.
-- Netlify published one initial production-context shell at `main` commit `6c18ece` during site creation despite the repository ignore rule. It remains edge-protected and has no production browser variables. Provider-level Auto Publishing is now locked.
+- Performance advice contains 22 informational unindexed-foreign-key and unused-index suggestions only. Review these as a separate optimization checkpoint; they do not weaken the verified owner boundary.
+- Netlify now publishes exact approved deployment `6aa46fb62a2a6f0008071ccd` for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f`. Provider-level Auto Publishing remains locked.
 - The prior implicit-flow OAuth callback path is retired. Its transient diagnostic exposure was contained through grant/session revocation and stale local sign-out; a fresh PKCE authorization is verified.
 
 ## Locked Decisions
@@ -126,7 +126,7 @@ The separately approved AI-3 Gate 3 used those generation functions for exactly 
 - Migrations remain source-controlled and additive; do not repair live schema with ad hoc dashboard edits.
 - Mutating pgTAP fixtures never run against the hosted owner project.
 - OAuth credentials and the owner UUID remain private provider/database configuration, never repository data.
-- Production deployment remains a separate explicit approval.
+- Every later production deployment remains a separate explicit approval; the currently approved deploy is locked.
 - Paid AI gates and social automation remain outside Milestone 10F and require their own feature checkpoints.
 
 ## Known Risks
@@ -137,17 +137,17 @@ The separately approved AI-3 Gate 3 used those generation functions for exactly 
 
 ## Remaining Verification
 
-- None within Milestone 10F. The documentation-only closeout, protected preview recheck, PR #5 merge, and post-merge production-lock verification passed. Production promotion remains separately prohibited.
+- Milestone 10F is complete. For the published release, the owner reports that owner login and non-owner denial pass; private-media expiry verification remains.
 
 ## Exact Next Implementation Task
 
-The on-demand schedule is configured, live-verified, and inactive while idle. The memory-safe source, hosted ingest bundle/authentication boundary, AI-4 provider/budget preflight, and local five-second preparation/confirmation path are complete; hosted B2 multipart execution remains pending. Follow `AI_GENERATION_STATE.md`: perform the action-time read-only provider/balance and hosted-guard checks, present the exact 25-credit/$0.25 request for separate approval, and stop before enablement or submission.
+Confirm the raw B2 object is private and a copied signed media URL expires after 10 minutes for exact deployment `6aa46fb62a2a6f0008071ccd`. Generation remains disabled; do not submit another provider request or publish a later commit without separate approval.
 
 ## Remaining Implementation Order
 
 1. Milestone 10F and its repository gate are complete.
 2. AI-1 and AI-2 plus PR #6 are complete.
 3. AI-3 Gate 3 is complete with exactly one two-credit still.
-4. Scheduler verification, memory-safe transfer source, and hosted ingest bundle/authentication verification are complete; hosted B2 multipart execution, AI-4 video, and production release remain separate approvals.
+4. Scheduler verification, memory-safe transfer, AI-4 video, and exact production publication are complete; hosted B2 multipart execution and production post-publish verification remain.
 
 Update this file after every meaningful live-service checkpoint.

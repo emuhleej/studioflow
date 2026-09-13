@@ -44,6 +44,23 @@ describe('mocked Runway adapter', () => {
     });
   });
 
+  it('recalculates the lowest image spending limit on the server', () => {
+    expect(
+      adapter(vi.fn() as unknown as typeof fetch).estimate({
+        ...baseRequest,
+        model: 'muse_image',
+      })
+    ).toMatchObject({
+      maximumCostMicros: 10_000,
+      providerCredits: 1,
+      pricingSnapshot: {
+        model: 'muse_image',
+        unitCostMicros: 10_000,
+        creditsPerUnit: 1,
+      },
+    });
+  });
+
   it('maps a normalized image request to the versioned API without returning signed references', async () => {
     const fetcher = vi.fn(
       async () =>

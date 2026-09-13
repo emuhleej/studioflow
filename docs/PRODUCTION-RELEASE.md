@@ -1,17 +1,17 @@
 # Production release gate
 
-No approved StudioFlow production release exists. Repository setup produced one protected, nonfunctional production-context shell; CI does not deploy or promote production.
+The exact approved StudioFlow deployment `6aa46fb62a2a6f0008071ccd` for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` is published and locked at `https://studioflowhq.netlify.app`. CI does not deploy or promote production, and Auto Publishing remains locked.
 
 ## Current Netlify lock
 
 - The Netlify project is `studioflowhq` and remains private.
 - `[context.production] ignore = "exit 0"` in `netlify.toml` is intended to skip ordinary `main` builds.
 - If Netlify bypasses the ignore check, the production-context command runs `scripts/netlify-production-guard.mjs` and fails closed unless the separately managed `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` value is a full 40-character SHA exactly matching Netlify's current `COMMIT_REF`.
-- The Supabase browser URL, anon key, and `VITE_DEMO_MODE=false` are configured only for the Deploy Previews context.
+- The Supabase browser URL, anon key, and `VITE_DEMO_MODE=false` are separately scoped to Deploy Previews and the approved Production deployment.
 - Netlify provider-level Auto Publishing is locked and must remain locked.
-- Do not remove the production guard, add production-context values, or change project visibility without separate owner approval.
+- Do not remove the production guard, alter production-context values, publish a later commit, or change project visibility without separate owner approval.
 
-The original repository ignore rule did not prevent Netlify from publishing the initial `main` build at commit `6c18ece` while the site was being created. That build remains behind Netlify access control and has no production browser values, so it cannot open the private StudioFlow workspace. It is not an approved production release. The later fail-closed production command and the verified provider-level Auto Publishing lock guard against the same bypass recurring; the repository guards remain defense in depth.
+The original repository ignore rule did not prevent Netlify from publishing the initial `main` build at commit `6c18ece` while the site was being created. The later fail-closed production command and the verified provider-level Auto Publishing lock guard against the same bypass recurring; the repository guards remain defense in depth. That original shell has been superseded by the exact approved deployment above.
 
 ## Current Milestone 10F preview
 
@@ -40,7 +40,23 @@ AI-3 Gate 3 later completed exactly one private Runway still-image request and r
 
 The memory-safe generated-video transfer is deployed in `generation-ingest` version 10. One confirmed 497,698-byte MP4 completed through the bounded single-payload branch with authenticated playback, one canonical link, one $0.25 cost entry, released reservations, disabled generation, and an inactive scheduler. Multipart remains pending because the output was below 8 MiB. AI-5 shot handoff and complete-attempt detail are implemented locally. None of these actions authorizes a Netlify production release.
 
-The final encrypted recovery prerequisite is complete. Hosted `metadata-backup` now writes schema version 2, and owner-authenticated `metadata-restore` completed a non-destructive live rehearsal from the latest private B2 object while preserving record counts and leaving generation plus its scheduler off. The next release action is preparation and review of one exact candidate commit; production publish still requires action-time confirmation for that exact reviewed candidate.
+The final encrypted recovery prerequisite is complete. Hosted `metadata-backup` now writes schema version 2, and owner-authenticated `metadata-restore` completed a non-destructive live rehearsal from the latest private B2 object while preserving record counts and leaving generation plus its scheduler off.
+
+The exact production candidate for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` completed successfully. Windows client troubleshooting caused Netlify to accept two hook invocations for the same commit; the second candidate reused the already-uploaded files. The fresh one-time build hook and the Production-context `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` value were then deleted and verified absent, while Auto Publishing remained locked. After separate action-time confirmation, exact deployment `6aa46fb62a2a6f0008071ccd` was manually published and locked.
+
+The candidate's signed-out shell and `/health` page pass at desktop, iPad landscape, iPad portrait, and phone sizes without horizontal overflow; visible controls meet the 44 px target. After exact temporary Supabase Auth, Edge Function `APP_ORIGINS`, and B2 CORS entries were added, GitHub sign-in returned to the candidate as the owner. Creator HQ, Projects, Production Memory, Media, and Settings rendered without an owner-denial or application error. The retained private B2 video loaded without a media error at 720 × 1280 for 5.04 seconds, and Backblaze returned the exact candidate origin for a PUT preflight. The only console error came from Netlify's injected candidate toolbar; StudioFlow source contains no `MutationObserver` use. Generation remains disabled with zero active managed jobs. No new B2 key was created for the candidate review. The candidate origin was removed from Supabase Auth redirects, Edge Function `APP_ORIGINS`, and B2 CORS after review; all three removals were verified. The temporary function, control secret, and local helper files are absent. The exact canonical production origin was later added to the existing B2 CORS rule without changing the private bucket, encryption, lifecycle settings, methods, headers, or prior origins; Backblaze returned revision 7. The one-hour standard key used for that update was deleted and the local B2 CLI authorization cache was cleared.
+
+## Current production verification
+
+- Published deployment: `6aa46fb62a2a6f0008071ccd`
+- Published commit: `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f`
+- Protected production URL: `https://studioflowhq.netlify.app`
+- Netlify status: published and locked; Auto Publishing remains locked.
+- Signed-out production shell: passed; only the private-workspace login shell is visible.
+- Public `/health`: passed with `status: ok` and version `0.1.0`.
+- Browser warnings/errors during those two checks: none.
+- Owner-reported checks: production owner login and major-area access pass; production non-owner denial passes.
+- Remaining before calling the release fully verified: confirm the raw B2 object is private and a copied signed media URL expires after its 10-minute lifetime.
 
 ## Weekly preview
 

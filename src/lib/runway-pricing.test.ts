@@ -19,6 +19,40 @@ const videoRequest: NormalizedGenerationRequest = {
 };
 
 describe('Runway browser preparation pricing', () => {
+  it('offers a one-credit image option without changing the one-output limit', () => {
+    const provider = createRunwayPreparationProvider(() => '2026-09-12T12:00:00.000Z');
+    const estimate = provider.estimate({
+      ...videoRequest,
+      mediaKind: 'image',
+      model: 'muse_image',
+      settings: { aspectRatio: '9:16', qualityTier: 'draft', outputCount: 1 },
+      references: [{ assetId: 'asset-start', role: 'reference_image' }],
+    });
+
+    expect(estimate).toMatchObject({
+      maximumCostMicros: 10_000,
+      providerCredits: 1,
+      pricingSnapshot: {
+        model: 'muse_image',
+        unitCostMicros: 10_000,
+        creditsPerUnit: 1,
+      },
+    });
+    expect(provider.capabilities().maxOutputs).toBe(1);
+  });
+
+  it('rejects image models without a reviewed spending limit', () => {
+    const provider = createRunwayPreparationProvider();
+    expect(() =>
+      provider.estimate({
+        ...videoRequest,
+        mediaKind: 'image',
+        model: 'unreviewed-image-model',
+        settings: { aspectRatio: '9:16', qualityTier: 'draft', outputCount: 1 },
+      })
+    ).toThrow('Choose an approved Runway image model.');
+  });
+
   it('locks the first video to one five-second vertical Gen-4 Turbo request', () => {
     const provider = createRunwayPreparationProvider(() => '2026-09-10T12:00:00.000Z');
     const capabilities = provider.capabilities();

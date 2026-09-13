@@ -1,21 +1,21 @@
 # StudioFlow Project State
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 This document is StudioFlow's current project dashboard. It records the state a fresh coding agent needs in order to resume work safely. Read `CODEX.md` first, then this file, before opening a feature checkpoint.
 
 ## Current project status
 
-| Field                       | Current state                                     |
-| --------------------------- | ------------------------------------------------- |
-| Status                      | Active development                                |
-| Production                  | Stable                                            |
-| Current major feature       | AI Generation release hardening                   |
-| Active implementation unit  | PR #12 release-candidate review                    |
-| Latest completed checkpoint | Encrypted version 2 backup and restore rehearsal   |
-| Next checkpoint to open     | Successful PR #12 CI and private preview review    |
+| Field                       | Current state                        |
+| --------------------------- | ------------------------------------ |
+| Status                      | Active development                   |
+| Production                  | Published; verification active       |
+| Current major feature       | AI Generation release hardening      |
+| Active implementation unit  | Post-publish production verification |
+| Latest completed checkpoint | Exact candidate publication          |
+| Next checkpoint to open     | Private-media expiry verification    |
 
-“Production: Stable” describes the current production-core code quality, not release approval. Netlify published an initial protected `main` build during site creation, but it has no production browser variables and is not an approved StudioFlow production release.
+Netlify serves the separately approved deployment `6aa46fb62a2a6f0008071ccd` for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` at `https://studioflowhq.netlify.app`. It is published and locked, with Auto Publishing still disabled. Signed-out shell and `/health` checks pass. The owner reports that production owner login and non-owner denial also pass; private-media expiry verification remains.
 
 ## Major systems currently present
 
@@ -75,6 +75,8 @@ AI-5 local production-memory integration is complete. Each shot has a direct gen
 
 The final AI-5 backup gate is complete. Hosted `metadata-backup` now writes schema version 2, and the owner-authenticated `metadata-restore` function reads only the latest encrypted object from the owner's private B2 prefix. The live rehearsal decrypted and validated that backup, checked every collection before inserting only missing rows, preserved all existing records, and forced generation off. The follow-up database check confirmed the same production counts, one completed five-second video, one settled video cost, no active managed job, disabled generation, and an inactive scheduler. No additional Runway request or production deployment occurred. PR #12 is the active release-review vehicle; its exact preview now has an allowlisted OAuth return address and opens the owner workspace.
 
+The exact production candidate for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` was published as deployment `6aa46fb62a2a6f0008071ccd` after separate action-time approval. Netlify reports the deploy as published and locked, and Auto Publishing remains locked. The one-time build hook and `STUDIOFLOW_PRODUCTION_RELEASE_COMMIT` authorization had already been deleted. The production signed-out shell and `/health` endpoint now pass without browser warnings or errors; `/health` returns `status: ok` and version `0.1.0`. Candidate review had already verified owner routes, the retained private 720 × 1280 five-second B2 video, and exact-origin PUT preflight. The canonical production origin remains in B2 CORS revision 7 without changing the private bucket, encryption, lifecycle settings, methods, headers, or prior origins. The owner reports that production owner login and non-owner denial pass. Generation remains disabled. Private-media expiry verification remains before the release can be called fully verified.
+
 During Gate 3 browser verification, an implicit-flow OAuth callback exposed transient callback credentials to agent-visible diagnostic output. Work stopped before provider submission; the GitHub grant and active Supabase session were revoked, and the stale local session was signed out. Supabase browser auth now uses PKCE, callback URLs are cleaned before inspection, and a fresh GitHub authorization restored owner access without exposing the replacement session. The exact Deploy Preview redirect remains allowlisted without a wildcard.
 
 Milestone 10A connected the hosted Supabase project, applied the five production-core migrations, regenerated `src/lib/database.types.ts`, and ran hosted checks. Milestone 10B added and applied the reviewed owner-auth hardening migration, configured GitHub OAuth and local callbacks, disabled unused email/password login, registered the single owner, and verified signed-out, non-owner, and real owner access. All 19 public tables have row-level security enabled and anonymous public-table grants are zero.
@@ -123,8 +125,8 @@ Milestone 10F is complete. The authorization startup race is permanently fixed i
 - Local Git checkpoints now include the initial production core and Milestones 7–9 (`8f2413c`). The repository is published at `emuhleej/studioflow`; local `main` was synchronized with merged remote commit `0914fd9` before this documentation update.
 - Guarded private Netlify Deploy Preview deployment `6a98ade0b248ff000843f8f0` at application revision `294acc8` contains the auth fix, production guard, and proposed provider-neutral AI plan. Owner access, a fresh OAuth cycle, three reloads, Creator HQ, `/library`, `/media`, a clean console, route refreshes, all four supported viewport sizes, and the exact tiny-media cleanup cycle are verified. Documentation-only closeout deployment `6a98b784104acf0008957b1c` at `faef374` completed; the canonical preview still opened Creator HQ as the owner with no browser warnings or errors.
 - The authorization-race regression suite increased the verified application total to 69 unit/component tests; `npm run verify` and all 32 Playwright scenarios pass.
-- Netlify published an initial production-context build of `main` at `6c18ece` during site creation. It remains edge-protected, has no production browser values, and is not an approved release. Site-level Auto Publishing is locked.
-- GitHub OAuth remains configured with PKCE. After containment of a transient callback-log exposure, the previous grant/session was revoked and a fresh authorization restored owner access without exposing the replacement session. The exact PR #6 preview redirect is allowlisted without a wildcard. No custom domain or approved production release exists.
+- Netlify now publishes exact deployment `6aa46fb62a2a6f0008071ccd` for approved commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f`. The deploy is locked and site-level Auto Publishing remains locked.
+- GitHub OAuth remains configured with PKCE. After containment of a transient callback-log exposure, the previous grant/session was revoked and a fresh authorization restored owner access without exposing the replacement session. No custom domain exists; the approved production release uses the Netlify subdomain.
 - AI-1/AI-2 verification passes locally with TypeScript, lint, 102 unit/component tests in the stable one-worker confirmation, six production-lock checks, and the production build. Final-head GitHub Actions run `33787517971` concluded successfully. PR #6 was merged into `main` as `2d6b5df70593bef82065137553de248f7f7b121e`.
 - Hosted migration history includes the eighth source migration for on-demand reconciliation. All 22 public tables retain RLS; generated hosted types include the service-only schedule-control functions; the two required Vault entries are present and valid by name/shape; `generation_enabled` remains false.
 - The private B2 integration is live-verified. Earlier disposable media/backup fixtures were exercised and removed. The current owner workspace now also has a retained encrypted schema-version-2 backup whose non-destructive restore rehearsal completed successfully without changing record counts.
@@ -150,7 +152,7 @@ Before opening the next separately approved gate, re-read:
 10. `docs/SETUP.md`
 11. The authentication, Supabase repository, migrations, database tests, and route-guard files
 
-Quick Wins and AI-1 through AI-5 are complete, including the live encrypted version 2 backup/non-destructive restore rehearsal. PR #12 packages the release candidate. Every pushed PR head must pass CI and its private preview review before action-time production confirmation. Do not submit another provider request.
+Quick Wins and AI-1 through AI-5 are complete, including the live encrypted version 2 backup/non-destructive restore rehearsal. The exact reviewed candidate for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` is published and locked. Signed-out shell and health checks pass, and the owner reports that production owner login and non-owner denial pass. The exact next checkpoint is private-media expiry verification. Do not publish a later commit or submit another provider request without separate approval.
 
 ## Active documentation
 
@@ -160,9 +162,10 @@ Quick Wins and AI-1 through AI-5 are complete, including the live encrypted vers
 - `docs/features/LIVE_SERVICE_READINESS_STATE.md` — completed 10A–10F live-service integration and the separate repository/release boundaries.
 - `docs/features/REAL_WORKFLOW_TRIAL_STATE.md` — completed fictional Milestone 9 rehearsal and remaining owner-private/physical-device trials.
 - `docs/features/GENERATION_HISTORY_STATE.md` — completed manual provenance scope, hosted verification, and the boundary to future managed generation.
-- `docs/features/AI_GENERATION_STATE.md` — current feature checkpoint: live private image/video and AI-5 backup/restore complete; release-candidate preparation next.
+- `docs/features/AI_GENERATION_STATE.md` — current feature checkpoint: live private image/video, AI-5 backup/restore, exact production publication, and remaining post-publish verification.
 - `docs/features/AI_GENERATION_PLAN.md` — provider-neutral image/video implementation order and separate paid-service gates.
 - `docs/features/MEDIA_LIFECYCLE_STATE.md` — completed media feature scope, live provider results, and remaining physical-device review.
+- `docs/USER-GUIDE.md` — beginner-friendly instructions for using every current production workspace area.
 - `README.md` — product overview, current capabilities, local commands, and repository status.
 - `docs/BUILD-PLAN.md` — ten-week feature and learning progression.
 - `docs/ARCHITECTURE.md` — system boundaries and data placement.

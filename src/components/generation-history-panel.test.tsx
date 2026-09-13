@@ -98,7 +98,7 @@ describe('GenerationHistoryPanel', () => {
     expect(runButton).toBeDisabled();
   });
 
-  it('submits the owner-only live image only after exact-cost confirmation and a reference', async () => {
+  it('adjusts the image spending limit and uses the visible default private reference', async () => {
     isDemo = false;
     const user = userEvent.setup();
     render(<GenerationHistoryPanel episodeId="episode-fridge" />);
@@ -107,18 +107,20 @@ describe('GenerationHistoryPanel', () => {
     const dialog = screen.getByRole('dialog', { name: 'Generate one private image' });
     expect(within(dialog).getByText('2 credits')).toBeInTheDocument();
     expect(within(dialog).getByText('$0.02 maximum')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Required private reference image')).toHaveValue(
+      'asset-fridge-ref'
+    );
     const generateButton = within(dialog).getByRole('button', {
       name: 'Generate one private image',
     });
     expect(generateButton).toBeDisabled();
 
-    await user.selectOptions(
-      within(dialog).getByLabelText('Required private reference image'),
-      'asset-fridge-ref'
-    );
+    await user.selectOptions(within(dialog).getByLabelText('Image spending limit'), 'muse_image');
+    expect(within(dialog).getByText('1 credit')).toBeInTheDocument();
+    expect(within(dialog).getByText('$0.01 maximum')).toBeInTheDocument();
     await user.click(
       within(dialog).getByRole('checkbox', {
-        name: /I approve spending up to 2 credits \(\$0\.02\)/,
+        name: /I approve spending up to 1 credit \(\$0\.01\)/,
       })
     );
     expect(generateButton).toBeEnabled();
@@ -129,7 +131,7 @@ describe('GenerationHistoryPanel', () => {
       shotId: 'shot-1',
       promptVersionId: 'prompt-shot-one-v2',
       mediaKind: 'image',
-      model: 'gen4_image_turbo',
+      model: 'muse_image',
       settings: {
         aspectRatio: '9:16',
         qualityTier: 'draft',
