@@ -23,7 +23,12 @@ import {
   type GenerationInput,
 } from '../lib/generation-history';
 import { getEpisodePromptHistory } from '../lib/prompt-history';
-import { RUNWAY_FIRST_IMAGE_PREFLIGHT, RUNWAY_FIRST_VIDEO_PREFLIGHT } from '../lib/runway-pricing';
+import {
+  getRunwayImagePreflight,
+  RUNWAY_FIRST_IMAGE_PREFLIGHT,
+  RUNWAY_FIRST_VIDEO_PREFLIGHT,
+  RUNWAY_IMAGE_PREFLIGHTS,
+} from '../lib/runway-pricing';
 import { useStudio } from '../state/studio-store';
 import type {
   Asset,
@@ -73,6 +78,9 @@ export function GenerationHistoryPanel({
   const [resultAssetId, setResultAssetId] = useState('');
   const [resultError, setResultError] = useState('');
   const [simulationKind, setSimulationKind] = useState<GenerationMediaKind>('image');
+  const [simulationImageModel, setSimulationImageModel] = useState<string>(
+    RUNWAY_FIRST_IMAGE_PREFLIGHT.model
+  );
   const [simulationOpen, setSimulationOpen] = useState(Boolean(launchRequest));
   const [simulationPromptId, setSimulationPromptId] = useState(
     launchRequest?.promptVersionId ?? ''
@@ -141,17 +149,22 @@ export function GenerationHistoryPanel({
     ? simulationPromptId
     : (prompts[0]?.id ?? '');
   const effectiveSimulationReferenceId =
-    simulationKind === 'image' && simulationReferenceId === ''
+    simulationKind === 'image' && isDemo && simulationReferenceId === ''
       ? ''
       : simulationReferences.some((asset) => asset.id === simulationReferenceId)
         ? simulationReferenceId
         : (simulationReferences[0]?.id ?? '');
   const activePreflight =
-    simulationKind === 'video' ? RUNWAY_FIRST_VIDEO_PREFLIGHT : RUNWAY_FIRST_IMAGE_PREFLIGHT;
+    simulationKind === 'video'
+      ? RUNWAY_FIRST_VIDEO_PREFLIGHT
+      : getRunwayImagePreflight(simulationImageModel);
   const outputLabel =
     simulationKind === 'video'
       ? `${RUNWAY_FIRST_VIDEO_PREFLIGHT.outputCount} five-second video`
       : `${RUNWAY_FIRST_IMAGE_PREFLIGHT.outputCount} image`;
+  const activeCreditLabel = `${activePreflight.providerCredits} credit${
+    activePreflight.providerCredits === 1 ? '' : 's'
+  }`;
   const liveModalTitle =
     simulationKind === 'video'
       ? 'Generate one private five-second video'
@@ -547,10 +560,10 @@ export function GenerationHistoryPanel({
                     </div>
                     <ol className="quiet mt-2 grid gap-1 text-[0.65rem]">
                       {lifecycle.map((event) => (
-                          <li key={event.id}>
-                            {formatShortDate(event.createdAt)} · {event.message}
-                          </li>
-                        ))}
+                        <li key={event.id}>
+                          {formatShortDate(event.createdAt)} · {event.message}
+                        </li>
+                      ))}
                     </ol>
                     {generation.operationalStatus === 'submission_unknown' ? (
                       <div
@@ -662,18 +675,18 @@ export function GenerationHistoryPanel({
       >
         <div className="grid gap-3">
           <Field label={isDemo ? 'Simulation type' : 'Output type'}>
-              <select
-                className="select"
-                value={simulationKind}
-                onChange={(event) => {
-                  setSimulationKind(event.target.value as GenerationMediaKind);
-                  setSimulationPriceConfirmed(false);
-                  setSimulationError('');
-                }}
-              >
-                <option value="image">Image</option>
-                <option value="video">Video</option>
-              </select>
+            <select
+              className="select"
+              value={simulationKind}
+              onChange={(event) => {
+                setSimulationKind(event.target.value as GenerationMediaKind);
+                setSimulationPriceConfirmed(false);
+                setSimulationError('');
+              }}
+            >
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+            </select>
           </Field>
           <Field label="Locked prompt version">
             <select
@@ -699,6 +712,27 @@ export function GenerationHistoryPanel({
               )}
             </select>
           </Field>
+          {simulationKind === 'image' ? (
+            <Field label="Image spending limit">
+              <select
+                className="select"
+                value={simulationImageModel}
+                onChange={(event) => {
+                  setSimulationImageModel(event.target.value);
+                  setSimulationPriceConfirmed(false);
+                  setSimulationError('');
+                }}
+              >
+                {RUNWAY_IMAGE_PREFLIGHTS.map((preflight) => (
+                  <option key={preflight.model} value={preflight.model}>
+                    {preflight.providerCredits}{' '}
+                    {preflight.providerCredits === 1 ? 'credit' : 'credits'} ·{' '}
+                    {formatMicros(preflight.maximumCostMicros)} maximum · {preflight.modelLabel}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          ) : null}
           <Field
             label={
               simulationKind === 'video'
@@ -751,7 +785,7 @@ export function GenerationHistoryPanel({
               </div>
               <div className="rounded-lg border border-[var(--line)] bg-black/10 p-2">
                 <dt className="quiet">Maximum credits</dt>
-                <dd className="mt-1 font-semibold">{activePreflight.providerCredits} credits</dd>
+                <dd className="mt-1 font-semibold">{activeCreditLabel}</dd>
               </div>
               <div className="rounded-lg border border-[var(--line)] bg-black/10 p-2">
                 <dt className="quiet">Maximum charge</dt>
@@ -797,8 +831,7 @@ export function GenerationHistoryPanel({
                 {isDemo
                   ? 'I reviewed the later live-request maximum of '
                   : 'I approve spending up to '}
-                {activePreflight.providerCredits} credits (
-                {formatMicros(activePreflight.maximumCostMicros)}).{' '}
+                {activeCreditLabel} ({formatMicros(activePreflight.maximumCostMicros)}).{' '}
                 {isDemo
                   ? 'Run only the free simulation now.'
                   : `Submit exactly one private Runway ${
@@ -830,8 +863,8 @@ export function GenerationHistoryPanel({
                 simulationBusy ||
                 !prompts.length ||
                 !simulationPriceConfirmed ||
-                (!isDemo && !simulationReferences.length) ||
-                (simulationKind === 'video' && !simulationReferences.length)
+                (!isDemo && !effectiveSimulationReferenceId) ||
+                (simulationKind === 'video' && !effectiveSimulationReferenceId)
               }
             >
               {simulationBusy ? (

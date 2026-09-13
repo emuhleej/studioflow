@@ -5,6 +5,19 @@ import type {
 
 export const RUNWAY_CREDIT_COST_MICROS = 10_000;
 
+export const RUNWAY_LOWEST_COST_IMAGE_PREFLIGHT = {
+  provider: 'runway',
+  providerLabel: 'Runway Dev',
+  model: 'muse_image',
+  modelLabel: 'Muse Image',
+  outputCount: 1,
+  providerCredits: 1,
+  maximumCostMicros: RUNWAY_CREDIT_COST_MICROS,
+  estimatedOutputBytes: 20_000_000,
+  reviewedOn: '2026-09-12',
+  reviewedOnLabel: 'September 12, 2026',
+} as const;
+
 export const RUNWAY_FIRST_IMAGE_PREFLIGHT = {
   provider: 'runway',
   providerLabel: 'Runway Dev',
@@ -17,6 +30,17 @@ export const RUNWAY_FIRST_IMAGE_PREFLIGHT = {
   reviewedOn: '2026-09-10',
   reviewedOnLabel: 'September 10, 2026',
 } as const;
+
+export const RUNWAY_IMAGE_PREFLIGHTS = [
+  RUNWAY_LOWEST_COST_IMAGE_PREFLIGHT,
+  RUNWAY_FIRST_IMAGE_PREFLIGHT,
+] as const;
+
+export function getRunwayImagePreflight(model: string) {
+  const preflight = RUNWAY_IMAGE_PREFLIGHTS.find((candidate) => candidate.model === model);
+  if (!preflight) throw new Error('Choose an approved Runway image model.');
+  return preflight;
+}
 
 export const RUNWAY_FIRST_VIDEO_PREFLIGHT = {
   provider: 'runway',
@@ -45,6 +69,14 @@ export function createRunwayPreparationProvider(
       mediaKinds: ['image', 'video'],
       models: [
         {
+          id: RUNWAY_LOWEST_COST_IMAGE_PREFLIGHT.model,
+          mediaKind: 'image',
+          aspectRatios: ['9:16', '16:9', '1:1'],
+          durations: [],
+          supportsReferences: true,
+          supportsCancellation: true,
+        },
+        {
           id: RUNWAY_FIRST_IMAGE_PREFLIGHT.model,
           mediaKind: 'image',
           aspectRatios: ['9:16', '16:9', '1:1'],
@@ -65,13 +97,14 @@ export function createRunwayPreparationProvider(
     }),
     estimate: (request: NormalizedGenerationRequest) => {
       const isVideo = request.mediaKind === 'video';
+      const imagePreflight = isVideo ? undefined : getRunwayImagePreflight(request.model);
       return {
         maximumCostMicros: isVideo
           ? RUNWAY_FIRST_VIDEO_PREFLIGHT.maximumCostMicros
-          : RUNWAY_FIRST_IMAGE_PREFLIGHT.maximumCostMicros,
+          : imagePreflight!.maximumCostMicros,
         providerCredits: isVideo
           ? RUNWAY_FIRST_VIDEO_PREFLIGHT.providerCredits
-          : RUNWAY_FIRST_IMAGE_PREFLIGHT.providerCredits,
+          : imagePreflight!.providerCredits,
         estimatedOutputBytes: isVideo
           ? RUNWAY_FIRST_VIDEO_PREFLIGHT.estimatedOutputBytes
           : RUNWAY_FIRST_IMAGE_PREFLIGHT.estimatedOutputBytes,
@@ -82,10 +115,10 @@ export function createRunwayPreparationProvider(
           unit: isVideo ? 'second' : 'request',
           unitCostMicros: isVideo
             ? RUNWAY_FIRST_VIDEO_PREFLIGHT.creditsPerSecond * RUNWAY_CREDIT_COST_MICROS
-            : RUNWAY_FIRST_IMAGE_PREFLIGHT.maximumCostMicros,
+            : imagePreflight!.maximumCostMicros,
           creditsPerUnit: isVideo
             ? RUNWAY_FIRST_VIDEO_PREFLIGHT.creditsPerSecond
-            : RUNWAY_FIRST_IMAGE_PREFLIGHT.providerCredits,
+            : imagePreflight!.providerCredits,
           capturedAt: clock(),
         },
       };

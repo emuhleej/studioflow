@@ -102,7 +102,7 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 - Hosted migration history, schema lint, generated database types, RLS/table inventory, generation-switch state, and security/performance advisors verified after application.
 - GitHub application, secret, browser, and database-security checks pass on the AI-1/AI-2 branch; final-head StudioFlow CI run `33787517971` concluded successfully and PR #6 is merged.
 - AI-3 Gate 2 credential setup: the exact Supabase secret name is present once and `generation_enabled` remains false.
-- AI-3 first-image preflight: one immutable prompt and optional active project-image reference feed the existing fake-provider path; the UI and mocked Runway adapter share the reviewed 2-credit/$0.02 Gen-4 Image Turbo maximum; confirmation is required and resets when an input changes.
+- AI-3 first-image preflight: one immutable prompt and optional active project-image reference feed the existing fake-provider path. The image form now offers reviewed one-output spending choices: Muse Image at 1 credit/$0.01 or Gen-4 Image Turbo at 2 credits/$0.02. The browser display and server adapter derive reservations from the selected allowlisted model, unknown models fail closed, and confirmation resets when the choice changes. A visibly selected first private reference now counts as selected instead of producing a false missing-reference error. This adjustment is local only; it has not been deployed and made no provider request.
 - AI-3 deployment/configuration gate: configured the strict output-host allowlist from Runway's current official output example, generated a distinct internal-job secret, and deployed `generation-start`, `generation-cancel`, `generation-ingest`, and `generation-reconcile` with their reviewed custom authentication. All three required secret names are present exactly once, all four functions are active, unauthenticated POST requests return HTTP 401, and the live generation switch remains off. `generation-ingest` was redeployed during Gate 3 with the verified Deno/B2 compatibility repair.
 - AI-3 Gate 3 live image: rechecked current official pricing/input/output rules, used one deliberately fictional private reference and immutable prompt, displayed and approved the exact 2-credit/$0.02 maximum, submitted exactly one request, and immediately returned `generation_enabled` to false after Runway accepted it.
 - Live recovery and private completion: temporary reconciliation recovered the asynchronous result without a scheduler or second provider request. Two Deno/B2 compatibility defects were isolated and fixed: optional AWS checksum calculation is no longer forced for the flowing body, and the strictly size-bounded still image is materialized as bytes before B2 upload. The retry reused the completed provider result and spent no additional credits.
@@ -123,7 +123,7 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 - AI-5 production-memory integration: every shot now offers a direct generation handoff. StudioFlow compiles the series, episode, scene, shot, assigned-character, assigned/named-location, named-prop, and project-style fragments into a new immutable prompt version before opening the existing confirmed generation gate. The shot workspace exposes location and character assignment, and each managed attempt can expand to show its full immutable prompt, private inputs, request shape, settled cost, complete lifecycle, and result.
 - AI-5 cost visibility: Creator HQ continues to total canonical cost entries and now identifies the generated-result subtotal and count. The live database contains exactly one $0.25 video cost row for the completed video generation; the episode total changed from $0.02 to $0.27 as expected.
 - AI-5 encrypted recovery: deployed schema-version-2 backup writing and an owner-authenticated restore function that accepts no caller-supplied records, decrypts only the latest completed owner backup from private B2, checks existing IDs before inserting only missing rows, and forces generation off. The live restore rehearsal completed without deleting or overwriting records; database counts, the completed video/cost/history, disabled generation, zero active jobs, and the inactive scheduler remained intact.
-- Release review: PR #12 packages the current AI workflow. Its exact Netlify preview has an explicitly allowlisted OAuth return address, opens the owner workspace, displays both generation attempts and the $0.27 total, and loads the private 5.04-second 720×1280 video without a media error. The release remains unpublished.
+- Release review and publication: PR #12 packages the current AI workflow. Its exact Netlify preview opened the owner workspace, displayed both generation attempts and the $0.27 total, and loaded the private 5.04-second 720×1280 video without a media error. Exact deployment `6aa46fb62a2a6f0008071ccd` for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` is now published and locked at the production URL.
 
 ## Partially Implemented
 
@@ -149,7 +149,7 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 - Scheduled recovery uses its own server-only credential and accepts no caller identifiers.
 - Ambiguous submissions/cancellation charges require owner review and never auto-retry.
 - Costs, reservations, assets, and canonical links are idempotent and database-enforced.
-- Production deployment remains a separate approval gate.
+- Every later production deployment remains a separate approval gate; the currently approved deploy is locked.
 
 ## Known Risks
 
@@ -162,13 +162,13 @@ Demo persistence normalizes older workspaces and creates disabled default budget
 
 ## Remaining Verification
 
-- Require successful CI and private preview review for every PR #12 head. Multipart execution remains a later opportunistic check when an already-approved output naturally exceeds 8 MiB.
+- Signed-out responsive and health review passed for the exact candidate at desktop, iPad landscape, iPad portrait, and phone sizes. Candidate owner authentication, all five protected workspace routes, and the retained private 5.04-second 720 × 1280 B2 video also passed before publication. Exact deployment `6aa46fb62a2a6f0008071ccd` is now published and locked. The production signed-out shell and `/health` endpoint pass without browser warnings or errors, and the owner reports that production owner login and non-owner denial pass. Private-media expiry verification remains. Generation remains disabled. Multipart execution remains a later opportunistic check when an already-approved output naturally exceeds 8 MiB.
 
 ## Exact Next Implementation Task
 
-Close the PR #12 CI and private-preview gate. Do not publish production or submit another provider request.
+Confirm the raw B2 object is private and a copied production media URL expires after its 10-minute lifetime. Do not publish a later commit or submit another provider request without separate approval.
 
 ## Remaining Implementation Order
 
-1. Require successful CI and private preview review for the exact PR #12 head.
-2. Obtain action-time confirmation, then follow the exact production release gate for that commit.
+1. Confirm the raw B2 object URL fails without its signature.
+2. Confirm a copied signed production media URL fails after 10 minutes and StudioFlow can request a fresh one for the owner.

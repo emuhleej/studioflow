@@ -8,8 +8,10 @@ import type {
   ProviderJobState,
 } from '../../../src/lib/generation-provider.ts';
 import {
+  getRunwayImagePreflight,
   RUNWAY_CREDIT_COST_MICROS,
   RUNWAY_FIRST_IMAGE_PREFLIGHT,
+  RUNWAY_LOWEST_COST_IMAGE_PREFLIGHT,
 } from '../../../src/lib/runway-pricing.ts';
 import { validateSignedReferenceUrl } from './generated-output.ts';
 
@@ -62,6 +64,14 @@ export class RunwayGenerationProvider implements GenerationProvider {
       mediaKinds: ['image', 'video'],
       models: [
         {
+          id: RUNWAY_LOWEST_COST_IMAGE_PREFLIGHT.model,
+          mediaKind: 'image',
+          aspectRatios: ['9:16', '16:9', '1:1'],
+          durations: [],
+          supportsReferences: true,
+          supportsCancellation: true,
+        },
+        {
           id: RUNWAY_FIRST_IMAGE_PREFLIGHT.model,
           mediaKind: 'image',
           aspectRatios: ['9:16', '16:9', '1:1'],
@@ -85,10 +95,10 @@ export class RunwayGenerationProvider implements GenerationProvider {
   estimate(request: NormalizedGenerationRequest): CostEstimate {
     const videoSeconds =
       request.mediaKind === 'video' ? (request.settings.durationSeconds ?? 0) : 0;
+    const imagePreflight =
+      request.mediaKind === 'image' ? getRunwayImagePreflight(request.model) : undefined;
     const providerCredits =
-      request.mediaKind === 'image'
-        ? RUNWAY_FIRST_IMAGE_PREFLIGHT.providerCredits
-        : videoSeconds * 5;
+      request.mediaKind === 'image' ? imagePreflight!.providerCredits : videoSeconds * 5;
     return {
       maximumCostMicros: providerCredits * RUNWAY_CREDIT_COST_MICROS,
       providerCredits,
@@ -100,10 +110,9 @@ export class RunwayGenerationProvider implements GenerationProvider {
         unit: request.mediaKind === 'image' ? 'request' : 'second',
         unitCostMicros:
           request.mediaKind === 'image'
-            ? RUNWAY_FIRST_IMAGE_PREFLIGHT.maximumCostMicros
+            ? imagePreflight!.maximumCostMicros
             : 5 * RUNWAY_CREDIT_COST_MICROS,
-        creditsPerUnit:
-          request.mediaKind === 'image' ? RUNWAY_FIRST_IMAGE_PREFLIGHT.providerCredits : 5,
+        creditsPerUnit: request.mediaKind === 'image' ? imagePreflight!.providerCredits : 5,
         capturedAt: this.clock(),
       },
     };
