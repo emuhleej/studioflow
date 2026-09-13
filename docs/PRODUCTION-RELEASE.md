@@ -1,6 +1,6 @@
 # Production release gate
 
-The exact approved StudioFlow deployment `6aa46fb62a2a6f0008071ccd` for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f` is published and locked at `https://studioflowhq.netlify.app`. CI does not deploy or promote production, and Auto Publishing remains locked.
+The exact approved StudioFlow deployment `6aa5fc5761abe6000824f5fd` for commit `b9238422931b9be125f52dc898ccb86f5513a53a` is published and locked at `https://studioflowhq.netlify.app`. CI does not deploy or promote production, and Auto Publishing remains locked.
 
 ## Current Netlify lock
 
@@ -46,10 +46,12 @@ The exact production candidate for commit `d5a56856ff8e50caf162fefbb3ae0efb0eb22
 
 The candidate's signed-out shell and `/health` page pass at desktop, iPad landscape, iPad portrait, and phone sizes without horizontal overflow; visible controls meet the 44 px target. After exact temporary Supabase Auth, Edge Function `APP_ORIGINS`, and B2 CORS entries were added, GitHub sign-in returned to the candidate as the owner. Creator HQ, Projects, Production Memory, Media, and Settings rendered without an owner-denial or application error. The retained private B2 video loaded without a media error at 720 × 1280 for 5.04 seconds, and Backblaze returned the exact candidate origin for a PUT preflight. The only console error came from Netlify's injected candidate toolbar; StudioFlow source contains no `MutationObserver` use. Generation remains disabled with zero active managed jobs. No new B2 key was created for the candidate review. The candidate origin was removed from Supabase Auth redirects, Edge Function `APP_ORIGINS`, and B2 CORS after review; all three removals were verified. The temporary function, control secret, and local helper files are absent. The exact canonical production origin was later added to the existing B2 CORS rule without changing the private bucket, encryption, lifecycle settings, methods, headers, or prior origins; Backblaze returned revision 7. The one-hour standard key used for that update was deleted and the local B2 CLI authorization cache was cleared.
 
+The adjustable image-spending follow-up passed 124 unit/component tests, six production-lock checks, the production build, all 44 Playwright scenarios, and PR #13 CI. Its merge commit is `b9238422931b9be125f52dc898ccb86f5513a53a`; `generation-start` version 16 enforces the same allowlisted image models and maximum price calculations as the browser. One-time hook deployment `6aa5fc5761abe6000824f5fd` completed successfully, its unpublished permalink passed the owner-only shell and `/health` checks without browser errors, and the exact candidate was manually published after action-time approval. The one-time hook, temporary local hook file, and Production-context commit authorization were removed before publication. Auto Publishing remains locked. A live database check confirmed generation disabled and zero active managed jobs; no Runway request or credit spend occurred.
+
 ## Current production verification
 
-- Published deployment: `6aa46fb62a2a6f0008071ccd`
-- Published commit: `d5a56856ff8e50caf162fefbb3ae0efb0eb22f5f`
+- Published deployment: `6aa5fc5761abe6000824f5fd`
+- Published commit: `b9238422931b9be125f52dc898ccb86f5513a53a`
 - Protected production URL: `https://studioflowhq.netlify.app`
 - Netlify status: published and locked; Auto Publishing remains locked.
 - Signed-out production shell: passed; only the private-workspace login shell is visible.
